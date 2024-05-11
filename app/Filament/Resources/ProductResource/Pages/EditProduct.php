@@ -14,6 +14,7 @@ class EditProduct extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
+            $this->getSaveFormAction()->formId('form')
         ];
     }
 }

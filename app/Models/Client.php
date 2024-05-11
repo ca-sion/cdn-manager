@@ -5,9 +5,11 @@ namespace App\Models;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model implements HasMedia
 {
@@ -24,9 +26,9 @@ class Client extends Model implements HasMedia
     /**
      * The provisions that belong to the client.
      */
-    public function clientProvisions(): HasMany
+    public function provisionElements(): MorphMany
     {
-        return $this->hasMany(ClientProvision::class);
+        return $this->morphMany(ProvisionElement::class, 'recipient');
     }
 
     /**
@@ -43,5 +45,21 @@ class Client extends Model implements HasMedia
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * The documents that belong to the client.
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    /**
+     * Get the category that owns the client.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ClientCategory::class, 'category_id');
     }
 }

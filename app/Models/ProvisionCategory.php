@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Dicastry extends Model
+class ProvisionCategory extends Model
 {
     use HasFactory;
 
@@ -18,7 +18,7 @@ class Dicastry extends Model
     protected $guarded = [];
 
     /**
-     * Get the provisions for the dicastry.
+     * Get the provisions for the category.
      */
     public function provisions(): HasMany
     {

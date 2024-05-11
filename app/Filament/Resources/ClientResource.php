@@ -14,8 +14,9 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ClientResource\RelationManagers;
 use App\Filament\Resources\ClientResource\RelationManagers\ClientProductsRelationManager;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use App\Filament\Resources\ClientResource\RelationManagers\ClientProvisionsRelationManager;
+use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager;
+use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
@@ -25,7 +26,11 @@ class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-home-modern';
+
+    protected static ?string $pluralModelLabel = 'Clients';
+
+    protected static ?string $modelLabel = 'Client';
 
     public static function form(Form $form): Form
     {
@@ -41,16 +46,9 @@ class ClientResource extends Resource
                                 ->label('Nom'),
                             Forms\Components\TextInput::make('long_name')
                                 ->label('Nom long'),
-                            /*Forms\Components\FileUpload::make('logo')
-                                ->label('Logo')
-                                ->directory('logo')
-                                ->image()
-                                ->imagePreviewHeight('100'),*/
-                            SpatieMediaLibraryFileUpload::make('logo')
-                                ->label('Logo')
-                                ->collection('logos')
-                                ->image()
-                                ->imagePreviewHeight('100'),
+                            Forms\Components\Select::make('category_id')
+                                ->label('Catégorie')
+                                ->relationship('category', 'name'),
                             Forms\Components\Textarea::make('note')
                                 ->label('Note'),
                         ]),
@@ -88,15 +86,23 @@ class ClientResource extends Resource
                     Tabs\Tab::make('Facturation')
                         ->columns(2)
                         ->schema([
-                            Forms\Components\TextInput::make('invoice_email')
+                            Forms\Components\TextInput::make('invoicing_email')
                                 ->label('Email de facturation'),
                             Forms\Components\TextInput::make('ide')
                                 ->label('CH-IDE'),
                             Forms\Components\TextInput::make('iban'),
                             Forms\Components\TextInput::make('iban_qr'),
-                            Forms\Components\Textarea::make('invoice_note')
+                            Forms\Components\Textarea::make('invoicing_note')
                                 ->label('Note')
                                 ->columnSpanFull(),
+                        ]),
+                    Tabs\Tab::make('Style')
+                        ->schema([
+                            SpatieMediaLibraryFileUpload::make('logo')
+                                ->label('Logo')
+                                ->collection('logos')
+                                ->image()
+                                ->imagePreviewHeight('100'),
                         ]),
                 ]),
             ]);
@@ -150,8 +156,9 @@ class ClientResource extends Resource
     public static function getRelations(): array
     {
         return [
-            ClientProvisionsRelationManager::class,
+            ProvisionElementsRelationManager::class,
             ContactsRelationManager::class,
+            DocumentsRelationManager::class,
             InvoicesRelationManager::class,
         ];
     }

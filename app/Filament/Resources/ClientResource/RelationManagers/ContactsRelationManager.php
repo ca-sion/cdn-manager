@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use App\Enums\ContactRoleEnum;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -24,8 +25,9 @@ class ContactsRelationManager extends RelationManager
                 Forms\Components\TextInput::make('last_name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('type')
-                    ->label('Type'),
+                Forms\Components\Select::make('type')
+                    ->label('Type')
+                    ->options(ContactRoleEnum::class),
             ]);
     }
 
@@ -37,7 +39,8 @@ class ContactsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nom'),
                 Tables\Columns\TextColumn::make('type')
-                    ->label('Type'),
+                    ->label('Type')
+                    ->formatStateUsing(fn (string $state) => ContactRoleEnum::from($state)->getLabel()),
                 Tables\Columns\TextColumn::make('note')
                     ->label('Note'),
             ])
@@ -50,7 +53,8 @@ class ContactsRelationManager extends RelationManager
                     ->recordSelectSearchColumns(['first_name', 'last_name', 'email'])
                     ->form(fn (Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect(),
-                        Forms\Components\TextInput::make('type'),
+                        Forms\Components\Select::make('type')
+                            ->options(ContactRoleEnum::class),
                     ]),
             ])
             ->actions([

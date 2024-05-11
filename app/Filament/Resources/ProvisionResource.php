@@ -6,7 +6,9 @@ use App\Filament\Resources\ProvisionResource\Pages;
 use App\Filament\Resources\ProvisionResource\RelationManagers;
 use App\Models\Provision;
 use Filament\Forms;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -19,22 +21,93 @@ class ProvisionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $pluralModelLabel = 'Prestations';
+
+    protected static ?string $modelLabel = 'Prestation';
+
+    protected static ?string $navigationGroup = 'Collections';
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Nom'),
-                Forms\Components\TextInput::make('description')
-                    ->label('Description'),
-                Forms\Components\TextInput::make('dicastry')
-                    ->label('Dicastère'),
-                Forms\Components\TextInput::make('type')
-                    ->label('Type'),
+                Section::make('Base')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Nom'),
+                        Forms\Components\TextInput::make('description')
+                            ->label('Description'),
+                        /*
+                        Forms\Components\TextInput::make('code')
+                            ->label('Code'),
+                        */
+                        Forms\Components\Select::make('dicastry_id')
+                            ->label('Dicastère')
+                            ->relationship('dicastry', 'name'),
+                        Forms\Components\Select::make('category_id')
+                            ->label('Catégorie')
+                            ->relationship('category', 'name'),
+                    ]),
+                Section::make('Indications')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('numeric_indicator')
+                            ->label('Indicateur numérique')
+                            ->numeric(),
+                        Forms\Components\TextInput::make('dimensions_indicator')
+                            ->label('Dimensions'),
+                        Forms\Components\TextInput::make('format_indicator')
+                            ->label('Format'),
+                        Forms\Components\TextInput::make('due_date_indicator')
+                            ->label('Délai'),
+                        Forms\Components\TextInput::make('contact_indicator')
+                            ->label('Contact'),
+                    ]),
+                Section::make('Options')
+                    ->columns(4)
+                    ->schema([
+                        Forms\Components\Toggle::make('has_content')
+                            ->label('Contenu'),
+                        Forms\Components\Toggle::make('has_due_date')
+                            ->label('Délai'),
+                        Forms\Components\Toggle::make('has_precision')
+                            ->label('Précision')
+                            ->default(true),
+                        Forms\Components\Toggle::make('has_numeric_indicator')
+                            ->label('Indicateur numérique'),
+                        Forms\Components\Toggle::make('has_textual_indicator')
+                            ->label('Indicateur textuel'),
+                        Forms\Components\Toggle::make('has_product')
+                            ->label('Produit')
+                            ->live(),
+                        Forms\Components\Toggle::make('has_contact')
+                            ->label('Contact'),
+                        Forms\Components\Toggle::make('has_media')
+                            ->label('Média'),
+                        Forms\Components\Toggle::make('has_goods_to_be_delivered')
+                            ->label('Marchandise'),
+                        Forms\Components\Toggle::make('has_responsible')
+                            ->label('Responsable'),
+                        Forms\Components\Toggle::make('has_tracking')
+                            ->label('Suivi')
+                            ->hint('Statut et date'),
+                        Forms\Components\Toggle::make('has_accreditation')
+                            ->label('Accréditation'),
+                        Forms\Components\Toggle::make('has_vip')
+                            ->label('VIP'),
+                        Forms\Components\Toggle::make('has_placeholder')
+                            ->label('Placeholder'),
+                    ]),
                 Forms\Components\Select::make('product_id')
                     ->label('Produit')
                     ->hint('Optionnel')
-                    ->relationship('product', 'name'),
+                    ->relationship('product', 'name')
+                    ->visible(fn (Get $get) => $get('has_product')),
+                /*
+                    Forms\Components\TextInput::make('type')
+                    ->label('Type'),
+                */
             ]);
     }
 
@@ -44,8 +117,8 @@ class ProvisionResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('dicastry'),
-                Tables\Columns\TextColumn::make('type'),
+                Tables\Columns\TextColumn::make('dicastry.name'),
+                // Tables\Columns\TextColumn::make('type'),
                 Tables\Columns\TextColumn::make('product.name'),
             ])
             ->filters([

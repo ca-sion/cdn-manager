@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\DicastryResource\Pages;
-use App\Filament\Resources\DicastryResource\RelationManagers;
-use App\Models\Dicastry;
+use App\Filament\Resources\ProvisionCategoryResource\Pages;
+use App\Filament\Resources\ProvisionCategoryResource\RelationManagers;
+use App\Models\ProvisionCategory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,15 +13,15 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class DicastryResource extends Resource
+class ProvisionCategoryResource extends Resource
 {
-    protected static ?string $model = Dicastry::class;
+    protected static ?string $model = ProvisionCategory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $pluralModelLabel = 'Dicastères';
+    protected static ?string $pluralModelLabel = 'Catégories de prestation';
 
-    protected static ?string $modelLabel = 'Dicastère';
+    protected static ?string $modelLabel = 'Catégorie de prestation';
 
     protected static ?string $navigationGroup = 'Collections';
 
@@ -30,9 +30,10 @@ class DicastryResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->label('Nom'),
-                Forms\Components\TextInput::make('description')
-                    ->label('Description'),
+                    ->label('Nom')
+                    ->maxLength(255),
+                Forms\Components\ColorPicker::make('color')
+                    ->label('Couleur'),
             ]);
     }
 
@@ -43,8 +44,17 @@ class DicastryResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nom')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('description')
-                    ->label('Description'),
+                Tables\Columns\ColorColumn::make('color')
+                    ->label('Couleur')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -69,9 +79,9 @@ class DicastryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDicastries::route('/'),
-            'create' => Pages\CreateDicastry::route('/create'),
-            'edit' => Pages\EditDicastry::route('/{record}/edit'),
+            'index' => Pages\ListProvisionCategories::route('/'),
+            'create' => Pages\CreateProvisionCategory::route('/create'),
+            'edit' => Pages\EditProvisionCategory::route('/{record}/edit'),
         ];
     }
 }

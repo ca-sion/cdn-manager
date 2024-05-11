@@ -19,6 +19,12 @@ class ProductResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $pluralModelLabel = 'Produits';
+
+    protected static ?string $modelLabel = 'Produit';
+
+    protected static ?string $navigationGroup = 'Collections';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -27,17 +33,22 @@ class ProductResource extends Resource
                     ->label('Nom'),
                 Forms\Components\TextInput::make('code')
                     ->label('Code'),
-                Forms\Components\TextInput::make('price')
+                Forms\Components\TextInput::make('cost')
                     ->label('Prix')
                     ->numeric()
                     ->inputMode('decimal')
-                    ->suffix('CHF'),
+                    ->prefix('CHF'),
                 Forms\Components\Select::make('tax_rate')
                     ->label('TVA')
                     ->options([
                         '8.1' => '8.1',
-                        '2.5' => '2.1',
-                    ]),
+                        '3.8' => '3.8',
+                        '2.6' => '2.1',
+                    ])
+                    ->suffix('%'),
+                Forms\Components\Checkbox::make('include_vat')
+                    ->label('Inclure TVA')
+                    ->inline(false),
                 Forms\Components\TextInput::make('unit')
                     ->label('Unité'),
             ]);
@@ -53,7 +64,7 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('code')
                     ->label('Code')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('price')
+                Tables\Columns\TextColumn::make('cost')
                     ->label('Prix')
                     ->money('CHF', locale: 'fr_CH'),
                 Tables\Columns\TextColumn::make('tax_rate')

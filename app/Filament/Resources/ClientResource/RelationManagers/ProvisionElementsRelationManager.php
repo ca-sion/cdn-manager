@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use App\Filament\Resources\ProvisionElementResource;
+use App\Models\ProvisionElement;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -10,23 +12,15 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class ClientProvisionsRelationManager extends RelationManager
+class ProvisionElementsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'clientProvisions';
+    protected static string $relationship = 'provisionElements';
 
     protected static ?string $title = 'Prestations';
 
     public function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('provision_id')
-                    ->relationship('provision', 'name')
-                    ->preload()
-                    ->required(),
-                Forms\Components\TextInput::make('status'),
-                Forms\Components\Textarea::make('note'),
-            ]);
+        return ProvisionElementResource::form($form);
     }
 
     public function table(Table $table): Table
@@ -35,7 +29,10 @@ class ClientProvisionsRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('provision.name'),
-                Tables\Columns\TextColumn::make('status'),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge(),
+                Tables\Columns\TextColumn::make('precision')
+                    ->label('Précision'),
                 Tables\Columns\TextColumn::make('note'),
             ])
             ->filters([

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Dicastry extends Model
+class ClientCategory extends Model
 {
     use HasFactory;
 
@@ -18,10 +18,10 @@ class Dicastry extends Model
     protected $guarded = [];
 
     /**
-     * Get the provisions for the dicastry.
+     * Get the clients for the category.
      */
-    public function provisions(): HasMany
+    public function client(): HasMany
     {
-        return $this->hasMany(Provision::class);
+        return $this->hasMany(Client::class);
     }
 }

@@ -21,6 +21,12 @@ class EditionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $pluralModelLabel = 'Éditions';
+
+    protected static ?string $modelLabel = 'Édition';
+
+    protected static ?string $navigationGroup = 'Collections';
+
     public static function form(Form $form): Form
     {
         return $form

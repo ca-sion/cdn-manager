@@ -16,6 +16,7 @@ class EditContact extends EditRecord
             Actions\DeleteAction::make(),
             Actions\ForceDeleteAction::make(),
             Actions\RestoreAction::make(),
+            $this->getSaveFormAction()->formId('form')
         ];
     }
 }

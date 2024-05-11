@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -19,18 +20,34 @@ class Provision extends Model
     protected $guarded = [];
 
     /**
-     * The client provisions that belong to the provision.
+     * Get the elements for the provisions.
      */
-    public function clientProvisions(): BelongsTo
+    public function elements(): HasMany
     {
-        return $this->belongsTo(ClientProvision::class);
+        return $this->hasMany(Provision::class);
     }
 
     /**
-     * Get the client that owns the invoice.
+     * Get the product that owns the provision.
      */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the dicastry that owns the provision.
+     */
+    public function dicastry(): BelongsTo
+    {
+        return $this->belongsTo(Dicastry::class);
+    }
+
+    /**
+     * Get the category that owns the provision.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ProvisionCategory::class);
     }
 }
