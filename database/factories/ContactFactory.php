@@ -30,7 +30,6 @@ class ContactFactory extends Factory
             'country_code' => fake()->optional()->randomElement(['CH', 'FR', 'DE']),
             'salutation' => fake()->optional()->title(),
             'language' => fake()->optional()->randomElement(['fr', 'de', 'en']),
-            'is' => null,
         ];
     }
 }

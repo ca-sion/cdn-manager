@@ -5,9 +5,9 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Dicastry>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Document>
  */
-class DicastryFactory extends Factory
+class DocumentFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -17,7 +17,7 @@ class DicastryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->bothify('Dicastère ??'),
+            //
         ];
     }
 }

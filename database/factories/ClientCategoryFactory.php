@@ -5,9 +5,9 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Dicastry>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ClientCategory>
  */
-class DicastryFactory extends Factory
+class ClientCategoryFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -17,7 +17,8 @@ class DicastryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->bothify('Dicastère ??'),
+            'name' => fake()->bothify('Catégorie ??'),
+            'color' => fake()->safeHexColor(),
         ];
     }
 }

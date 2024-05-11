@@ -19,17 +19,20 @@ return new class extends Migration
             $table->string('number')->nullable();
             $table->date('date')->nullable();
             $table->date('due_date')->nullable();
+            $table->string('reference')->nullable();
+            $table->string('client_reference')->nullable();
+            $table->boolean('is_pro_forma')->nullable();
+
             $table->boolean('include_vat')->nullable();
             $table->string('total_include_vat')->nullable();
             $table->string('total_exclude_vat')->nullable();
             $table->string('currency')->nullable();
-            $table->string('reference')->nullable();
-            $table->string('client_reference')->nullable();
 
             $table->json('positions')->nullable();
             $table->json('payment_instructions')->nullable();
 
             $table->string('content')->nullable();
+            $table->string('footer')->nullable();
             $table->string('note')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();

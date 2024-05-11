@@ -11,16 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('dicastries', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('edition_id')->nullable()->constrained('editions')->cascadeOnUpdate()->nullOnDelete();
             $table->string('name')->nullable();
             $table->string('description')->nullable();
-            $table->string('code')->nullable();
-            $table->string('unit')->nullable();
-            $table->float('cost')->nullable();
-            $table->float('tax_rate')->nullable();
-            $table->boolean('include_vat')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();
         });
@@ -31,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('dicastries');
     }
 };

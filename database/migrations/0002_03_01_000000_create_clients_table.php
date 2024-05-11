@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->nullable();
             $table->string('long_name')->nullable();
+            $table->string('type')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
             $table->string('website')->nullable();
@@ -27,8 +28,11 @@ return new class extends Migration
             $table->string('iban_qr')->nullable();
             $table->string('ide')->nullable();
             $table->string('logo')->nullable();
-            $table->string('invoice_email')->nullable();
-            $table->string('invoice_note')->nullable();
+            $table->string('invoicing_email')->nullable();
+            $table->string('invoicing_note')->nullable();
+
+            $table->foreignId('category_id')->nullable()->constrained('client_categories')->cascadeOnUpdate()->nullOnDelete();
+
             $table->string('note')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();

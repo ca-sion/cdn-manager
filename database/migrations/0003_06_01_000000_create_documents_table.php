@@ -11,16 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('edition_id')->nullable()->constrained('editions')->cascadeOnUpdate()->nullOnDelete();
+            $table->foreignId('client_id')->nullable()->constrained('clients')->cascadeOnUpdate()->nullOnDelete();
+
             $table->string('name')->nullable();
-            $table->string('description')->nullable();
-            $table->string('code')->nullable();
-            $table->string('unit')->nullable();
-            $table->float('cost')->nullable();
-            $table->float('tax_rate')->nullable();
-            $table->boolean('include_vat')->nullable();
+            $table->string('type')->nullable();
+            $table->string('status')->nullable();
+            $table->date('date')->nullable();
+            $table->string('validity_year_start')->nullable();
+            $table->string('validity_year_end')->nullable();
+            $table->json('medias')->nullable();
+
+            $table->string('note')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();
         });
@@ -31,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('documents');
     }
 };

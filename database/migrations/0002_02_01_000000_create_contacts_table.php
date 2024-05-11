@@ -32,7 +32,6 @@ return new class extends Migration
             $table->string('country_code')->nullable();
             $table->string('salutation')->nullable();
             $table->string('language')->nullable();
-            $table->json('is')->nullable(); // VIP, Accredited, etc.
             $table->json('meta')->nullable();
             $table->softDeletes();
             $table->timestamps();

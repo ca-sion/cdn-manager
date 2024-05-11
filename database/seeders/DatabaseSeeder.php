@@ -4,11 +4,14 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Client;
+use App\Models\ClientCategory;
 use App\Models\Contact;
+use App\Models\Dicastry;
 use App\Models\Edition;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Product;
 use App\Models\Provision;
+use App\Models\ProvisionCategory;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -40,5 +43,8 @@ class DatabaseSeeder extends Seeder
         Client::factory(15)->create();
         Product::factory(5)->create();
         Provision::factory(5)->create();
+        Dicastry::factory(5)->create();
+        ClientCategory::factory(5)->create();
+        ProvisionCategory::factory(5)->create();
     }
 }
