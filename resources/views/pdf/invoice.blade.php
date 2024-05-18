@@ -102,7 +102,8 @@
                         {{ $invoice->client->invoicing_address_extension ?? $invoice->client->address }}<br>
                     @endif
                     @if ($invoice->client->postal_code || $invoice->client->locality || $invoice->client->invoicing_postal_code || $invoice->client->invoicing_locality)
-                        {{ $invoice->client->invoicing_postal_code ?? $invoice->client->postal_code }}@if ($invoice->client->locality || $invoice->client->invoicing_locality), {{ $invoice->client->invoicing_locality ?? $invoice->client->locality }}@endif
+                        {{ $invoice->client->invoicing_postal_code ?? $invoice->client->postal_code }}
+                        {{ $invoice->client->invoicing_locality ?? $invoice->client->locality }}
                         <br>
                     @endif
                 </div>
