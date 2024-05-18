@@ -92,14 +92,17 @@
         <tr>
             <td align="left" valign="top" style="max-width:8cm;padding-top: 2.5cm;padding-left: 1.1cm">
                 <div style="text-wrap: nowrap;word-break: break-word;">
-                    @if ($invoice->client->name)
-                        {{ $invoice->client->name }}<br>
+                    @if ($invoice->client->name || $invoice->client->invoicing_name)
+                        {{ $invoice->client->invoicing_name ?? $invoice->client->name }}<br>
                     @endif
-                    @if ($invoice->client->address)
-                        {{ $invoice->client->address }}<br>
+                    @if ($invoice->client->address || $invoice->client->invoicing_address)
+                        {{ $invoice->client->invoicing_address ?? $invoice->client->address }}<br>
                     @endif
-                    @if ($invoice->client->postal_code || $invoice->client->locality)
-                        {{ $invoice->client->postal_code }}@if ($invoice->client->locality), {{ $invoice->client->locality }}@endif
+                    @if ($invoice->client->address_extension || $invoice->client->invoicing_address_extension)
+                        {{ $invoice->client->invoicing_address_extension ?? $invoice->client->address }}<br>
+                    @endif
+                    @if ($invoice->client->postal_code || $invoice->client->locality || $invoice->client->invoicing_postal_code || $invoice->client->invoicing_locality)
+                        {{ $invoice->client->invoicing_postal_code ?? $invoice->client->postal_code }}@if ($invoice->client->locality || $invoice->client->invoicing_locality), {{ $invoice->client->invoicing_locality ?? $invoice->client->locality }}@endif
                         <br>
                     @endif
                 </div>
