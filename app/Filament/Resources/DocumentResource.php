@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Document;
@@ -31,10 +32,12 @@ class DocumentResource extends Resource
             ->schema([
                 Forms\Components\Select::make('edition_id')
                     ->relationship('edition', 'year')
+                    ->default(session('edition_id'))
                     ->required(),
                 Forms\Components\Select::make('client_id')
                     ->relationship('client', 'name')
-                    ->required(),
+                    ->required()
+                    ->hiddenOn(DocumentsRelationManager::class),
                 Forms\Components\Select::make('type')
                     ->default('contract')
                     ->options([

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use App\Filament\Resources\DocumentResource;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -16,10 +17,7 @@ class DocumentsRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                //
-            ]);
+        return DocumentResource::form($form);
     }
 
     public function table(Table $table): Table

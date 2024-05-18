@@ -45,6 +45,7 @@ class ProvisionElementResource extends Resource
                     Forms\Components\Select::make('edition_id')
                         ->label('Edition')
                         ->relationship('edition', 'year')
+                        ->default(session('edition_id'))
                         ->required(),
                     Forms\Components\Select::make('provision_id')
                         ->label('Prestation')
