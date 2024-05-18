@@ -60,11 +60,11 @@ class InvoiceController extends Controller
 
         $qrBill->setUltimateDebtor(
             StructuredAddress::createWithStreet(
-                $client->name,
-                $client->address,
+                $client->invoicing_name ?? $client->name,
+                $client->invoicing_address ?? $client->address,
                 null,
-                $client->postal_code,
-                $client->locality,
+                $client->invoicing_postal_code ?? $client->postal_code,
+                $client->invoicing_locality ?? $client->locality,
                 'CH'
             )
         );

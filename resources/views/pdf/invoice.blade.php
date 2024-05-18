@@ -151,8 +151,8 @@
 
         <h2 style="font-size: medium;">
             {{ $invoice->title }}
-            @if ($invoice->edition)
-                · {{ $invoice->edition->name }} de la Course de Noël
+            @if ($invoice->edition?->name)
+                · {{ $invoice->edition->name }}
             @endif
         </h2>
 
