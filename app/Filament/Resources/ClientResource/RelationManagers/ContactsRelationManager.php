@@ -28,6 +28,13 @@ class ContactsRelationManager extends RelationManager
                 Forms\Components\Select::make('type')
                     ->label('Type')
                     ->options(ContactRoleEnum::class),
+                Forms\Components\TextInput::make('email')
+                    ->label('Email')
+                    ->email(),
+                Forms\Components\TextInput::make('phone')
+                    ->label('Téléphone')
+                    ->tel()
+                    ->telRegex('/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\.\/0-9]*$/'),
             ]);
     }
 
@@ -41,8 +48,6 @@ class ContactsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('type')
                     ->label('Type')
                     ->formatStateUsing(fn (string $state) => ContactRoleEnum::from($state)->getLabel()),
-                Tables\Columns\TextColumn::make('note')
-                    ->label('Note'),
             ])
             ->filters([
                 //
