@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Client;
@@ -10,20 +9,22 @@ use App\Models\Contact;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Forms\Form;
+use App\Models\Provision;
 use Filament\Tables\Table;
+use Illuminate\Support\Number;
 use App\Models\ProvisionElement;
+use App\Services\PricingService;
 use Filament\Resources\Resource;
-use App\Enums\ProvisionElementStatusEnum;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Fieldset;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\ProvisionElementStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProvisionElementResource\Pages;
-use App\Services\PricingService;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Illuminate\Support\Number;
+use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 
 class ProvisionElementResource extends Resource
 {
@@ -72,37 +73,37 @@ class ProvisionElementResource extends Resource
                         Forms\Components\TextInput::make('precision')
                             ->label('Précision')
                             ->maxLength(255)
-                            ->visible(fn (?Model $record) => $record?->provision?->has_precision),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_precision : false),
                         Forms\Components\TextInput::make('numeric_indicator')
                             ->label('Indicateur numérique')
                             ->numeric()
-                            ->visible(fn (?Model $record) => $record?->provision?->has_numeric_indicator),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_numeric_indicator : false),
                         Forms\Components\TextInput::make('textual_indicator')
                             ->label('Indicateur textuel')
                             ->maxLength(255)
-                            ->visible(fn (?Model $record) => $record?->provision?->has_textual_indicator),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_textual_indicator : false),
                         Forms\Components\TextInput::make('goods_to_be_delivered')
                             ->label('Indicateur textuel')
                             ->maxLength(255)
-                            ->visible(fn (?Model $record) => $record?->provision?->has_goods_to_be_delivered),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_goods_to_be_delivered : false),
                         Forms\Components\Select::make('contact_id')
                             ->label('Contact')
                             ->relationship('contact', 'name')
-                            ->visible(fn (?Model $record) => $record?->provision?->has_contact),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Forms\Components\TextInput::make('contact_text')
                             ->label('Contact')
                             ->maxLength(255)
-                            ->visible(fn (?Model $record) => $record?->provision?->has_contact),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Forms\Components\TextInput::make('contact_location')
                             ->label('Lieu du contact')
                             ->maxLength(255)
-                            ->visible(fn (?Model $record) => $record?->provision?->has_contact),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Forms\Components\DatePicker::make('contact_date')
                             ->label('Date du contact')
-                            ->visible(fn (?Model $record) => $record?->provision?->has_contact),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Forms\Components\TimePicker::make('contact_time')
                             ->label('Heure du contact')
-                            ->visible(fn (?Model $record) => $record?->provision?->has_contact),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Forms\Components\Select::make('media_status')
                             ->label('Statut du média')
                             ->options([
@@ -114,7 +115,7 @@ class ProvisionElementResource extends Resource
                                 'physically_received' => 'Reçu physiquement',
                                 'missing' => 'Manquant',
                             ])
-                            ->visible(fn (?Model $record) => $record?->provision?->has_media),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_media : false),
                         SpatieMediaLibraryFileUpload::make('medias')
                             ->label('Médias')
                             ->collection('provision_elements')
@@ -123,15 +124,15 @@ class ProvisionElementResource extends Resource
                             ->openable()
                             ->downloadable()
                             ->imagePreviewHeight('50')
-                            ->visible(fn (?Model $record) => $record?->provision?->has_media),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_media : false),
                         Forms\Components\TextInput::make('responsible')
                             ->label('Responsable')
                             ->maxLength(255)
-                            ->visible(fn (?Model $record) => $record?->provision?->has_responsible),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_responsible : false),
                         Forms\Components\Select::make('dicastry_id')
                             ->label('Dicastère')
                             ->relationship('dicastry', 'name')
-                            ->visible(fn (?Model $record) => $record?->provision?->has_responsible),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_responsible : false),
                         Forms\Components\Select::make('tracking_status')
                             ->label('Statut du média')
                             ->default('to_transmit')
@@ -140,10 +141,10 @@ class ProvisionElementResource extends Resource
                                 'transmitted' => 'Transmis',
                                 'suspended' => 'suspendu',
                             ])
-                            ->visible(fn (?Model $record) => $record?->provision?->has_tracking),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_tracking : false),
                         Forms\Components\DatePicker::make('tracking_date')
                             ->label('Suivi le')
-                            ->visible(fn (?Model $record) => $record?->provision?->has_tracking),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_tracking : false),
                         Forms\Components\Select::make('accreditation_type')
                             ->label('Type d\'accréditation du média')
                             ->default('media')
@@ -153,9 +154,9 @@ class ProvisionElementResource extends Resource
                                 'organisation_cdn' => 'Organisation CDN',
                                 'organisation_trail' => 'Organisation Trail',
                             ])
-                            ->visible(fn (?Model $record) => $record?->provision?->has_accreditation),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_accreditation : false),
                         Fieldset::make('Produit')
-                            ->visible(fn (?Model $record) => $record?->provision?->has_product)
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_product : false)
                             ->columns(5)
                             ->schema([
                                 Forms\Components\Toggle::make('has_product')
@@ -163,7 +164,7 @@ class ProvisionElementResource extends Resource
                                     ->inline(false)
                                     ->live()
                                     ->default(true)
-                                    ->visible(fn (?Model $record) => $record?->provision?->has_product),
+                                    ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_product : false),
                                 Forms\Components\TextInput::make('quantity')
                                     ->label('Quantité')
                                     ->numeric()
@@ -178,15 +179,14 @@ class ProvisionElementResource extends Resource
                                         Forms\Components\Actions\Action::make('syncCostFromProduct')
                                             ->label('Sync.')
                                             ->icon('heroicon-m-arrow-path')
-                                            ->action(function (Set $set, ?Model $record) {
-                                                $set('cost', $record?->provision?->product?->cost);
+                                            ->action(function (Set $set, Get $get) {
+                                                $set('cost', Provision::find($get('provision_id'))->product?->cost);
                                             })
                                     )
                                     ->live()
                                     ->visible(fn (Get $get) => $get('has_product')),
                                 Forms\Components\Select::make('tax_rate')
                                     ->label('TVA')
-                                    ->default(null)
                                     ->options([
                                         '8.1' => '8.1',
                                         '3.8' => '3.8',
@@ -197,8 +197,8 @@ class ProvisionElementResource extends Resource
                                         Forms\Components\Actions\Action::make('syncTaxRateFromProduct')
                                             ->label('Sync.')
                                             ->icon('heroicon-m-arrow-path')
-                                            ->action(function (Set $set, ?Model $record) {
-                                                $set('tax_rate', $record?->provision?->product?->tax_rate);
+                                            ->action(function (Set $set, Get $get) {
+                                                $set('tax_rate', Provision::find($get('provision_id'))->product?->tax_rate);
                                             })
                                     )
                                     ->live()
@@ -210,8 +210,8 @@ class ProvisionElementResource extends Resource
                                         Forms\Components\Actions\Action::make('syncIncludeVatFromProduct')
                                             ->label('')
                                             ->icon('heroicon-m-arrow-path')
-                                            ->action(function (Set $set, ?Model $record) {
-                                                $set('include_vat', $record?->provision?->product?->include_vat ? true : false);
+                                            ->action(function (Set $set, Get $get) {
+                                                $set('include_vat', Provision::find($get('provision_id'))->product?->include_vat ? true : false);
                                             })
                                     )
                                     ->live()
@@ -261,12 +261,12 @@ class ProvisionElementResource extends Resource
                                 'trail' => 'Trail',
                                 'swisslife' => 'Swisslife',
                             ])
-                            ->visible(fn (?Model $record) => $record?->provision?->has_vip),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
                         Forms\Components\TextInput::make('vip_invitation_number')
                             ->label('Nombre d\'invitation VIP')
                             ->numeric()
                             ->default(1)
-                            ->visible(fn (?Model $record) => $record?->provision?->has_vip),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
                         Forms\Components\Select::make('vip_response_status')
                             ->label('Réponse VIP')
                             ->placeholder('Sans réponse')
@@ -275,10 +275,10 @@ class ProvisionElementResource extends Resource
                                 true => 'Inscrit',
                                 false => 'Excusé',
                             ])
-                            ->visible(fn (?Model $record) => $record?->provision?->has_vip),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
                         Forms\Components\Textarea::make('vip_guests')
                             ->label('Liste invités')
-                            ->visible(fn (?Model $record) => $record?->provision?->has_vip),
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
                     ]),
                 Forms\Components\TextInput::make('note')
                     ->maxLength(255)
@@ -309,6 +309,17 @@ class ProvisionElementResource extends Resource
                 Tables\Columns\TextColumn::make('note')
                     ->searchable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Montant')
+                    ->state(function (Model $record) {
+                        if (! $record->has_product) {
+                            return null;
+                        }
+                        $price = PricingService::calculateCostPrice($record->cost, $record->tax_rate, $record->include_vat);
+                        $amount = PricingService::applyQuantity($price, $record->quantity);
+
+                        return Number::currency($amount, in: 'CHF', locale: 'fr_CH');
+                    }),
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()

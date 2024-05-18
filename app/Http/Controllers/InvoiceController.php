@@ -27,7 +27,6 @@ class InvoiceController extends Controller
                 ->setPrintable(false)
                 ->setQrCodeImageFormat(QrCode::FILE_FORMAT_PNG)
                 ->getPaymentPart();
-        //dd($qrBillOutput);
 
         $view = View::make('pdf.invoice', ['invoice' => $invoice, 'qrBillOutput' => $qrBillOutput]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');

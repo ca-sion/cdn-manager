@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Number;
 use phpDocumentor\Reflection\Types\Self_;
 
 class PricingService
@@ -50,5 +51,10 @@ class PricingService
     public static function floatify($value)
     {
         return floatval($value);
+    }
+
+    public static function format(int|float $value, string $in = 'CHF', string $locale = 'fr_CH')
+    {
+        return Number::currency($value, in: $in, locale: $locale);
     }
 }
