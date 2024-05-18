@@ -294,16 +294,20 @@ class ProvisionElementResource extends Resource
                     ->label('Édition')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('provision.name')
-                    ->numeric()
+                    ->label('Prestation')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('recipient.name')
                     ->label('Bénéficiaire')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->badge(),
+                    ->badge()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('precision')
-                    ->label('Précision'),
+                    ->label('Précision')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('note')
+                    ->searchable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
@@ -319,7 +323,19 @@ class ProvisionElementResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Statut')
+                    ->multiple()
+                    ->options(ProvisionElementStatusEnum::class),
+                Tables\Filters\SelectFilter::make('provision')
+                    ->label('Prestation')
+                    ->multiple()
+                    ->relationship('provision', 'name'),
+                Tables\Filters\SelectFilter::make('edition')
+                    ->label('Édition')
+                    ->multiple()
+                    ->preload()
+                    ->relationship('edition', 'year'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

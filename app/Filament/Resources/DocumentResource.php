@@ -13,6 +13,7 @@ use App\Filament\Resources\DocumentResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\DocumentResource\RelationManagers;
+use Filament\Forms\Get;
 
 class DocumentResource extends Resource
 {
@@ -34,9 +35,20 @@ class DocumentResource extends Resource
                 Forms\Components\Select::make('client_id')
                     ->relationship('client', 'name')
                     ->required(),
+                Forms\Components\Select::make('type')
+                    ->default('contract')
+                    ->options([
+                        'contract' => 'Contrat',
+                        'invoice' => 'Facture',
+                        'offer' => 'Offre',
+                        'decision' => 'Décision',
+                    ])
+                    ->live()
+                    ->required(),
                 SpatieMediaLibraryFileUpload::make('medias')
                     ->label('Médias')
                     ->collection('documents')
+                    ->customProperties(fn (Get $get) => ['type' => $get('type')])
                     ->multiple()
                     ->reorderable()
                     ->openable()
@@ -44,9 +56,6 @@ class DocumentResource extends Resource
                     ->imagePreviewHeight('50')
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('name')
-                    ->maxLength(255)
-                    ->default(null),
-                Forms\Components\TextInput::make('type')
                     ->maxLength(255)
                     ->default(null),
                 Forms\Components\TextInput::make('status')

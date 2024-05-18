@@ -2,13 +2,16 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use App\Filament\Resources\InvoiceResource;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Services\InvoiceService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Resources\RelationManagers\RelationManager;
 
 class InvoicesRelationManager extends RelationManager
 {
@@ -16,10 +19,7 @@ class InvoicesRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                //
-            ]);
+        return InvoiceResource::form($form);
     }
 
     public function table(Table $table): Table
@@ -27,17 +27,25 @@ class InvoicesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('number')
             ->columns([
+                Tables\Columns\TextColumn::make('edition.year'),
                 Tables\Columns\TextColumn::make('number'),
+                Tables\Columns\TextColumn::make('title'),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),
+                Tables\Actions\Action::make('generateInvoice')
+                    ->label('Générer')
+                    ->action(fn () => InvoiceService::generateInvoiceByClient($this->ownerRecord->id)),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('pdf')
+                    ->url(fn (Model $record): string => $record->link)
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

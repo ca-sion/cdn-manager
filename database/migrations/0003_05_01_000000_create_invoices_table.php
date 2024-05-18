@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('edition_id')->nullable()->constrained('editions')->cascadeOnUpdate()->nullOnDelete();
             $table->foreignId('client_id')->nullable()->constrained('clients')->cascadeOnUpdate()->nullOnDelete();
+
             $table->string('status')->nullable();
             $table->string('title')->nullable();
             $table->string('number')->nullable();
@@ -30,6 +32,7 @@ return new class extends Migration
 
             $table->json('positions')->nullable();
             $table->json('payment_instructions')->nullable();
+            $table->string('qr_reference')->nullable();
 
             $table->string('content')->nullable();
             $table->string('footer')->nullable();
