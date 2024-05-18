@@ -36,6 +36,8 @@ class DocumentResource extends Resource
                     ->required(),
                 Forms\Components\Select::make('client_id')
                     ->relationship('client', 'name')
+                    ->searchable()
+                    ->preload()
                     ->required()
                     ->hiddenOn(DocumentsRelationManager::class),
                 Forms\Components\Select::make('type')
@@ -59,21 +61,23 @@ class DocumentResource extends Resource
                     ->imagePreviewHeight('50')
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('name')
-                    ->maxLength(255)
-                    ->default(null),
+                    ->label('Nom ou titre')
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('status')
-                    ->maxLength(255)
-                    ->default(null),
-                Forms\Components\DatePicker::make('date'),
+                    ->label('Statut')
+                    ->maxLength(255),
+                Forms\Components\DatePicker::make('date')
+                    ->label('Date')
+                    ->default(now()),
                 Forms\Components\TextInput::make('validity_year_start')
-                    ->maxLength(255)
-                    ->default(null),
+                    ->label('Année de début')
+                    ->maxLength(4),
                 Forms\Components\TextInput::make('validity_year_end')
-                    ->maxLength(255)
-                    ->default(null),
+                    ->label('Année de fin')
+                    ->maxLength(4),
                 Forms\Components\TextInput::make('note')
-                    ->maxLength(255)
-                    ->default(null),
+                    ->label('Note')
+                    ->maxLength(255),
             ]);
     }
 

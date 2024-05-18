@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Invoice;
@@ -41,7 +42,10 @@ class InvoiceResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('client_id')
-                    ->relationship('client', 'name'),
+                    ->relationship('client', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->hiddenOn(InvoicesRelationManager::class),
                 Forms\Components\Select::make('status')
                     ->default('draft')
                     ->options([

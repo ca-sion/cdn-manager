@@ -50,6 +50,8 @@ class ProvisionElementResource extends Resource
                     Forms\Components\Select::make('provision_id')
                         ->label('Prestation')
                         ->relationship('provision', 'name')
+                        ->searchable()
+                        ->preload()
                         ->live()
                         ->required(),
                     Forms\Components\MorphToSelect::make('recipient')
