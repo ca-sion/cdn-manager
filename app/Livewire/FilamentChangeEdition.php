@@ -11,7 +11,7 @@ class FilamentChangeEdition extends Component
     #[Session(key: 'edition_id')]
     public $edition_id;
 
-    #[On('change')]
+    #[On('filament-page-edition-change')]
     public function change()
     {
         // session(['edition_id' => $this->edition_id]);
