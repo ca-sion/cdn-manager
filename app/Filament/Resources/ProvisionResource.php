@@ -67,10 +67,12 @@ class ProvisionResource extends Resource
                 Section::make('Options')
                     ->columns(4)
                     ->schema([
+                        /*
                         Forms\Components\Toggle::make('has_content')
                             ->label('Contenu'),
                         Forms\Components\Toggle::make('has_due_date')
                             ->label('Délai'),
+                        */
                         Forms\Components\Toggle::make('has_precision')
                             ->label('Précision')
                             ->default(true),
@@ -82,11 +84,13 @@ class ProvisionResource extends Resource
                             ->label('Produit')
                             ->live(),
                         Forms\Components\Toggle::make('has_contact')
-                            ->label('Contact'),
+                            ->label('Contact')
+                            ->hint('Point de contact'),
                         Forms\Components\Toggle::make('has_media')
                             ->label('Média'),
                         Forms\Components\Toggle::make('has_goods_to_be_delivered')
-                            ->label('Marchandise'),
+                            ->label('Marchandise')
+                            ->hint('Prévu'),
                         Forms\Components\Toggle::make('has_responsible')
                             ->label('Responsable'),
                         Forms\Components\Toggle::make('has_tracking')

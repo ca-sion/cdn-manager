@@ -86,7 +86,7 @@ class ProvisionElementResource extends Resource
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_textual_indicator : false),
                         Forms\Components\TextInput::make('goods_to_be_delivered')
-                            ->label('Indicateur textuel')
+                            ->label('Marchandise prévue')
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_goods_to_be_delivered : false),
                         Forms\Components\Select::make('contact_id')
