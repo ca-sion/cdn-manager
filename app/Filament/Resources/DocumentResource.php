@@ -88,6 +88,7 @@ class DocumentResource extends Resource
                     ->label('Client')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nom')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
                     ->label('Type'),
