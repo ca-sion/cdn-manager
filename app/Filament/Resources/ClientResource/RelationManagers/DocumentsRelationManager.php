@@ -25,7 +25,7 @@ class DocumentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('edition_id')
+                Tables\Columns\TextColumn::make('edition.year')
                     ->label('Edition')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')

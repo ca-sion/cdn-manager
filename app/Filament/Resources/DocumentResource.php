@@ -81,7 +81,7 @@ class DocumentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('edition_id')
+                Tables\Columns\TextColumn::make('edition.year')
                     ->label('Edition')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('client.name')
