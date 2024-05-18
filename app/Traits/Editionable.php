@@ -15,7 +15,7 @@ trait Editionable
     {
         static::creating(function ($model) {
             if (! $model->getAttribute('edition_id') && ! $model->relationLoaded('edition')) {
-                $model->setAttribute('edition_id', config('cdn.edition_default'));
+                $model->setAttribute('edition_id', session('edition_id', config('cdn.edition_default')));
             }
         });
     }

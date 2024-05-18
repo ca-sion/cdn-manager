@@ -43,6 +43,7 @@ class InvoiceService
         );
 
         $invoice = new Invoice;
+        $invoice->edition_id = session('edition_id');
         $invoice->client_id = $clientId;
         $invoice->status = 'ready';
         $invoice->title = $title;
