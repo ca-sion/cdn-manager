@@ -32,6 +32,13 @@ class ClientResource extends Resource
 
     protected static ?string $modelLabel = 'Client';
 
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'email', 'long_name', 'note'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form

@@ -29,6 +29,13 @@ class InvoiceResource extends Resource
 
     protected static ?string $modelLabel = 'Facture';
 
+    protected static ?string $recordTitleAttribute = 'title';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title', 'number', 'qr_reference', 'reference', 'client_reference'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form
