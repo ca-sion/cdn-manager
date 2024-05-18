@@ -45,6 +45,7 @@ class ClientResource extends Resource
             ->columns(1)
             ->schema([
                 Tabs::make('Tabs')
+                ->persistTabInQueryString()
                 ->tabs([
                     Tabs\Tab::make('Base')
                         ->columns(2)
@@ -93,14 +94,42 @@ class ClientResource extends Resource
                     Tabs\Tab::make('Facturation')
                         ->columns(2)
                         ->schema([
-                            Forms\Components\TextInput::make('invoicing_email')
-                                ->label('Email de facturation'),
-                            Forms\Components\TextInput::make('ide')
-                                ->label('CH-IDE'),
-                            Forms\Components\TextInput::make('iban'),
-                            Forms\Components\TextInput::make('iban_qr'),
+                            Forms\Components\Fieldset::make('Contact et adresse de facturation')
+                                //->description('Laisser vide si pas de changement par rapport à l\'adresse de base')
+                                ->columns(12)
+                                ->schema([
+                                    Forms\Components\TextInput::make('invoicing_name')
+                                        ->label('Nom')
+                                        ->columnSpan(6),
+                                    Forms\Components\TextInput::make('invoicing_email')
+                                        ->label('Email')
+                                        ->columnSpan(6),
+                                    Forms\Components\TextInput::make('invoicing_address')
+                                        ->label('Adresse')
+                                        ->columnSpan(4),
+                                    Forms\Components\TextInput::make('invoicing_address_extension')
+                                        ->label('Adresse (complément)')
+                                        ->columnSpan(3),
+                                    Forms\Components\TextInput::make('invoicing_postal_code')
+                                        ->label('Code postal')
+                                        ->columnSpan(2),
+                                    Forms\Components\TextInput::make('invoicing_locality')
+                                        ->label('Localité')
+                                        ->columnSpan(3),
+                                ]),
+                            Forms\Components\Fieldset::make('Relation bancaire')
+                                ->columns(3)
+                                ->schema([
+                                    Forms\Components\TextInput::make('ide')
+                                        ->label('CH-IDE'),
+                                    Forms\Components\TextInput::make('iban')
+                                        ->label('IBAN'),
+                                    Forms\Components\TextInput::make('iban_qr')
+                                        ->label('QR IBAN'),
+                                ]),
                             Forms\Components\Textarea::make('invoicing_note')
-                                ->label('Note')
+                                ->label('Note pour la facturation')
+                                ->autosize()
                                 ->columnSpanFull(),
                         ]),
                     Tabs\Tab::make('Style')

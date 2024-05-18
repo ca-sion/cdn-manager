@@ -28,7 +28,14 @@ return new class extends Migration
             $table->string('iban_qr')->nullable();
             $table->string('ide')->nullable();
             $table->string('logo')->nullable();
+            $table->string('invoicing_name')->nullable();
             $table->string('invoicing_email')->nullable();
+            $table->string('invoicing_address')->nullable();
+            $table->string('invoicing_address_extension')->nullable();
+            $table->string('invoicing_address_extension_two')->nullable();
+            $table->string('invoicing_postal_code')->nullable();
+            $table->string('invoicing_locality')->nullable();
+            $table->string('invoicing_country')->nullable();
             $table->string('invoicing_note')->nullable();
 
             $table->foreignId('category_id')->nullable()->constrained('client_categories')->cascadeOnUpdate()->nullOnDelete();
