@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\InvoiceController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\InvoiceController;
 
 Route::get('/', function () {
     return view('welcome');

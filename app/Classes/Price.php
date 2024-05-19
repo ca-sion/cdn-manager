@@ -36,10 +36,10 @@ class Price
      */
     public function __construct()
     {
-        $this->cost     = 0.0;
+        $this->cost = 0.0;
         $this->quantity = 1.0;
         $this->tax_rate = 0.0;
-        $this->tax      = 0.0;
+        $this->tax = 0.0;
         $this->discount_rate = 0.0;
         $this->discount = 0.0;
         $this->include_tax_in_price = false;
@@ -86,7 +86,7 @@ class Price
         return $this;
     }
 
-    public function calculate() : void
+    public function calculate(): void
     {
         $this->price = $this->calculatePrice();
         $this->net_price = $this->calculateNetPrice();

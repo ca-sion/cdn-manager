@@ -17,7 +17,7 @@ class ProvisionCategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->bothify('Catégorie ??'),
+            'name'  => fake()->bothify('Catégorie ??'),
             'color' => fake()->safeHexColor(),
         ];
     }

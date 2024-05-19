@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Invoice;
-use Illuminate\Http\Request;
 use Sprain\SwissQrBill\QrBill;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;
@@ -24,9 +23,9 @@ class InvoiceController extends Controller
         $qrBill = $this->generateQrBill($invoice->client, $invoice);
         $qrBillHtmlOutput = new HtmlOutput($qrBill, 'fr');
         $qrBillOutput = $qrBillHtmlOutput
-                ->setPrintable(false)
-                ->setQrCodeImageFormat(QrCode::FILE_FORMAT_PNG)
-                ->getPaymentPart();
+            ->setPrintable(false)
+            ->setQrCodeImageFormat(QrCode::FILE_FORMAT_PNG)
+            ->getPaymentPart();
 
         $view = View::make('pdf.invoice', ['invoice' => $invoice, 'qrBillOutput' => $qrBillOutput]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');

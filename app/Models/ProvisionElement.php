@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use App\Enums\ProvisionElementStatusEnum;
 use App\Traits\Editionable;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\ProvisionElementStatusEnum;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -14,10 +14,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ProvisionElement extends Model implements HasMedia
 {
-    use HasFactory;
-    use SoftDeletes;
     use Editionable;
+    use HasFactory;
     use InteractsWithMedia;
+    use SoftDeletes;
 
     /**
      * The attributes that aren't mass assignable.

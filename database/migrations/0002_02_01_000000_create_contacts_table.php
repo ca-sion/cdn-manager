@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -15,8 +15,8 @@ return new class extends Migration
         Schema::create('contacts', function (Blueprint $table) {
             $table->id();
             match (DB::connection($this->getConnection())->getDriverName()) {
-                'mysql' => $table->string('name')->virtualAs("CONCAT(first_name, ' ', last_name)"),
-                'pgsql' => $table->string('name')->virtualAs("CONCAT(first_name, ' ', last_name)"),
+                'mysql'  => $table->string('name')->virtualAs("CONCAT(first_name, ' ', last_name)"),
+                'pgsql'  => $table->string('name')->virtualAs("CONCAT(first_name, ' ', last_name)"),
                 'sqlite' => $table->string('name')->virtualAs("first_name || ' ' || last_name"),
             };
             $table->string('first_name')->nullable();

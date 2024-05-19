@@ -18,11 +18,11 @@ class ProvisionElementFactory extends Factory
     public function definition(): array
     {
         return [
-            'edition_id' => 1,
-            'recipient_id' => 1,
+            'edition_id'     => 1,
+            'recipient_id'   => 1,
             'recipient_type' => 'App\Models\Client',
-            'provision_id' => 1,
-            'status' => fake('fr_CH')->randomElement(ProvisionElementStatusEnum::class),
+            'provision_id'   => 1,
+            'status'         => fake('fr_CH')->randomElement(ProvisionElementStatusEnum::class),
         ];
     }
 }

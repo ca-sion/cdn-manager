@@ -17,12 +17,12 @@ class ProvisionFactory extends Factory
     public function definition(): array
     {
         return [
-            'edition_id' => 1,
-            'product_id' => fake('fr_CH')->optional()->randomElement([1, 2, 3, 4, 5]),
-            'name' => fake()->bothify('Prestation ??'),
+            'edition_id'  => 1,
+            'product_id'  => fake('fr_CH')->optional()->randomElement([1, 2, 3, 4, 5]),
+            'name'        => fake()->bothify('Prestation ??'),
             'description' => fake('fr_CH')->optional()->sentence(8),
             'dicastry_id' => null,
-            'type' => fake('fr_CH')->word(1),
+            'type'        => fake('fr_CH')->word(1),
         ];
     }
 }

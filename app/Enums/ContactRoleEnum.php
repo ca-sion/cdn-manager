@@ -14,9 +14,9 @@ enum ContactRoleEnum: string implements HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::Invoicing => 'Facturation',
-            self::Executive => 'Direction',
-            self::Commercial => 'Commercial',
+            self::Invoicing      => 'Facturation',
+            self::Executive      => 'Direction',
+            self::Commercial     => 'Commercial',
             self::Administration => 'Administration',
         };
     }

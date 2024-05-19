@@ -4,16 +4,16 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Client;
-use App\Models\ClientCategory;
 use App\Models\Contact;
-use App\Models\Dicastry;
 use App\Models\Edition;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Product;
+use App\Models\Dicastry;
+// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Provision;
-use App\Models\ProvisionCategory;
-use App\Models\ProvisionElement;
+use App\Models\ClientCategory;
 use Illuminate\Database\Seeder;
+use App\Models\ProvisionElement;
+use App\Models\ProvisionCategory;
 
 class DatabaseSeeder extends Seeder
 {
@@ -24,8 +24,8 @@ class DatabaseSeeder extends Seeder
     {
         if (! User::where('email', 'info@coursedenoel.ch')->first()) {
             User::factory()->create([
-                'name' => 'Michael',
-                'email' => 'info@coursedenoel.ch',
+                'name'     => 'Michael',
+                'email'    => 'info@coursedenoel.ch',
                 'password' => '$2y$12$GF7QBo/M5uYYkmphwfNvNOxbFA.0Aw9xHOtNEwXb8iy.InmOtYKUW',
             ]);
         }
@@ -50,35 +50,34 @@ class DatabaseSeeder extends Seeder
 
         // Elements
         Provision::factory()->create([
-            'name' => 'Avec produit',
+            'name'        => 'Avec produit',
             'has_product' => true,
-            'product_id' => 1,
+            'product_id'  => 1,
         ]);
         Provision::factory()->create([
-            'name' => 'Avec media',
+            'name'      => 'Avec media',
             'has_media' => true,
         ]);
         Provision::factory()->create([
-            'name' => 'Avec VIP',
+            'name'    => 'Avec VIP',
             'has_vip' => true,
         ]);
 
         ProvisionElement::factory()->create([
             'provision_id' => 6,
-            'has_product' => true,
-            'unit' => fake()->optional()->randomElement(['m.', 'pièce', 'litre']),
-            'cost' => fake()->randomNumber(3),
-            'tax_rate' => fake()->randomElement([null, '8.1', '2.6']),
-            'quantity' => fake()->randomElement([1, 2, 5, 10]),
+            'has_product'  => true,
+            'unit'         => fake()->optional()->randomElement(['m.', 'pièce', 'litre']),
+            'cost'         => fake()->randomNumber(3),
+            'tax_rate'     => fake()->randomElement([null, '8.1', '2.6']),
+            'quantity'     => fake()->randomElement([1, 2, 5, 10]),
         ]);
 
         ProvisionElement::factory()->create([
-            'provision_id' => 7,
-            'vip_category' => 'company',
+            'provision_id'          => 7,
+            'vip_category'          => 'company',
             'vip_invitation_number' => 2,
-            'vip_response_status' => null,
+            'vip_response_status'   => null,
         ]);
-
 
     }
 }

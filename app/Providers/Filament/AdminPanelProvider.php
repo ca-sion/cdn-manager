@@ -2,11 +2,11 @@
 
 namespace App\Providers\Filament;
 
-use App\Http\Middleware\Edition;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\Widgets;
 use Filament\PanelProvider;
+use App\Http\Middleware\Edition;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;

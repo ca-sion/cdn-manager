@@ -17,13 +17,13 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'edition_id' => 1,
-            'name' => fake()->bothify('Produit ??'),
+            'edition_id'  => 1,
+            'name'        => fake()->bothify('Produit ??'),
             'description' => fake('fr_CH')->optional()->sentence(6),
-            'code' => fake('fr_CH')->optional()->bothify('p-??##'),
-            'unit' => fake()->optional()->randomElement(['m.', 'pièce', 'litre']),
-            'cost' => fake()->randomNumber(3),
-            'tax_rate' => fake()->randomElement([null, '8.1', '2.6']),
+            'code'        => fake('fr_CH')->optional()->bothify('p-??##'),
+            'unit'        => fake()->optional()->randomElement(['m.', 'pièce', 'litre']),
+            'cost'        => fake()->randomNumber(3),
+            'tax_rate'    => fake()->randomElement([null, '8.1', '2.6']),
         ];
     }
 }
