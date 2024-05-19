@@ -58,10 +58,10 @@ echo 'Command: cache'
 # php artisan event:cache
 
 # Install node modules
-npm install
+# npm install
 
 # Build assets using Laravel Mix
-npm run build
+# npm run build
 
 # Start Cronless schedule
 # php artisan schedule:run-cronless
