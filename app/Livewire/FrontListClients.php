@@ -78,7 +78,8 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->weight(FontWeight::Bold),
                 TextColumn::make('address')
                     ->label('Adresse')
-                    ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->address}<br>".($record->address_extension ? "{$record->address_extension}<br>" : null)."{$record->postal_code} {$record->locality}")),
+                    ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->address}<br>".($record->address_extension ? "{$record->address_extension}<br>" : null)."{$record->postal_code} {$record->locality}"))
+                    ->verticallyAlignStart(),
                 TextColumn::make('contacts.name')
                     ->label('Contacts')
                     ->searchable()
@@ -86,7 +87,8 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->limitList(3)
                     ->expandableLimitedList()
                     ->html()
-                    ->formatStateUsing(fn (Model $record, string $state): HtmlString => new HtmlString("<a href='mailto:{$record->contacts?->where('name', $state)->first()?->email}'>{$state}</a>")),
+                    ->formatStateUsing(fn (Model $record, string $state): HtmlString => new HtmlString("<a href='mailto:{$record->contacts?->where('name', $state)->first()?->email}'>{$state}</a>"))
+                    ->verticallyAlignStart(),
                 TextColumn::make('documents.id')
                     ->label('Documents')
                     ->listWithLineBreaks()
@@ -98,7 +100,8 @@ class FrontListClients extends Component implements HasForms, HasTable
                         $record->documents?->where('id', $state)->first()?->name.' ('.
                         \Carbon\Carbon::parse($record->documents?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'
-                    )),
+                    ))
+                    ->verticallyAlignStart(),
                 TextColumn::make('invoices.id')
                     ->label('Factures')
                     ->listWithLineBreaks()
@@ -110,12 +113,14 @@ class FrontListClients extends Component implements HasForms, HasTable
                         $record->invoices?->where('id', $state)->first()?->number.' ('.
                         \Carbon\Carbon::parse($record->invoices?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'
-                    )),
+                    ))
+                    ->verticallyAlignStart(),
                 ViewColumn::make('provisionElements.provision.name')->view('tables.columns.provision-elements-infolist')
                     ->label('Prestations')
                     ->searchable(),
                 TextColumn::make('note')
                     ->label('Note')
+                    ->verticallyAlignStart(),
             ])
             ->filters([
                 SelectFilter::make('category_id')
