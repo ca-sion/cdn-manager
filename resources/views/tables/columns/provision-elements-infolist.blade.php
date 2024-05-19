@@ -16,7 +16,7 @@
             <td class="px-2">{{ $provision->precision }}</td>
             <td class="px-2">
                 @if ($provision->cost)
-                    {{ \App\services\PricingService::format(\App\services\PricingService::applyQuantity(\App\services\PricingService::calculateCostPrice($provision->cost, $provision->tax_rate, $provision->include_vat), $provision->quantity)) }}
+                    {{ \App\Services\PricingService::format(\App\Services\PricingService::applyQuantity(\App\Services\PricingService::calculateCostPrice($provision->cost, $provision->tax_rate, $provision->include_vat), $provision->quantity)) }}
                 @endif
             </td>
         </tr>
