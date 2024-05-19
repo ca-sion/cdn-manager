@@ -3,16 +3,23 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>{{ $invoice->title }}</title>
+    <link href="https://fonts.cdnfonts.com/css/dejavu-sans" rel="stylesheet">
+
     <style>
 
         @page {
             margin: 50px 50px 75px 50px;
         }
+
         body {
-            font-family: sans-serif;
+            font-family: 'Helvetica', sans-serif;
             font-size: small;
             color:#222222
+        }
+        .dejavu {
+            font-family: 'DejaVu Sans', sans-serif;
         }
         .container {
             max-width: 620px;
@@ -99,7 +106,7 @@
                         {{ $invoice->client->invoicing_address ?? $invoice->client->address }}<br>
                     @endif
                     @if ($invoice->client->address_extension || $invoice->client->invoicing_address_extension)
-                        {{ $invoice->client->invoicing_address_extension ?? $invoice->client->address }}<br>
+                        {{ $invoice->client->invoicing_address_extension ?? $invoice->client->address_extension }}<br>
                     @endif
                     @if ($invoice->client->postal_code || $invoice->client->locality || $invoice->client->invoicing_postal_code || $invoice->client->invoicing_locality)
                         {{ $invoice->client->invoicing_postal_code ?? $invoice->client->postal_code }}
@@ -170,6 +177,11 @@
             @endif
         </div>
 
+        <div style="font-size: x-small;">
+            <p>Nous vous remercions chaleureusement pour votre généreux soutien, et vous prions d’agréer nos salutations les meilleures.</p>
+            <p>Le Comité de la Course de Noël</p>
+        </div>
+
         <table width="100%" class="products-table break-avoid">
             <thead>
                 <td width="1%"></td>
@@ -190,7 +202,7 @@
                         {{ $item->name }}
                     </td>
                     <td align="right">
-                        {{ App\Classes\Price::format($item->cost) }}
+                        {{ App\Classes\Price::formatfoPdf($item->cost) }}
                     </td>
                     <td>
                         {{ $item->quantity }}
@@ -206,7 +218,7 @@
                         @endif
                     </td>
                     <td align="right">
-                        {{ App\Classes\Price::format($item->price->net_price) }}
+                        {{ App\Classes\Price::formatfoPdf($item->price->net_price) }}
                     </td>
                 </tr>
                 @endforeach
@@ -225,7 +237,7 @@
                                 TVA
                             </td>
                             <td align="right" style="width: 50%;">
-                                {{ App\Classes\Price::format($invoice->total_tax) }}
+                                {{ App\Classes\Price::formatfoPdf($invoice->total_tax) }}
                             </td>
                         </tr>
                         <tr>
@@ -233,19 +245,13 @@
                                 Total
                             </td>
                             <td align="right" style="width: 50%;">
-                                {{ App\Classes\Price::format($invoice->total) }}
+                                {{ App\Classes\Price::formatfoPdf($invoice->total) }}
                             </td>
                         </tr>
                     </table>
                 </td>
             </tr>
         </table>
-
-        <div style="font-size: x-small;">
-            <p>Nous vous remercions chaleureusement pour votre généreux soutien, et vous prions d’agréer, Madame, Monsieur, nos salutations les meilleures.</p>
-            <p>Le Comité de la Course de Noël</p>
-        </div>
-
 
     </div>
     <!-- container -->

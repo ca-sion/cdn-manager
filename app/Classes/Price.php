@@ -131,10 +131,8 @@ class Price
         return Number::currency($value, in: $in, locale: $locale);
     }
 
-    public function validate()
+    public static function formatfoPdf(int|float $value, string $in = 'CHF', string $locale = 'fr_CH')
     {
-        if (is_null($this->cost)) {
-            throw new Exception('Price: cost not defined.');
-        }
+        return str(Number::currency($value, in: $in, locale: $locale))->replace(' ', " ");
     }
 }
