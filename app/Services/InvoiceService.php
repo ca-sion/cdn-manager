@@ -20,22 +20,22 @@ class InvoiceService
         $lastInvoice = Invoice::latest()->first();
         $lastInvoiceId = $lastInvoice ? $lastInvoice->id : 0;
 
-        $invoiceNumber = Self::generateInvoiceNumber();
+        $invoiceNumber = self::generateInvoiceNumber();
 
         $provisionElementsWithProduct = $client->provisionElements->where('has_product', true);
         $positions = $provisionElementsWithProduct->map(function ($item) {
             return [
-                'name' => $item->provision->name,
-                'quantity' => $item->quantity,
-                'unit' => $item->unit,
-                'cost' => $item->cost,
-                'tax_rate' => $item->tax_rate,
-                'discount' => $item->discount,
+                'name'        => $item->provision->name,
+                'quantity'    => $item->quantity,
+                'unit'        => $item->unit,
+                'cost'        => $item->cost,
+                'tax_rate'    => $item->tax_rate,
+                'discount'    => $item->discount,
                 'include_vat' => $item->include_vat,
             ];
         });
 
-        $title = Self::generateInvoicetitle();
+        $title = self::generateInvoicetitle();
 
         $referenceNumber = QrPaymentReferenceGenerator::generate(
             null,
@@ -73,6 +73,6 @@ class InvoiceService
 
     public static function generateInvoicetitle()
     {
-        return 'Facture '.Self::generateInvoiceNumber();
+        return 'Facture '.self::generateInvoiceNumber();
     }
 }
