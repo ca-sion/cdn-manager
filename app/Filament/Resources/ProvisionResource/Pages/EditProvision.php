@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\ProvisionResource\Pages;
 
-use App\Filament\Resources\ProvisionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\ProvisionResource;
 
 class EditProvision extends EditRecord
 {

@@ -2,16 +2,13 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\DicastryResource\Pages;
-use App\Filament\Resources\DicastryResource\RelationManagers;
-use App\Models\Dicastry;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Dicastry;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Resources\Resource;
+use App\Filament\Resources\DicastryResource\Pages;
 
 class DicastryResource extends Resource
 {
@@ -69,9 +66,9 @@ class DicastryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDicastries::route('/'),
+            'index'  => Pages\ListDicastries::route('/'),
             'create' => Pages\CreateDicastry::route('/create'),
-            'edit' => Pages\EditDicastry::route('/{record}/edit'),
+            'edit'   => Pages\EditDicastry::route('/{record}/edit'),
         ];
     }
 }

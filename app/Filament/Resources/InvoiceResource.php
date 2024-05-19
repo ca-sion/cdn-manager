@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Invoice;
@@ -11,14 +10,12 @@ use Filament\Forms\Set;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Number;
+use App\Services\InvoiceService;
 use App\Services\PricingService;
 use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\InvoiceResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\InvoiceResource\RelationManagers;
-use App\Services\InvoiceService;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
+use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 
 class InvoiceResource extends Resource
 {
@@ -49,10 +46,10 @@ class InvoiceResource extends Resource
                 Forms\Components\Select::make('status')
                     ->default('draft')
                     ->options([
-                        'draft' => 'Brouillon',
-                        'ready' => 'Prête',
-                        'sent' => 'Envoyé',
-                        'payed' => 'Payé',
+                        'draft'     => 'Brouillon',
+                        'ready'     => 'Prête',
+                        'sent'      => 'Envoyé',
+                        'payed'     => 'Payé',
                         'suspended' => 'Suspendu',
                         'cancelled' => 'Annulée',
                     ])
@@ -97,12 +94,12 @@ class InvoiceResource extends Resource
                     ->columnSpanFull()
                     ->columns(6)
                     ->live()
-                        ->afterStateUpdated(function (Get $get, Set $set) {
-                            self::updateTotals($get, $set);
-                        })
-                        ->deleteAction(
-                            fn(Forms\Components\Actions\Action $action) => $action->after(fn(Get $get, Set $set) => self::updateTotals($get, $set)),
-                        )
+                    ->afterStateUpdated(function (Get $get, Set $set) {
+                        self::updateTotals($get, $set);
+                    })
+                    ->deleteAction(
+                        fn (Forms\Components\Actions\Action $action) => $action->after(fn (Get $get, Set $set) => self::updateTotals($get, $set)),
+                    )
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('nom'),
@@ -195,9 +192,9 @@ class InvoiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInvoices::route('/'),
+            'index'  => Pages\ListInvoices::route('/'),
             'create' => Pages\CreateInvoice::route('/create'),
-            'edit' => Pages\EditInvoice::route('/{record}/edit'),
+            'edit'   => Pages\EditInvoice::route('/{record}/edit'),
         ];
     }
 
@@ -211,6 +208,7 @@ class InvoiceResource extends Resource
         $positionAmounts = $positions->map(function ($position) {
             $price = PricingService::calculateCostPrice(data_get($position, 'cost'), data_get($position, 'tax_rate'), data_get($position, 'include_vat'));
             $amount = PricingService::applyQuantity($price, data_get($position, 'quantity'));
+
             return $amount;
         });
 

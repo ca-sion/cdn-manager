@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\ProvisionCategoryResource\Pages;
 
-use App\Filament\Resources\ProvisionCategoryResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\ProvisionCategoryResource;
 
 class EditProvisionCategory extends EditRecord
 {
@@ -14,7 +14,7 @@ class EditProvisionCategory extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
-            $this->getSaveFormAction()->formId('form')
+            $this->getSaveFormAction()->formId('form'),
         ];
     }
 }

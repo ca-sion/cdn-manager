@@ -20,8 +20,6 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Fieldset;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\ProvisionElementStatusEnum;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProvisionElementResource\Pages;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
@@ -110,13 +108,13 @@ class ProvisionElementResource extends Resource
                         Forms\Components\Select::make('media_status')
                             ->label('Statut du média')
                             ->options([
-                                'requested' => 'Demandé',
-                                'to_relaunch' => 'À relancer',
-                                'relaunched' => 'Relancé',
-                                'to_modify' => 'À modifier',
-                                'received' => 'Reçu',
+                                'requested'           => 'Demandé',
+                                'to_relaunch'         => 'À relancer',
+                                'relaunched'          => 'Relancé',
+                                'to_modify'           => 'À modifier',
+                                'received'            => 'Reçu',
                                 'physically_received' => 'Reçu physiquement',
-                                'missing' => 'Manquant',
+                                'missing'             => 'Manquant',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_media : false),
                         SpatieMediaLibraryFileUpload::make('medias')
@@ -142,7 +140,7 @@ class ProvisionElementResource extends Resource
                             ->options([
                                 'to_transmit' => 'À transmettre',
                                 'transmitted' => 'Transmis',
-                                'suspended' => 'suspendu',
+                                'suspended'   => 'suspendu',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_tracking : false),
                         Forms\Components\DatePicker::make('tracking_date')
@@ -152,9 +150,9 @@ class ProvisionElementResource extends Resource
                             ->label('Type d\'accréditation du média')
                             ->default('media')
                             ->options([
-                                'media' => 'Média',
-                                'press' => 'Presse',
-                                'organisation_cdn' => 'Organisation CDN',
+                                'media'              => 'Média',
+                                'press'              => 'Presse',
+                                'organisation_cdn'   => 'Organisation CDN',
                                 'organisation_trail' => 'Organisation Trail',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_accreditation : false),
@@ -250,19 +248,19 @@ class ProvisionElementResource extends Resource
                         Forms\Components\Select::make('vip_category')
                             ->label('Catégorie VIP')
                             ->options([
-                                'individual' => 'individu',
-                                'company' => 'Entreprise',
-                                'sponsor' => 'Sponsor',
-                                'partner' => 'Partenaire',
-                                'town_council' => 'Conseil municipal',
-                                'general_council' => 'Conseil général',
-                                'states_council' => 'Conseil d\'état',
-                                'national_council' => 'Conseil national',
+                                'individual'        => 'individu',
+                                'company'           => 'Entreprise',
+                                'sponsor'           => 'Sponsor',
+                                'partner'           => 'Partenaire',
+                                'town_council'      => 'Conseil municipal',
+                                'general_council'   => 'Conseil général',
+                                'states_council'    => 'Conseil d\'état',
+                                'national_council'  => 'Conseil national',
                                 'council_of_states' => 'Conseil des états',
-                                'committee' => 'Comité (CDN)',
-                                'committee_trail' => 'Comité (Trail)',
-                                'trail' => 'Trail',
-                                'swisslife' => 'Swisslife',
+                                'committee'         => 'Comité (CDN)',
+                                'committee_trail'   => 'Comité (Trail)',
+                                'trail'             => 'Trail',
+                                'swisslife'         => 'Swisslife',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
                         Forms\Components\TextInput::make('vip_invitation_number')
@@ -275,7 +273,7 @@ class ProvisionElementResource extends Resource
                             ->placeholder('Sans réponse')
                             ->default(null)
                             ->options([
-                                true => 'Inscrit',
+                                true  => 'Inscrit',
                                 false => 'Excusé',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
@@ -371,9 +369,9 @@ class ProvisionElementResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProvisionElements::route('/'),
+            'index'  => Pages\ListProvisionElements::route('/'),
             'create' => Pages\CreateProvisionElement::route('/create'),
-            'edit' => Pages\EditProvisionElement::route('/{record}/edit'),
+            'edit'   => Pages\EditProvisionElement::route('/{record}/edit'),
         ];
     }
 }

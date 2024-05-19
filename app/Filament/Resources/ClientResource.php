@@ -8,19 +8,14 @@ use App\Models\Client;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\ClientResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\ClientResource\RelationManagers;
-use App\Filament\Resources\ClientResource\RelationManagers\ClientProductsRelationManager;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
-use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager;
-use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
-use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
+use App\Filament\Resources\ClientResource\Pages;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager;
+use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
+use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
+use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 
 class ClientResource extends Resource
 {
@@ -45,102 +40,102 @@ class ClientResource extends Resource
             ->columns(1)
             ->schema([
                 Tabs::make('Tabs')
-                ->persistTabInQueryString()
-                ->tabs([
-                    Tabs\Tab::make('Base')
-                        ->columns(2)
-                        ->schema([
-                            Forms\Components\TextInput::make('name')
-                                ->label('Nom'),
-                            Forms\Components\TextInput::make('long_name')
-                                ->label('Nom long'),
-                            Forms\Components\Select::make('category_id')
-                                ->label('Catégorie')
-                                ->relationship('category', 'name'),
-                            Forms\Components\Textarea::make('note')
-                                ->label('Note'),
-                        ]),
-                    Tabs\Tab::make('Contact')
-                        ->columns(12)
-                        ->schema([
-                            Forms\Components\TextInput::make('email')
-                                ->label('Email')
-                                ->email()
-                                ->columnSpan(4),
-                            Forms\Components\TextInput::make('phone')
-                                ->label('Téléphone')
-                                ->tel()
-                                ->columnSpan(4),
-                            Forms\Components\TextInput::make('website')
-                                ->label('Site web')
-                                ->columnSpan(4),
-                            Forms\Components\TextInput::make('address')
-                                ->label('Adresse')
-                                ->columnSpan(4),
-                            Forms\Components\TextInput::make('address_extension')
-                                ->label('Adresse (complément)')
-                                ->columnSpan(3),
-                            Forms\Components\TextInput::make('postal_code')
-                                ->label('Code postal')
-                                ->columnSpan(2),
-                            Forms\Components\TextInput::make('locality')
-                                ->label('Localité')
-                                ->columnSpan(3),
-                            /*
+                    ->persistTabInQueryString()
+                    ->tabs([
+                        Tabs\Tab::make('Base')
+                            ->columns(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nom'),
+                                Forms\Components\TextInput::make('long_name')
+                                    ->label('Nom long'),
+                                Forms\Components\Select::make('category_id')
+                                    ->label('Catégorie')
+                                    ->relationship('category', 'name'),
+                                Forms\Components\Textarea::make('note')
+                                    ->label('Note'),
+                            ]),
+                        Tabs\Tab::make('Contact')
+                            ->columns(12)
+                            ->schema([
+                                Forms\Components\TextInput::make('email')
+                                    ->label('Email')
+                                    ->email()
+                                    ->columnSpan(4),
+                                Forms\Components\TextInput::make('phone')
+                                    ->label('Téléphone')
+                                    ->tel()
+                                    ->columnSpan(4),
+                                Forms\Components\TextInput::make('website')
+                                    ->label('Site web')
+                                    ->columnSpan(4),
+                                Forms\Components\TextInput::make('address')
+                                    ->label('Adresse')
+                                    ->columnSpan(4),
+                                Forms\Components\TextInput::make('address_extension')
+                                    ->label('Adresse (complément)')
+                                    ->columnSpan(3),
+                                Forms\Components\TextInput::make('postal_code')
+                                    ->label('Code postal')
+                                    ->columnSpan(2),
+                                Forms\Components\TextInput::make('locality')
+                                    ->label('Localité')
+                                    ->columnSpan(3),
+                                /*
                             Forms\Components\TextInput::make('country_code')
                                 ->label('Pays'),
                             */
-                        ]),
-                    Tabs\Tab::make('Facturation')
-                        ->columns(2)
-                        ->schema([
-                            Forms\Components\Fieldset::make('Contact et adresse de facturation')
-                                //->description('Laisser vide si pas de changement par rapport à l\'adresse de base')
-                                ->columns(12)
-                                ->schema([
-                                    Forms\Components\TextInput::make('invoicing_name')
-                                        ->label('Nom')
-                                        ->columnSpan(6),
-                                    Forms\Components\TextInput::make('invoicing_email')
-                                        ->label('Email')
-                                        ->columnSpan(6),
-                                    Forms\Components\TextInput::make('invoicing_address')
-                                        ->label('Adresse')
-                                        ->columnSpan(4),
-                                    Forms\Components\TextInput::make('invoicing_address_extension')
-                                        ->label('Adresse (complément)')
-                                        ->columnSpan(3),
-                                    Forms\Components\TextInput::make('invoicing_postal_code')
-                                        ->label('Code postal')
-                                        ->columnSpan(2),
-                                    Forms\Components\TextInput::make('invoicing_locality')
-                                        ->label('Localité')
-                                        ->columnSpan(3),
-                                ]),
-                            Forms\Components\Fieldset::make('Relation bancaire')
-                                ->columns(3)
-                                ->schema([
-                                    Forms\Components\TextInput::make('ide')
-                                        ->label('CH-IDE'),
-                                    Forms\Components\TextInput::make('iban')
-                                        ->label('IBAN'),
-                                    Forms\Components\TextInput::make('iban_qr')
-                                        ->label('QR IBAN'),
-                                ]),
-                            Forms\Components\Textarea::make('invoicing_note')
-                                ->label('Note pour la facturation')
-                                ->autosize()
-                                ->columnSpanFull(),
-                        ]),
-                    Tabs\Tab::make('Style')
-                        ->schema([
-                            SpatieMediaLibraryFileUpload::make('logo')
-                                ->label('Logo')
-                                ->collection('logos')
-                                ->image()
-                                ->imagePreviewHeight('100'),
-                        ]),
-                ]),
+                            ]),
+                        Tabs\Tab::make('Facturation')
+                            ->columns(2)
+                            ->schema([
+                                Forms\Components\Fieldset::make('Contact et adresse de facturation')
+                                    //->description('Laisser vide si pas de changement par rapport à l\'adresse de base')
+                                    ->columns(12)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('invoicing_name')
+                                            ->label('Nom')
+                                            ->columnSpan(6),
+                                        Forms\Components\TextInput::make('invoicing_email')
+                                            ->label('Email')
+                                            ->columnSpan(6),
+                                        Forms\Components\TextInput::make('invoicing_address')
+                                            ->label('Adresse')
+                                            ->columnSpan(4),
+                                        Forms\Components\TextInput::make('invoicing_address_extension')
+                                            ->label('Adresse (complément)')
+                                            ->columnSpan(3),
+                                        Forms\Components\TextInput::make('invoicing_postal_code')
+                                            ->label('Code postal')
+                                            ->columnSpan(2),
+                                        Forms\Components\TextInput::make('invoicing_locality')
+                                            ->label('Localité')
+                                            ->columnSpan(3),
+                                    ]),
+                                Forms\Components\Fieldset::make('Relation bancaire')
+                                    ->columns(3)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('ide')
+                                            ->label('CH-IDE'),
+                                        Forms\Components\TextInput::make('iban')
+                                            ->label('IBAN'),
+                                        Forms\Components\TextInput::make('iban_qr')
+                                            ->label('QR IBAN'),
+                                    ]),
+                                Forms\Components\Textarea::make('invoicing_note')
+                                    ->label('Note pour la facturation')
+                                    ->autosize()
+                                    ->columnSpanFull(),
+                            ]),
+                        Tabs\Tab::make('Style')
+                            ->schema([
+                                SpatieMediaLibraryFileUpload::make('logo')
+                                    ->label('Logo')
+                                    ->collection('logos')
+                                    ->image()
+                                    ->imagePreviewHeight('100'),
+                            ]),
+                    ]),
             ]);
     }
 
@@ -202,9 +197,9 @@ class ClientResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListClients::route('/'),
+            'index'  => Pages\ListClients::route('/'),
             'create' => Pages\CreateClient::route('/create'),
-            'edit' => Pages\EditClient::route('/{record}/edit'),
+            'edit'   => Pages\EditClient::route('/{record}/edit'),
         ];
     }
 }

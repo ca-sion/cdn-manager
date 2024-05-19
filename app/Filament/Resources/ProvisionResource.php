@@ -2,18 +2,15 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ProvisionResource\Pages;
-use App\Filament\Resources\ProvisionResource\RelationManagers;
-use App\Models\Provision;
 use Filament\Forms;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Get;
+use Filament\Forms\Form;
+use App\Models\Provision;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Resources\Resource;
+use Filament\Forms\Components\Section;
+use App\Filament\Resources\ProvisionResource\Pages;
 
 class ProvisionResource extends Resource
 {
@@ -148,9 +145,9 @@ class ProvisionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProvisions::route('/'),
+            'index'  => Pages\ListProvisions::route('/'),
             'create' => Pages\CreateProvision::route('/create'),
-            'edit' => Pages\EditProvision::route('/{record}/edit'),
+            'edit'   => Pages\EditProvision::route('/{record}/edit'),
         ];
     }
 }

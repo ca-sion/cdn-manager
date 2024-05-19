@@ -2,16 +2,13 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ClientCategoryResource\Pages;
-use App\Filament\Resources\ClientCategoryResource\RelationManagers;
-use App\Models\ClientCategory;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Models\ClientCategory;
+use Filament\Resources\Resource;
+use App\Filament\Resources\ClientCategoryResource\Pages;
 
 class ClientCategoryResource extends Resource
 {
@@ -79,9 +76,9 @@ class ClientCategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListClientCategories::route('/'),
+            'index'  => Pages\ListClientCategories::route('/'),
             'create' => Pages\CreateClientCategory::route('/create'),
-            'edit' => Pages\EditClientCategory::route('/{record}/edit'),
+            'edit'   => Pages\EditClientCategory::route('/{record}/edit'),
         ];
     }
 }

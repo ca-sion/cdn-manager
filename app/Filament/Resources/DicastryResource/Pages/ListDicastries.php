@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\DicastryResource\Pages;
 
-use App\Filament\Resources\DicastryResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\DicastryResource;
 
 class ListDicastries extends ListRecords
 {

@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\ClientResource\Pages;
 
-use App\Filament\Resources\ClientResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\ClientResource;
 
 class EditClient extends EditRecord
 {
@@ -14,7 +14,7 @@ class EditClient extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
-            $this->getSaveFormAction()->formId('form')
+            $this->getSaveFormAction()->formId('form'),
         ];
     }
 }

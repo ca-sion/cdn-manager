@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms;
 use Filament\Tables;
 use App\Models\Edition;
 use Filament\Forms\Form;
@@ -10,10 +9,7 @@ use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
-use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\EditionResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\EditionResource\RelationManagers;
 
 class EditionResource extends Resource
 {
@@ -72,9 +68,9 @@ class EditionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEditions::route('/'),
+            'index'  => Pages\ListEditions::route('/'),
             'create' => Pages\CreateEdition::route('/create'),
-            'edit' => Pages\EditEdition::route('/{record}/edit'),
+            'edit'   => Pages\EditEdition::route('/{record}/edit'),
         ];
     }
 }

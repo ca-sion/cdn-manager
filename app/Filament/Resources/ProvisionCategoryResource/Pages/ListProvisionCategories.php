@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\ProvisionCategoryResource\Pages;
 
-use App\Filament\Resources\ProvisionCategoryResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\ProvisionCategoryResource;
 
 class ListProvisionCategories extends ListRecords
 {

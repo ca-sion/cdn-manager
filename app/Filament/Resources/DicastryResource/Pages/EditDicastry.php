@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\DicastryResource\Pages;
 
-use App\Filament\Resources\DicastryResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\DicastryResource;
 
 class EditDicastry extends EditRecord
 {
@@ -14,7 +14,7 @@ class EditDicastry extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
-            $this->getSaveFormAction()->formId('form')
+            $this->getSaveFormAction()->formId('form'),
         ];
     }
 }

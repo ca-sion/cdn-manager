@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\ContactResource\Pages;
 
-use App\Filament\Resources\ContactResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\ContactResource;
 
 class EditContact extends EditRecord
 {
@@ -16,7 +16,7 @@ class EditContact extends EditRecord
             Actions\DeleteAction::make(),
             Actions\ForceDeleteAction::make(),
             Actions\RestoreAction::make(),
-            $this->getSaveFormAction()->formId('form')
+            $this->getSaveFormAction()->formId('form'),
         ];
     }
 }

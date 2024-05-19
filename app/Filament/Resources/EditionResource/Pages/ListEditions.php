@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\EditionResource\Pages;
 
-use App\Filament\Resources\EditionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\EditionResource;
 
 class ListEditions extends ListRecords
 {

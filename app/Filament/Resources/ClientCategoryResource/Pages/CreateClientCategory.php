@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources\ClientCategoryResource\Pages;
 
-use App\Filament\Resources\ClientCategoryResource;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Resources\ClientCategoryResource;
 
 class CreateClientCategory extends CreateRecord
 {

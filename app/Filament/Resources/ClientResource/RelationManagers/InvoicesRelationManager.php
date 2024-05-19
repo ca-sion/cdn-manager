@@ -2,15 +2,12 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
-use App\Filament\Resources\InvoiceResource;
-use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Services\InvoiceService;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\InvoiceResource;
 use Filament\Resources\RelationManagers\RelationManager;
 
 class InvoicesRelationManager extends RelationManager

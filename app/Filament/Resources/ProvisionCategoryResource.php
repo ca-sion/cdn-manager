@@ -2,16 +2,13 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ProvisionCategoryResource\Pages;
-use App\Filament\Resources\ProvisionCategoryResource\RelationManagers;
-use App\Models\ProvisionCategory;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Resources\Resource;
+use App\Models\ProvisionCategory;
+use App\Filament\Resources\ProvisionCategoryResource\Pages;
 
 class ProvisionCategoryResource extends Resource
 {
@@ -79,9 +76,9 @@ class ProvisionCategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProvisionCategories::route('/'),
+            'index'  => Pages\ListProvisionCategories::route('/'),
             'create' => Pages\CreateProvisionCategory::route('/create'),
-            'edit' => Pages\EditProvisionCategory::route('/{record}/edit'),
+            'edit'   => Pages\EditProvisionCategory::route('/{record}/edit'),
         ];
     }
 }

@@ -2,19 +2,16 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
 use Filament\Forms;
 use Filament\Tables;
+use Filament\Forms\Get;
 use App\Models\Document;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\DocumentResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use App\Filament\Resources\DocumentResource\RelationManagers;
-use Filament\Forms\Get;
+use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
 
 class DocumentResource extends Resource
 {
@@ -44,8 +41,8 @@ class DocumentResource extends Resource
                     ->default('contract')
                     ->options([
                         'contract' => 'Contrat',
-                        'invoice' => 'Facture',
-                        'offer' => 'Offre',
+                        'invoice'  => 'Facture',
+                        'offer'    => 'Offre',
                         'decision' => 'Décision',
                     ])
                     ->live()
@@ -139,9 +136,9 @@ class DocumentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDocuments::route('/'),
+            'index'  => Pages\ListDocuments::route('/'),
             'create' => Pages\CreateDocument::route('/create'),
-            'edit' => Pages\EditDocument::route('/{record}/edit'),
+            'edit'   => Pages\EditDocument::route('/{record}/edit'),
         ];
     }
 }

@@ -2,11 +2,9 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
-use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use App\Models\ProvisionElement;
 use App\Services\PricingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
@@ -49,7 +47,7 @@ class ProvisionElementsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('note'),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make()
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),
