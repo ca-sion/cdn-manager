@@ -91,7 +91,8 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->verticallyAlignStart(),
                 ViewColumn::make('provisionElements.provision.name')->view('tables.columns.provision-elements-infolist')
                     ->label('Prestations')
-                    ->searchable(),
+                    ->searchable()
+                    ->verticallyAlignStart(),
                 TextColumn::make('documents.id')
                     ->label('Documents')
                     ->listWithLineBreaks()
