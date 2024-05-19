@@ -2,7 +2,6 @@
 
 namespace App\Classes;
 
-use Exception;
 use Illuminate\Support\Number;
 use App\Services\PricingService;
 
@@ -133,6 +132,6 @@ class Price
 
     public static function formatfoPdf(int|float $value, string $in = 'CHF', string $locale = 'fr_CH')
     {
-        return str(Number::currency($value, in: $in, locale: $locale))->replace(' ', " ");
+        return str(Number::currency($value, in: $in, locale: $locale))->replace(' ', ' ');
     }
 }

@@ -14,15 +14,14 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
 class FrontListClients extends Component implements HasForms, HasTable
 {
-    use InteractsWithTable;
     use InteractsWithForms;
+    use InteractsWithTable;
 
     /**
      * @var array<string, mixed> | null
@@ -65,7 +64,8 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->label('Catégorie')
                     ->html()
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString('<span class="text-white text-xs font-medium me-2 px-2.5 py-0.5 rounded" style="background-color:'.$record->category?->color.';">'.$record->category?->name.'</span>'))
-                    ->sortable(),
+                    ->sortable()
+                    ->verticallyAlignStart(),
                 TextColumn::make('name')
                     ->label('Nom')
                     ->searchable()
@@ -89,6 +89,9 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->html()
                     ->formatStateUsing(fn (Model $record, string $state): HtmlString => new HtmlString("<a href='mailto:{$record->contacts?->where('name', $state)->first()?->email}'>{$state}</a>"))
                     ->verticallyAlignStart(),
+                ViewColumn::make('provisionElements.provision.name')->view('tables.columns.provision-elements-infolist')
+                    ->label('Prestations')
+                    ->searchable(),
                 TextColumn::make('documents.id')
                     ->label('Documents')
                     ->listWithLineBreaks()
@@ -115,9 +118,6 @@ class FrontListClients extends Component implements HasForms, HasTable
                         .'</a>'
                     ))
                     ->verticallyAlignStart(),
-                ViewColumn::make('provisionElements.provision.name')->view('tables.columns.provision-elements-infolist')
-                    ->label('Prestations')
-                    ->searchable(),
                 TextColumn::make('note')
                     ->label('Note')
                     ->verticallyAlignStart(),
