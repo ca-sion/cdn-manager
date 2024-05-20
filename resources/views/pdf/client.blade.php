@@ -159,10 +159,10 @@
         <table class="table table-border-between">
             <tr>
                 <td class="subtitle">Prestations</td>
+                <td width="12%"></td>
                 <td></td>
-                <td></td>
-                <td align="right" class="text-sm">TVA</td>
-                <td align="right" class="text-sm">Montant</td>
+                <td align="right" class="text-sm" width="8%">TVA</td>
+                <td align="right" class="text-sm" width="15%">Montant</td>
             </tr>
             @foreach ($client->provisionElements as $pe)
             <tr class="text-sm">
@@ -172,10 +172,10 @@
                         <div style="color: gray; font-size: xx-small;">{{ $pe->provision->description }}</div>
                     @endif
                 </td>
-                <td valign="top" class="text-xs">{{ $pe->status ? str($pe->status->getLabel())->limit(7, '.') : null }}</td>
-                <td valign="top" class="text-xs">{{ str($pe->precision) }}</td>
+                <td valign="top" class="text-xs">{{ $pe->status ? $pe->status->getLabel() : null }}</td>
+                <td valign="top" class="text-xs">{{ str($pe->precision) }} asj akjs a sj akjs akjs kaj skja ksja ksj akjs kajs kja sja ksjak </td>
                 <td valign="top" align="right">
-                    <div>{{ $pe->tax_rate ? $pe->price?->formatted_pdf_tax_amount : null }}</div>
+                    <div>{{ $pe->tax_rate ? str($pe->price?->formatted_pdf_tax_amount)->replace(['CHF', ' '], '') : null }}</div>
                 </td>
                 <td valign="top" align="right">
                     <div>{{ $pe->cost ? $pe->price?->formatted_pdf_price : null }}</div>
