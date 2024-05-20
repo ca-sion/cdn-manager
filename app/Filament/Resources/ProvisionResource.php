@@ -10,6 +10,7 @@ use App\Models\Provision;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Section;
+use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\ProvisionResource\Pages;
 
 class ProvisionResource extends Resource
@@ -102,8 +103,10 @@ class ProvisionResource extends Resource
                     ]),
                 Forms\Components\Select::make('product_id')
                     ->label('Produit')
-                    ->hint('Optionnel')
                     ->relationship('product', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm(fn (Form $form): Form => ProductResource::form($form))
                     ->visible(fn (Get $get) => $get('has_product')),
                 /*
                     Forms\Components\TextInput::make('type')
