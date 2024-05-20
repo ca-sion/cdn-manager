@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages\Settings;
+namespace App\Filament\Pages;
 
 use App\Models\ClientCategory;
 use Closure;
