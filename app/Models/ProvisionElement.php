@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Classes\Price;
 use App\Traits\Editionable;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\ProvisionElementStatusEnum;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -66,5 +68,15 @@ class ProvisionElement extends Model implements HasMedia
     public function dicastry(): BelongsTo
     {
         return $this->belongsTo(Dicastry::class);
+    }
+
+    /**
+     * Get the provision element's topricetal.
+     */
+    protected function price(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => Price::of($this->cost)->taxRate($this->tax_rate)->includeTaxInPrice($this->include_vat ?? false),
+        );
     }
 }

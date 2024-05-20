@@ -16,6 +16,7 @@ use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManag
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
+use Illuminate\Database\Eloquent\Model;
 
 class ClientResource extends Resource
 {
@@ -176,6 +177,10 @@ class ClientResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('pdf')
+                    ->label('Fiche')
+                    ->url(fn (Model $record): string => $record->pdfLink)
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

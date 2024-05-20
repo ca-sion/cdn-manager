@@ -14,6 +14,7 @@ Route::get('/', function () {
 Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('signed')->name('invoices.show');
 
 Route::get('/pdf/clients', [PdfController::class, 'clients'])->name('pdf.clients');
+Route::get('/pdf/client/{client}', [PdfController::class, 'client'])->name('pdf.client');
 
 Route::get('clients', FrontListClients::class)->middleware(SiteProtection::class)->name('front.clients');
 Route::get('advertisers/form', AdvertiserForm::class)->name('advertisers.form');

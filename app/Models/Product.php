@@ -19,7 +19,7 @@ class Product extends Model
     protected $guarded = [];
 
     /**
-     * Get the invoice's total.
+     * Get the product's price.
      */
     protected function price(): Attribute
     {

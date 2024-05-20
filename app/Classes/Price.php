@@ -30,6 +30,18 @@ class Price
 
     public float $tax_amount;
 
+    public string $formatted_price;
+
+    public string $formatted_net_price;
+
+    public string $formatted_tax_amount;
+
+    public string $formatted_pdf_price;
+
+    public string $formatted_pdf_net_price;
+
+    public string $formatted_pdf_tax_amount;
+
     /**
      * InvoiceItem constructor.
      */
@@ -90,6 +102,14 @@ class Price
         $this->price = $this->calculatePrice();
         $this->net_price = $this->calculateNetPrice();
         $this->tax_amount = $this->calculateTax();
+
+        $this->formatted_price = $this->format($this->price);
+        $this->formatted_net_price = $this->format($this->net_price);
+        $this->formatted_tax_amount = $this->format($this->tax_amount);
+
+        $this->formatted_pdf_price = $this->formatForPdf($this->price);
+        $this->formatted_pdf_net_price = $this->formatForPdf($this->net_price);
+        $this->formatted_pdf_tax_amount = $this->formatForPdf($this->tax_amount);
     }
 
     public function calculatePrice()
@@ -130,7 +150,7 @@ class Price
         return Number::currency($value, in: $in, locale: $locale);
     }
 
-    public static function formatfoPdf(int|float $value, string $in = 'CHF', string $locale = 'fr_CH')
+    public static function formatForPdf(int|float $value, string $in = 'CHF', string $locale = 'fr_CH')
     {
         return str(Number::currency($value, in: $in, locale: $locale))->replace(' ', ' ');
     }

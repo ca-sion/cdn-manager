@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use Spatie\MediaLibrary\HasMedia;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -61,5 +63,15 @@ class Client extends Model implements HasMedia
     public function category(): BelongsTo
     {
         return $this->belongsTo(ClientCategory::class, 'category_id');
+    }
+
+    /**
+     * Get the pdf url.
+     */
+    protected function pdfLink(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => URL::signedRoute('pdf.client', $this->id),
+        );
     }
 }

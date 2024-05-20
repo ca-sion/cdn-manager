@@ -72,28 +72,7 @@
 
 <body>
 
-    <div class="document-vertical-line"></div>
-
-    <table width="100%">
-        <tr>
-            <td width="100px" style="vertical-align: top;">
-                <x-logo.cdn style="width: 15px;" width="15px" />
-            </td>
-            <td style="font-size: xx-small">
-                Centre athlétique de Sion<br>
-                Course de Noël<br>
-                Case postale 4057<br>
-                1950 Sion<br>
-                <br>
-                info@coursedenoel.ch<br>
-                coursedenoel.ch
-
-            </td>
-            <td align="right" style="vertical-align: top;">
-                <x-logo.casion style="width: 80px;" width="80px" />
-            </td>
-        </tr>
-    </table>
+    <x-pdf.header />
 
     <table width="100%">
         <tr>
@@ -202,7 +181,7 @@
                         {{ $item->name }}
                     </td>
                     <td align="right">
-                        {{ App\Classes\Price::formatfoPdf($item->cost) }}
+                        {{ App\Classes\Price::formatForPdf($item->cost) }}
                     </td>
                     <td>
                         {{ $item->quantity }}
@@ -218,7 +197,7 @@
                         @endif
                     </td>
                     <td align="right">
-                        {{ App\Classes\Price::formatfoPdf($item->price->net_price) }}
+                        {{ App\Classes\Price::formatForPdf($item->price->net_price) }}
                     </td>
                 </tr>
                 @endforeach
@@ -237,7 +216,7 @@
                                 TVA
                             </td>
                             <td align="right" style="width: 50%;">
-                                {{ App\Classes\Price::formatfoPdf($invoice->total_tax) }}
+                                {{ App\Classes\Price::formatForPdf($invoice->total_tax) }}
                             </td>
                         </tr>
                         <tr>
@@ -245,7 +224,7 @@
                                 Total
                             </td>
                             <td align="right" style="width: 50%;">
-                                {{ App\Classes\Price::formatfoPdf($invoice->total) }}
+                                {{ App\Classes\Price::formatForPdf($invoice->total) }}
                             </td>
                         </tr>
                     </table>
