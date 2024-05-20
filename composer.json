@@ -12,6 +12,7 @@
         "filament/spatie-laravel-media-library-plugin": "^3.2",
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
+        "outerweb/filament-settings": "^1.2",
         "sprain/swiss-qr-bill": "^4.12"
     },
     "require-dev": {

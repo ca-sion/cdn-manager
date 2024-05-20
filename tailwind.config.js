@@ -7,6 +7,7 @@ export default {
         './resources/views/filament/**/*.blade.php',
         './vendor/filament/**/*.blade.php',
 
+        './app/Livewire/**/*.php',
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
         "./resources/**/*.vue",
@@ -30,7 +31,8 @@ export default {
         extend: {},
     },
     plugins: [
-        require('flowbite/plugin')
+        require('flowbite/plugin'),
+        require('flowbite-typography')
     ],
 }
 

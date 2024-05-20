@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Filament\Pages\Settings;
+
+use App\Models\ClientCategory;
+use Closure;
+use App\Models\Edition;
+use App\Models\Provision;
+use App\Models\ProvisionCategory;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
+
+class Settings extends BaseSettings
+{
+    public static function getNavigationLabel(): string
+    {
+        return 'Paramètres';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Paramètres';
+    }
+
+    public function schema(): array|Closure
+    {
+        return [
+            Select::make('edition_id')
+                ->options(Edition::all()->pluck('name', 'id'))
+                ->default(config('cdn.edition_default')),
+            Section::make('Formulaire annonceur')
+                ->schema([
+                    Select::make('advertiser_form_client_category')
+                        ->label('Catégorie des clients')
+                        ->options(ClientCategory::all()->pluck('name', 'id')),
+                    Select::make('advertiser_form_journal_category')
+                        ->label('Journal : Catégorie des prestations')
+                        ->options(ProvisionCategory::all()->pluck('name', 'id')),
+                    Select::make('advertiser_form_banner_category')
+                        ->label('Banderole : Catégorie des prestations')
+                        ->options(ProvisionCategory::all()->pluck('name', 'id')),
+                    Select::make('advertiser_form_screen_category')
+                        ->label('Ecran : Catégorie des prestations')
+                        ->options(ProvisionCategory::all()->pluck('name', 'id')),
+                    Select::make('advertiser_form_donation_provision')
+                        ->label('Donation : Prestation')
+                        ->options(Provision::all()->pluck('name', 'id')),
+                ]),
+        ];
+    }
+}
