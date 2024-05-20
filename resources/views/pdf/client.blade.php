@@ -166,14 +166,14 @@
             </tr>
             @foreach ($client->provisionElements as $pe)
             <tr class="text-sm">
-                <td>
+                <td valign="top">
                     <div>{{ $pe->provision->name }}</div>
                     @if ($pe->provision->description)
                         <div style="color: gray; font-size: xx-small;">{{ $pe->provision->description }}</div>
                     @endif
                 </td>
-                <td valign="top">{{ $pe->status ? $pe->status->getLabel() : null }}</td>
-                <td valign="top">{{ $pe->precision }}</td>
+                <td valign="top" class="text-xs">{{ $pe->status ? str($pe->status->getLabel())->limit(7, '.') : null }}</td>
+                <td valign="top" class="text-xs">{{ str($pe->precision) }}</td>
                 <td valign="top" align="right">
                     <div>{{ $pe->tax_rate ? $pe->price?->formatted_pdf_tax_amount : null }}</div>
                 </td>
