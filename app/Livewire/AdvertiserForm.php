@@ -18,7 +18,6 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -42,8 +41,8 @@ class AdvertiserForm extends Component implements HasForms
                     Wizard\Step::make('Prestations')
                         ->schema([
                             Placeholder::make('Annonce journalistique')
-                                        ->label('')
-                                        ->content(new HtmlString('Sélectionner les prestations qui vous conviennent dans les listes ci-après.')),
+                                ->label('')
+                                ->content(new HtmlString('Sélectionner les prestations qui vous conviennent dans les listes ci-après.')),
                             Section::make('Anonce journalistique')
                                 ->description(new HtmlString('Annonce dans le Journal de la Course de Noël et du Trail des Châteaux, édité à plus de 40 000 exemplaires, à paraître dans le Nouvelliste du NN novembre et distribué dans les districts de Sion, d’Hérens et de Conthey.<br><br>Consulter <a href="/docs/Dimensions_encarté_NF.pdf" class="underline text-primary-600 hover:text-primary-500">mise en page des emplacements</a> pour choisir votre emplacement et les dimensions de votre annonce.'))
                                 ->schema([
@@ -164,36 +163,36 @@ class AdvertiserForm extends Component implements HasForms
                                         ->columnSpan(['md' => 4]),
                                 ]),
                         ]),
-                        Wizard\Step::make('Récapitulatif')
-                            ->schema([
-                                    Placeholder::make('total')
-                                        ->label(new HtmlString('<div class="format"><h2>Total qui sera facturé</h2></div>'))
-                                        ->content(function (Get $get) {
-                                            $provisionIds = collect($get('journal_provisions'))->merge($get('screen_provisions'))->merge($get('banner_provisions'));
+                    Wizard\Step::make('Récapitulatif')
+                        ->schema([
+                            Placeholder::make('total')
+                                ->label(new HtmlString('<div class="format"><h2>Total qui sera facturé</h2></div>'))
+                                ->content(function (Get $get) {
+                                    $provisionIds = collect($get('journal_provisions'))->merge($get('screen_provisions'))->merge($get('banner_provisions'));
 
-                                            $provisions = Provision::find($provisionIds);
-                                            $provisionPrices = $provisions->pluck('product.price.price', 'id')->sum();
-                                            $provisionTaxes = $provisions->pluck('product.price.tax_amount', 'id')->sum();
-                                            $provisionCost = $provisions->pluck('product.price.cost', 'id')->sum();
+                                    $provisions = Provision::find($provisionIds);
+                                    $provisionPrices = $provisions->pluck('product.price.price', 'id')->sum();
+                                    $provisionTaxes = $provisions->pluck('product.price.tax_amount', 'id')->sum();
+                                    $provisionCost = $provisions->pluck('product.price.cost', 'id')->sum();
 
-                                            $total = $provisionPrices + ((float) $get('donnation_provision_amount'));
-                                            $totalTaxes = $provisionTaxes;
-                                            $totalNet = $provisionCost + ((float) $get('donnation_provision_amount'));
+                                    $total = $provisionPrices + ((float) $get('donnation_provision_amount'));
+                                    $totalTaxes = $provisionTaxes;
+                                    $totalNet = $provisionCost + ((float) $get('donnation_provision_amount'));
 
-                                            return new HtmlString(
-                                                '<table>'.
-                                                '<tr><td>Net</td><td>'.PricingService::format($totalNet).'</td></tr>'.
-                                                '<tr><td>TVA</td><td>'.($totalTaxes > 0 ? PricingService::format($totalTaxes) : '-').'</td></tr>'.
-                                                '<tr><td style="width: 50px;">Total</td><td>'.PricingService::format($total).'</td></tr>'.
-                                                '</table>');
-                                        }),
-                                    Textarea::make('note')
-                                            ->label('Note général que vous aimeriez communiquer'),
+                                    return new HtmlString(
+                                        '<table>'.
+                                        '<tr><td>Net</td><td>'.PricingService::format($totalNet).'</td></tr>'.
+                                        '<tr><td>TVA</td><td>'.($totalTaxes > 0 ? PricingService::format($totalTaxes) : '-').'</td></tr>'.
+                                        '<tr><td style="width: 50px;">Total</td><td>'.PricingService::format($total).'</td></tr>'.
+                                        '</table>');
+                                }),
+                            Textarea::make('note')
+                                ->label('Note général que vous aimeriez communiquer'),
 
-                                    Placeholder::make('journal_indications')
-                                        ->label('')
-                                        ->visible(fn (Get $get) => $get('journal_provisions'))
-                                        ->content(new HtmlString(Blade::render(<<<BLADE
+                            Placeholder::make('journal_indications')
+                                ->label('')
+                                ->visible(fn (Get $get) => $get('journal_provisions'))
+                                ->content(new HtmlString(Blade::render(<<<'BLADE'
                                             <div class="format">
                                                 <h2>Annonces journalistique</h2>
                                                 <p>Transmettre votre visuel au format numérique à <a href="mailto:pub@coursedenoel.ch">pub@coursedenoel.ch</a></p>
@@ -204,10 +203,10 @@ class AdvertiserForm extends Component implements HasForms
                                                 </ul>
                                             </div>
                                         BLADE))),
-                                    Placeholder::make('screen_indications')
-                                        ->label('')
-                                        ->visible(fn (Get $get) => $get('screen_provisions'))
-                                        ->content(new HtmlString(Blade::render(<<<BLADE
+                            Placeholder::make('screen_indications')
+                                ->label('')
+                                ->visible(fn (Get $get) => $get('screen_provisions'))
+                                ->content(new HtmlString(Blade::render(<<<'BLADE'
                                             <div class="format">
                                                 <h2>Écran dans la tente principale</h2>
                                                 <p>Transmettre votre visuel au format numérique à <a href="mailto:pub@coursedenoel.ch">pub@coursedenoel.ch</a></p>
@@ -220,18 +219,18 @@ class AdvertiserForm extends Component implements HasForms
                                                 </ul>
                                             </div>
                                         BLADE))),
-                                    Placeholder::make('banner_indications')
-                                        ->label('')
-                                        ->visible(fn (Get $get) => $get('banner_provisions'))
-                                        ->content(new HtmlString(Blade::render(<<<BLADE
+                            Placeholder::make('banner_indications')
+                                ->label('')
+                                ->visible(fn (Get $get) => $get('banner_provisions'))
+                                ->content(new HtmlString(Blade::render(<<<'BLADE'
                                             <div class="format">
                                                 <h2>Banderoles</h2>
                                                 <p>Les banderoles seront collectées le jeudi N décembre au plus tard.</a></p>
                                             </div>
                                         BLADE))),
-                            ]),
-                    ])
-                    ->submitAction(new HtmlString(Blade::render(<<<BLADE
+                        ]),
+                ])
+                    ->submitAction(new HtmlString(Blade::render(<<<'BLADE'
                         <x-filament::button
                             type="submit"
                             size="sm"
@@ -251,25 +250,25 @@ class AdvertiserForm extends Component implements HasForms
 
         // Client
         $client = Client::create([
-            'name' => $dataObject->name,
-            'address' => $dataObject->address,
-            'postal_code' => $dataObject->postal_code,
-            'locality' => $dataObject->locality,
-            'category_id' => setting('advertiser_form_client_category'),
-            'invoicing_email' => $dataObject->invoicing_email,
-            'invoicing_address' => $dataObject->invoicing_address,
+            'name'                        => $dataObject->name,
+            'address'                     => $dataObject->address,
+            'postal_code'                 => $dataObject->postal_code,
+            'locality'                    => $dataObject->locality,
+            'category_id'                 => setting('advertiser_form_client_category'),
+            'invoicing_email'             => $dataObject->invoicing_email,
+            'invoicing_address'           => $dataObject->invoicing_address,
             'invoicing_address_extension' => $dataObject->invoicing_address_extension,
-            'invoicing_postal_code' => $dataObject->invoicing_postal_code,
-            'invoicing_locality' => $dataObject->invoicing_locality,
-            'note' => $dataObject->note,
+            'invoicing_postal_code'       => $dataObject->invoicing_postal_code,
+            'invoicing_locality'          => $dataObject->invoicing_locality,
+            'note'                        => $dataObject->note,
         ]);
 
         // Contact
         if ($dataObject->contact->email) {
             $contact = Contact::create([
                 'first_name' => $dataObject->contact->first_name,
-                'last_name' => $dataObject->contact->last_name,
-                'email' => $dataObject->contact->email,
+                'last_name'  => $dataObject->contact->last_name,
+                'email'      => $dataObject->contact->email,
             ]);
             $client->contacts()->attach($contact->id);
         }
@@ -278,15 +277,15 @@ class AdvertiserForm extends Component implements HasForms
         foreach ($dataObject->journal_provisions as $journalProvision) {
             $provision = Provision::find($journalProvision);
             $journalProvisionElement = ProvisionElement::create([
-                'recipient_id' => $client->id,
+                'recipient_id'   => $client->id,
                 'recipient_type' => 'App\Models\Client',
-                'provision_id' => $journalProvision,
-                'status' => 'to_prepare',
-                'has_product' => true,
-                'quantity' => 1,
-                'cost' => $provision->product?->cost,
-                'tax_rate' => $provision->product?->tax_rate,
-                'include_vat' => $provision->product?->include_vat ?? false,
+                'provision_id'   => $journalProvision,
+                'status'         => 'to_prepare',
+                'has_product'    => true,
+                'quantity'       => 1,
+                'cost'           => $provision->product?->cost,
+                'tax_rate'       => $provision->product?->tax_rate,
+                'include_vat'    => $provision->product?->include_vat ?? false,
             ]);
             $client->provisionElements()->save($journalProvisionElement);
         }
@@ -295,15 +294,15 @@ class AdvertiserForm extends Component implements HasForms
         foreach ($dataObject->banner_provisions as $bannerProvision) {
             $provision = Provision::find($bannerProvision);
             $bannerProvisionElement = ProvisionElement::create([
-                'recipient_id' => $client->id,
+                'recipient_id'   => $client->id,
                 'recipient_type' => 'App\Models\Client',
-                'provision_id' => $bannerProvision,
-                'status' => 'to_prepare',
-                'has_product' => true,
-                'quantity' => 1,
-                'cost' => $provision->product?->cost,
-                'tax_rate' => $provision->product?->tax_rate,
-                'include_vat' => $provision->product?->include_vat ?? false,
+                'provision_id'   => $bannerProvision,
+                'status'         => 'to_prepare',
+                'has_product'    => true,
+                'quantity'       => 1,
+                'cost'           => $provision->product?->cost,
+                'tax_rate'       => $provision->product?->tax_rate,
+                'include_vat'    => $provision->product?->include_vat ?? false,
             ]);
             $client->provisionElements()->save($bannerProvisionElement);
         }
@@ -312,15 +311,15 @@ class AdvertiserForm extends Component implements HasForms
         foreach ($dataObject->screen_provisions as $screenProvision) {
             $provision = Provision::find($screenProvision);
             $screenProvisionElement = ProvisionElement::create([
-                'recipient_id' => $client->id,
+                'recipient_id'   => $client->id,
                 'recipient_type' => 'App\Models\Client',
-                'provision_id' => $screenProvision,
-                'status' => 'to_prepare',
-                'has_product' => true,
-                'quantity' => 1,
-                'cost' => $provision->product?->cost,
-                'tax_rate' => $provision->product?->tax_rate,
-                'include_vat' => $provision->product?->include_vat ?? false,
+                'provision_id'   => $screenProvision,
+                'status'         => 'to_prepare',
+                'has_product'    => true,
+                'quantity'       => 1,
+                'cost'           => $provision->product?->cost,
+                'tax_rate'       => $provision->product?->tax_rate,
+                'include_vat'    => $provision->product?->include_vat ?? false,
             ]);
             $client->provisionElements()->save($screenProvisionElement);
         }
@@ -329,15 +328,15 @@ class AdvertiserForm extends Component implements HasForms
         if ($dataObject->donnation_provision_amount) {
             $provision = Provision::find(setting('advertiser_form_donation_provision'));
             $donationProvisionElement = ProvisionElement::create([
-                'recipient_id' => $client->id,
-                'recipient_type' => 'App\Models\Client',
-                'provision_id' => $provision->id,
-                'status' => 'to_prepare',
-                'has_product' => true,
-                'quantity' => 1,
-                'cost' => $dataObject->donnation_provision_amount,
-                'tax_rate' => $provision->product?->tax_rate ?? null,
-                'include_vat' => $provision->product?->include_vat ?? true,
+                'recipient_id'      => $client->id,
+                'recipient_type'    => 'App\Models\Client',
+                'provision_id'      => $provision->id,
+                'status'            => 'to_prepare',
+                'has_product'       => true,
+                'quantity'          => 1,
+                'cost'              => $dataObject->donnation_provision_amount,
+                'tax_rate'          => $provision->product?->tax_rate ?? null,
+                'include_vat'       => $provision->product?->include_vat ?? true,
                 'textual_indicator' => $dataObject->donnation_provision_mention,
             ]);
             $client->provisionElements()->save($donationProvisionElement);

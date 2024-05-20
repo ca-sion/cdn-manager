@@ -6,11 +6,11 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\Widgets;
 use Filament\PanelProvider;
+use App\Filament\Pages\Settings;
 use App\Http\Middleware\Edition;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
-use App\Filament\Pages\Settings;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Support\Facades\FilamentView;
 use Filament\Support\Facades\FilamentColor;
@@ -35,9 +35,9 @@ class AdminPanelProvider extends PanelProvider
         );
 
         FilamentColor::register([
-            'danger' => Color::Red,
-            'gray' => Color::Zinc,
-            'info' => Color::Blue,
+            'danger'  => Color::Red,
+            'gray'    => Color::Zinc,
+            'info'    => Color::Blue,
             'primary' => Color::Sky,
             'success' => Color::Green,
             'warning' => Color::Amber,
@@ -80,7 +80,7 @@ class AdminPanelProvider extends PanelProvider
                 FilamentSettingsPlugin::make()
                     ->pages([
                         Settings::class,
-                    ])
+                    ]),
             ]);
     }
 }
