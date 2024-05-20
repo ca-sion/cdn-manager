@@ -173,7 +173,7 @@
                     @endif
                 </td>
                 <td valign="top" class="text-xs">{{ $pe->status ? $pe->status->getLabel() : null }}</td>
-                <td valign="top" class="text-xs">{{ str($pe->precision) }} asj akjs a sj akjs akjs kaj skja ksja ksj akjs kajs kja sja ksjak </td>
+                <td valign="top" class="text-xs">{{ str($pe->precision) }}</td>
                 <td valign="top" align="right">
                     <div>{{ $pe->tax_rate ? str($pe->price?->formatted_pdf_tax_amount)->replace(['CHF', ' '], '') : null }}</div>
                 </td>
