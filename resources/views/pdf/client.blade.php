@@ -156,16 +156,16 @@
         @if ($client->provisionElements->count() > 0)
         <br>
         <br>
-        <table class="table table-border-between text-sm">
+        <table class="table table-border-between">
             <tr>
                 <td class="subtitle">Prestations</td>
                 <td></td>
                 <td></td>
-                <td class="text-sm">TVA</td>
-                <td class="text-sm">Montant</td>
+                <td align="right" class="text-sm">TVA</td>
+                <td align="right" class="text-sm">Montant</td>
             </tr>
             @foreach ($client->provisionElements as $pe)
-            <tr>
+            <tr class="text-sm">
                 <td>
                     <div>{{ $pe->provision->name }}</div>
                     @if ($pe->provision->description)
