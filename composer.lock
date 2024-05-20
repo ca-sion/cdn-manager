@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a5f5994d16619007f851918ff46bbb36",
+    "content-hash": "adb030089a17f943e8ec05dd7c688d61",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -1413,6 +1413,53 @@
                 }
             ],
             "time": "2023-10-06T06:47:41+00:00"
+        },
+        {
+            "name": "elic-dev/laravel-site-protection",
+            "version": "1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/elic-dev/laravel-site-protection.git",
+                "reference": "0b124ccd7837f92609cd720a0bb6ce30d2decb72"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/elic-dev/laravel-site-protection/zipball/0b124ccd7837f92609cd720a0bb6ce30d2decb72",
+                "reference": "0b124ccd7837f92609cd720a0bb6ce30d2decb72",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6.4"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "ElicDev\\SiteProtection\\SiteProtectionServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "ElicDev\\SiteProtection\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Matthias Lill",
+                    "email": "m.lill@gmx.de"
+                }
+            ],
+            "description": "Protect your site with a simple password form",
+            "support": {
+                "issues": "https://github.com/elic-dev/laravel-site-protection/issues",
+                "source": "https://github.com/elic-dev/laravel-site-protection/tree/1.2.0"
+            },
+            "time": "2023-07-12T07:16:29+00:00"
         },
         {
             "name": "endroid/qr-code",
