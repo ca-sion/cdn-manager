@@ -158,7 +158,7 @@
         <br>
         <table class="table table-border-between">
             <tr>
-                <td class="subtitle">Prestations</td>
+                <td width="45%" class="subtitle">Prestations</td>
                 <td width="12%"></td>
                 <td></td>
                 <td align="right" class="text-sm" width="8%">TVA</td>
