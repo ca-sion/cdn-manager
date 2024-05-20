@@ -176,9 +176,9 @@ class AdvertiserForm extends Component implements HasForms
                                             $provisionTaxes = $provisions->pluck('product.price.tax_amount', 'id')->sum();
                                             $provisionCost = $provisions->pluck('product.price.cost', 'id')->sum();
 
-                                            $total = $provisionPrices + $get('donnation_provision_amount');
+                                            $total = $provisionPrices + ((float) $get('donnation_provision_amount'));
                                             $totalTaxes = $provisionTaxes;
-                                            $totalNet = $provisionCost + $get('donnation_provision_amount');
+                                            $totalNet = $provisionCost + ((float) $get('donnation_provision_amount'));
 
                                             return new HtmlString(
                                                 '<table>'.
