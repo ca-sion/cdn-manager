@@ -22,7 +22,7 @@
             font-family: 'DejaVu Sans', sans-serif;
         }
         .container {
-            max-width: 620px;
+            max-width: 800px;
             margin:0 auto;
         }
         .document-vertical-line {
