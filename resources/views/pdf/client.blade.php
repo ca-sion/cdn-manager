@@ -68,7 +68,7 @@
             border-collapse:collapse;
         }
         .table-border-between td {
-            padding: 4px 0px;
+            padding: 4px 4px 4px 0px;
         }
         .table-border-between tr {
             border-bottom: 1px solid #E3E3E3;
@@ -156,7 +156,7 @@
         @if ($client->provisionElements->count() > 0)
         <br>
         <br>
-        <table class="table table-border-between">
+        <table class="table table-border-between text-sm">
             <tr>
                 <td class="subtitle">Prestations</td>
                 <td></td>
@@ -169,7 +169,7 @@
                 <td>
                     <div>{{ $pe->provision->name }}</div>
                     @if ($pe->provision->description)
-                        <div style="color: gray; font-size: x-small;">{{ $pe->provision->description }}</div>
+                        <div style="color: gray; font-size: xx-small;">{{ $pe->provision->description }}</div>
                     @endif
                 </td>
                 <td valign="top">{{ $pe->status ? $pe->status->getLabel() : null }}</td>
@@ -179,7 +179,7 @@
                 </td>
                 <td valign="top" align="right">
                     <div>{{ $pe->cost ? $pe->price?->formatted_pdf_price : null }}</div>
-                    <div style="color: gray; font-size: x-small;">{{ $pe->cost && $pe->tax_rate ? $pe->price?->formatted_pdf_net_price : null }}</div>
+                    <div style="color: gray; font-size: xx-small;">{{ $pe->cost && $pe->tax_rate ? $pe->price?->formatted_pdf_net_price : null }}</div>
                 </td>
             </tr>
             @endforeach
