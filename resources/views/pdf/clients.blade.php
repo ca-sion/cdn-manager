@@ -88,11 +88,11 @@
                     <td class="px-6 py-4">
                         <table>
                             @foreach ($client->provisionElements as $provision)
-                            <tr>
+                            <tr class="border-b border-gray-200 last:border-0">
                                 <td>{{ $provision->status }}</td>
                                 <td>{{ $provision->provision?->name }}</td>
                                 <td>{{ $provision->precision }}</td>
-                                <td>{{ \App\services\PricingService::format(\App\services\PricingService::applyQuantity(\App\services\PricingService::calculateCostPrice($provision->cost, $provision->tax_rate, $provision->include_vat), $provision->quantity)) }}</td>
+                                <td>{{ $provision->cost ? $provision->price->amount('c') : null }}</td>
                             </tr>
                             @endforeach
                         </table>

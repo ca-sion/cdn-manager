@@ -175,11 +175,11 @@
                 <td valign="top" class="text-xs">{{ $pe->status ? $pe->status->getLabel() : null }}</td>
                 <td valign="top" class="text-xs">{{ str($pe->precision) }}</td>
                 <td valign="top" align="right">
-                    <div>{{ $pe->tax_rate ? str($pe->price?->formatted_pdf_tax_amount)->replace(['CHF', ' '], '') : null }}</div>
+                    <div>{{ $pe->tax_rate ? $pe->price?->taxAmount('npdf') : null }}</div>
                 </td>
                 <td valign="top" align="right">
-                    <div>{{ $pe->cost ? $pe->price?->formatted_pdf_price : null }}</div>
-                    <div style="color: gray; font-size: xx-small;">{{ $pe->cost && $pe->tax_rate ? $pe->price?->formatted_pdf_net_price : null }}</div>
+                    <div>{{ $pe->cost ? $pe->price?->amount('pdf') : null }}</div>
+                    <div style="color: gray; font-size: xx-small;">{{ $pe->cost && $pe->tax_rate ? $pe->price?->netAmount('pdf') : null }}</div>
                 </td>
             </tr>
             @endforeach

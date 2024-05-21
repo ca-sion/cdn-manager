@@ -181,7 +181,7 @@
                         {{ $item->name }}
                     </td>
                     <td align="right">
-                        {{ App\Classes\Price::formatForPdf($item->cost) }}
+                        {{ $item->price->cost('npdf') }}
                     </td>
                     <td>
                         {{ $item->quantity }}
@@ -193,11 +193,11 @@
                     </td>
                     <td align="right">
                         @if ($item->price->tax_amount)
-                        {{ $item->price->tax_amount }}
+                        {{ $item->price->taxAmount('pdf') }}
                         @endif
                     </td>
                     <td align="right">
-                        {{ App\Classes\Price::formatForPdf($item->price->net_price) }}
+                        {{ $item->price->netAmount('pdf') }}
                     </td>
                 </tr>
                 @endforeach
@@ -216,7 +216,7 @@
                                 TVA
                             </td>
                             <td align="right" style="width: 50%;">
-                                {{ App\Classes\Price::formatForPdf($invoice->total_tax) }}
+                                {{ App\Classes\Price::of($invoice->total_tax)->amount('pdf') }}
                             </td>
                         </tr>
                         <tr>
@@ -224,7 +224,7 @@
                                 Total
                             </td>
                             <td align="right" style="width: 50%;">
-                                {{ App\Classes\Price::formatForPdf($invoice->total) }}
+                                {{ App\Classes\Price::of($invoice->total)->amount('pdf') }}
                             </td>
                         </tr>
                     </table>

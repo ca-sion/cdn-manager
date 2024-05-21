@@ -35,15 +35,8 @@ class ProvisionElementsRelationManager extends RelationManager
                     ->label('Précision'),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Montant')
-                    ->state(function (Model $record) {
-                        if (! $record->has_product) {
-                            return null;
-                        }
-                        $price = PricingService::calculateCostPrice($record->cost, $record->tax_rate, $record->include_vat);
-                        $amount = PricingService::applyQuantity($price, $record->quantity);
-
-                        return PricingService::format($amount);
-                    }),
+                    ->state(fn (Model $record) => $record->has_product ? $record->price->amount('c') : null)
+                    ->description(fn (Model $record) => $record->has_product && $record->price->netAmount('c') != $record->price->amount('c') ? $record->price->netAmount('c') : null),
                 Tables\Columns\TextColumn::make('note'),
             ])
             ->filters([

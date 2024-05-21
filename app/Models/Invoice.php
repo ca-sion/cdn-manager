@@ -86,7 +86,7 @@ class Invoice extends Model
     protected function total(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->items->pluck('price.price')->sum(),
+            get: fn () => $this->items->pluck('price.amount')->sum(),
         );
     }
 

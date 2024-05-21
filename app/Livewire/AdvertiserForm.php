@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Contact;
 use Filament\Forms\Get;
@@ -50,7 +51,7 @@ class AdvertiserForm extends Component implements HasForms
                                         ->label('')
                                         ->hint('Prix hors TVA')
                                         ->options(Provision::where('category_id', setting('advertiser_form_journal_category'))->get()->mapWithKeys(fn ($item) => [$item->id => $item->description ?? $item->name]))
-                                        ->descriptions(Provision::where('category_id', setting('advertiser_form_journal_category'))->get()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->net_price ? $item->product?->price->net_price.' CHF' : null]))
+                                        ->descriptions(Provision::where('category_id', setting('advertiser_form_journal_category'))->get()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->netAmount() ? $item->product?->price->netAmount('c') : null]))
                                         ->columns(2)
                                         ->live(),
                                 ]),
@@ -60,7 +61,7 @@ class AdvertiserForm extends Component implements HasForms
                                         ->label('')
                                         ->hint('Prix hors TVA')
                                         ->options(Provision::where('category_id', setting('advertiser_form_banner_category'))->get()->mapWithKeys(fn ($item) => [$item->id => $item->description ?? $item->name]))
-                                        ->descriptions(Provision::all()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->net_price ? $item->product?->price->net_price.' CHF' : null]))
+                                        ->descriptions(Provision::all()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->netAmount() ? $item->product?->price->netAmount('c') : null]))
                                         ->live(),
                                 ]),
                             Section::make('Écran dans la tente principale')
@@ -69,7 +70,7 @@ class AdvertiserForm extends Component implements HasForms
                                         ->label('')
                                         ->hint('Prix hors TVA')
                                         ->options(Provision::where('category_id', setting('advertiser_form_screen_category'))->get()->mapWithKeys(fn ($item) => [$item->id => $item->description ?? $item->name]))
-                                        ->descriptions(Provision::all()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->net_price.' CHF (+TVA)']))
+                                        ->descriptions(Provision::all()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->netAmount('c')]))
                                         ->live(),
                                 ]),
                             Section::make('Don d\'honneur')
@@ -171,7 +172,7 @@ class AdvertiserForm extends Component implements HasForms
                                     $provisionIds = collect($get('journal_provisions'))->merge($get('screen_provisions'))->merge($get('banner_provisions'));
 
                                     $provisions = Provision::find($provisionIds);
-                                    $provisionPrices = $provisions->pluck('product.price.price', 'id')->sum();
+                                    $provisionPrices = $provisions->pluck('product.price.amount', 'id')->sum();
                                     $provisionTaxes = $provisions->pluck('product.price.tax_amount', 'id')->sum();
                                     $provisionCost = $provisions->pluck('product.price.cost', 'id')->sum();
 
@@ -181,9 +182,9 @@ class AdvertiserForm extends Component implements HasForms
 
                                     return new HtmlString(
                                         '<table>'.
-                                        '<tr><td>Net</td><td>'.PricingService::format($totalNet).'</td></tr>'.
-                                        '<tr><td>TVA</td><td>'.($totalTaxes > 0 ? PricingService::format($totalTaxes) : '-').'</td></tr>'.
-                                        '<tr><td style="width: 50px;">Total</td><td>'.PricingService::format($total).'</td></tr>'.
+                                        '<tr><td>Net</td><td>'.Price::of($totalNet)->amount('c').'</td></tr>'.
+                                        '<tr><td>TVA</td><td>'.($totalTaxes > 0 ? Price::of($totalTaxes)->amount('c') : '-').'</td></tr>'.
+                                        '<tr><td style="width: 50px;">Total</td><td>'.Price::of($total)->amount('c').'</td></tr>'.
                                         '</table>');
                                 }),
                             Textarea::make('note')

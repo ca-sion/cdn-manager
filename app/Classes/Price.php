@@ -24,23 +24,11 @@ class Price
 
     public bool $include_tax_in_price;
 
-    public float $price;
+    public float $amount;
 
-    public float $net_price;
+    public float $net_amount;
 
     public float $tax_amount;
-
-    public string $formatted_price;
-
-    public string $formatted_net_price;
-
-    public string $formatted_tax_amount;
-
-    public string $formatted_pdf_price;
-
-    public string $formatted_pdf_net_price;
-
-    public string $formatted_pdf_tax_amount;
 
     /**
      * InvoiceItem constructor.
@@ -58,10 +46,10 @@ class Price
 
     public static function of($cost)
     {
-        return (new self())->cost($cost);
+        return (new self())->addCost($cost);
     }
 
-    public function cost($cost)
+    public function addCost($cost)
     {
         $this->cost = (float) $cost;
 
@@ -97,30 +85,60 @@ class Price
         return $this;
     }
 
+    public function cost(string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
+    {
+        return $this->generateFormatted($this->cost, $format, $in, $locale);
+    }
+
+    public function amount(string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
+    {
+        return $this->generateFormatted($this->amount, $format, $in, $locale);
+    }
+
+    public function netAmount(string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
+    {
+        return $this->generateFormatted($this->net_amount, $format, $in, $locale);
+    }
+
+    public function taxAmount(string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
+    {
+        return $this->generateFormatted($this->tax_amount, $format, $in, $locale);
+    }
+
+    public function generateFormatted(int|float $value, ?string $format, string $in = 'CHF', string $locale = 'fr_CH')
+    {
+        $formats = (object) [
+            's' => (string) $value,
+            'v' => $value,
+            'n' => number_format($value, 2, '.', ' '),
+            'c' => Number::currency($value, in: $in, locale: $locale),
+            'pdf' => str(Number::currency($value, in: $in, locale: $locale))->replace(' ', ' ')->toString(),
+            'npdf' => number_format($value, 2, '.', ' '),
+        ];
+
+        if ($format) {
+            return data_get($formats, $format);
+        }
+
+        return $formats;
+    }
+
     public function calculate(): void
     {
-        $this->price = $this->calculatePrice();
-        $this->net_price = $this->calculateNetPrice();
+        $this->amount = $this->calculatePrice();
+        $this->net_amount = $this->calculateNetPrice();
         $this->tax_amount = $this->calculateTax();
-
-        $this->formatted_price = $this->format($this->price);
-        $this->formatted_net_price = $this->format($this->net_price);
-        $this->formatted_tax_amount = $this->format($this->tax_amount);
-
-        $this->formatted_pdf_price = $this->formatForPdf($this->price);
-        $this->formatted_pdf_net_price = $this->formatForPdf($this->net_price);
-        $this->formatted_pdf_tax_amount = $this->formatForPdf($this->tax_amount);
     }
 
     public function calculatePrice()
     {
-        $price = PricingService::calculateCostPrice($this->cost, $this->tax_rate, $this->include_tax_in_price);
+        $amount = PricingService::calculateCostPrice($this->cost, $this->tax_rate, $this->include_tax_in_price);
 
         if ($this->quantity > 0) {
-            return $price * $this->quantity;
+            return $amount * $this->quantity;
         }
 
-        return $price;
+        return $amount;
     }
 
     public function calculateNetPrice()
@@ -148,10 +166,5 @@ class Price
     public static function format(int|float $value, string $in = 'CHF', string $locale = 'fr_CH')
     {
         return Number::currency($value, in: $in, locale: $locale);
-    }
-
-    public static function formatForPdf(int|float $value, string $in = 'CHF', string $locale = 'fr_CH')
-    {
-        return str(Number::currency($value, in: $in, locale: $locale))->replace(' ', ' ');
     }
 }
