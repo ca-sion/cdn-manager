@@ -8,6 +8,8 @@ use App\Models\Product;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Tables\Actions\ReplicateAction;
 use App\Filament\Resources\ProductResource\Pages;
 
 class ProductResource extends Resource
@@ -75,6 +77,9 @@ class ProductResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                ReplicateAction::make()->successRedirectUrl(fn (Model $replica): string => route('filament.admin.resources.products.edit', [
+                    'record' => $replica,
+                ])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

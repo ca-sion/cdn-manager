@@ -10,7 +10,9 @@ use App\Models\Provision;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Section;
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\ProductResource;
+use Filament\Tables\Actions\ReplicateAction;
 use App\Filament\Resources\ProvisionResource\Pages;
 
 class ProvisionResource extends Resource
@@ -130,6 +132,9 @@ class ProvisionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                ReplicateAction::make()->successRedirectUrl(fn (Model $replica): string => route('filament.admin.resources.provisions.edit', [
+                    'record' => $replica,
+                ])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
