@@ -10,10 +10,14 @@ use Filament\Forms\Set;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Number;
+use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
 use App\Services\PricingService;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\InvoiceResource\Pages;
+use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 
@@ -45,14 +49,7 @@ class InvoiceResource extends Resource
                     ->hiddenOn(InvoicesRelationManager::class),
                 Forms\Components\Select::make('status')
                     ->default('draft')
-                    ->options([
-                        'draft'     => 'Brouillon',
-                        'ready'     => 'Prête',
-                        'sent'      => 'Envoyé',
-                        'payed'     => 'Payé',
-                        'suspended' => 'Suspendu',
-                        'cancelled' => 'Annulée',
-                    ])
+                    ->options(InvoiceStatusEnum::class)
                     ->live()
                     ->required(),
                 Forms\Components\TextInput::make('title')
@@ -151,6 +148,14 @@ class InvoiceResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('status_view')
+                    ->label('Statut')
+                    ->badge()
+                    ->sortable()
+                    ->state(fn (Model $record) => $record->status),
+                Tables\Columns\SelectColumn::make('status')
+                    ->label('')
+                    ->options(InvoiceStatusEnum::class),
                 Tables\Columns\TextColumn::make('client.name')
                     ->label('Client')
                     ->searchable(),
@@ -162,9 +167,15 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('qr_reference')
                     ->label('QR')
                     ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->label('Statut'),
+                    ->sortable()
+                    ->formatStateUsing(fn (string $state) => '…'.substr($state, -9))
+                    ->size(TextColumnSize::ExtraSmall),
+                Tables\Columns\TextColumn::make('total')
+                    ->label('Montant')
+                    ->money('CHF', 0, 'fr_CH'),
+                Tables\Columns\TextColumn::make('totalTax')
+                    ->label('Taxes')
+                    ->money('CHF', 0, 'fr_CH'),
             ])
             ->filters([
                 //

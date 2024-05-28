@@ -6,6 +6,7 @@ use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\ProvisionElementStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProvisionElementResource;
@@ -28,8 +29,14 @@ class ProvisionElementsRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('provision.name'),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge(),
+                Tables\Columns\TextColumn::make('status_view')
+                    ->label('Statut')
+                    ->badge()
+                    ->sortable()
+                    ->state(fn (Model $record) => $record->status),
+                Tables\Columns\SelectColumn::make('status')
+                    ->label('')
+                    ->options(ProvisionElementStatusEnum::class),
                 Tables\Columns\TextColumn::make('precision')
                     ->label('Précision'),
                 Tables\Columns\TextColumn::make('price')
@@ -45,10 +52,12 @@ class ProvisionElementsRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\ForceDeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

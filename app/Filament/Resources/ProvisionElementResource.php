@@ -301,9 +301,14 @@ class ProvisionElementResource extends Resource
                 Tables\Columns\TextColumn::make('recipient.name')
                     ->label('Bénéficiaire')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('status_view')
+                    ->label('Statut')
                     ->badge()
-                    ->sortable(),
+                    ->sortable()
+                    ->state(fn (Model $record) => $record->status),
+                Tables\Columns\SelectColumn::make('status')
+                    ->label('')
+                    ->options(ProvisionElementStatusEnum::class),
                 Tables\Columns\TextColumn::make('precision')
                     ->label('Précision')
                     ->searchable(),
@@ -312,15 +317,8 @@ class ProvisionElementResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Montant')
-                    ->state(function (Model $record) {
-                        if (! $record->has_product) {
-                            return null;
-                        }
-                        $price = PricingService::calculateCostPrice($record->cost, $record->tax_rate, $record->include_vat);
-                        $amount = PricingService::applyQuantity($price, $record->quantity);
-
-                        return Number::currency($amount, in: 'CHF', locale: 'fr_CH');
-                    }),
+                    ->state(fn (Model $record) => $record->has_product ? $record->price->amount('c') : null),
+                    // ->description(fn (Model $record) => $record->has_product && $record->price->netAmount('c') != $record->price->amount('c') ? $record->price->netAmount('c') : null),
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
@@ -350,7 +348,11 @@ class ProvisionElementResource extends Resource
                     ->relationship('edition', 'year'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\ReplicateAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

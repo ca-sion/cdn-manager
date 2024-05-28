@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\ReplicateAction;
 use App\Filament\Resources\ProductResource\Pages;
 
@@ -60,7 +62,15 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nom')
                     ->searchable(),
+                /*
                 Tables\Columns\TextColumn::make('code')
+                    ->label('Code')
+                    ->searchable(),
+                */
+                Tables\Columns\TextInputColumn::make('code')
+                    ->label('Code')
+                    ->searchable(),
+                Tables\Columns\TextInputColumn::make('code')
                     ->label('Code')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('cost')
@@ -69,17 +79,34 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('tax_rate')
                     ->label('TVA')
                     ->numeric(),
+                    Tables\Columns\SelectColumn::make('tax_rate')
+                    ->label('TVA')
+                    ->options([
+                        '8.1' => '8.1',
+                        '3.8' => '3.8',
+                        '2.6' => '2.1',
+                    ]),
+
+                    Tables\Columns\CheckboxColumn::make('include_vat')
+                    ->label('Inclure TVA'),
+                /*
                 Tables\Columns\TextColumn::make('unit')
+                    ->label('Unité'),
+                */
+                Tables\Columns\TextInputColumn::make('unit')
                     ->label('Unité'),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                ReplicateAction::make()->successRedirectUrl(fn (Model $replica): string => route('filament.admin.resources.products.edit', [
-                    'record' => $replica,
-                ])),
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    ReplicateAction::make()->successRedirectUrl(fn (Model $replica): string => route('filament.admin.resources.products.edit', [
+                        'record' => $replica,
+                    ])),
+                    DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

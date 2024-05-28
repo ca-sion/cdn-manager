@@ -11,6 +11,8 @@ use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Section;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\ReplicateAction;
 use App\Filament\Resources\ProvisionResource\Pages;
 
@@ -122,18 +124,49 @@ class ProvisionResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('dicastry.name'),
-                // Tables\Columns\TextColumn::make('type'),
-                Tables\Columns\TextColumn::make('product.name'),
+                Tables\Columns\TextColumn::make('dicastry.name')
+                    ->label('Dicastère'),
+                Tables\Columns\TextColumn::make('category.name')
+                    ->label('Catégorie'),
+                Tables\Columns\TextColumn::make('product.name')
+                    ->label('Produit')
+                    ->limit(40),
+
+                Tables\Columns\TextColumn::make('numeric_indicator')
+                    ->label('Ind. numérique'),
+                Tables\Columns\TextColumn::make('dimensions_indicator')
+                    ->label('Dimensions'),
+                Tables\Columns\TextColumn::make('format_indicator')
+                    ->label('Format'),
+                Tables\Columns\TextColumn::make('due_date_indicator')
+                    ->label('Délai'),
+                Tables\Columns\TextColumn::make('contact_indicator')
+                    ->label('Contact'),
+
+                /*
+                Tables\Columns\TextInputColumn::make('numeric_indicator')
+                    ->label('Ind. numérique'),
+                Tables\Columns\TextInputColumn::make('dimensions_indicator')
+                    ->label('Dimensions'),
+                Tables\Columns\TextInputColumn::make('format_indicator')
+                    ->label('Format'),
+                Tables\Columns\TextInputColumn::make('due_date_indicator')
+                    ->label('Délai'),
+                Tables\Columns\TextInputColumn::make('contact_indicator')
+                    ->label('Contact'),
+                */
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                ReplicateAction::make()->successRedirectUrl(fn (Model $replica): string => route('filament.admin.resources.provisions.edit', [
-                    'record' => $replica,
-                ])),
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    ReplicateAction::make()->successRedirectUrl(fn (Model $replica): string => route('filament.admin.resources.provisions.edit', [
+                        'record' => $replica,
+                    ])),
+                    DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

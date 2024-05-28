@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Classes\Price;
+use App\Enums\InvoiceStatusEnum;
 use App\Traits\Editionable;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,7 @@ class Invoice extends Model
     {
         return [
             'positions' => 'array',
+            'status' => InvoiceStatusEnum::class,
         ];
     }
 
