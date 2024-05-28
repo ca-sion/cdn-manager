@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Tabs;
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\ClientResource\Pages;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -16,7 +17,6 @@ use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManag
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
-use Illuminate\Database\Eloquent\Model;
 
 class ClientResource extends Resource
 {

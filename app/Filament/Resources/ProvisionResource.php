@@ -11,7 +11,6 @@ use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Section;
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Resources\ProductResource;
 use Filament\Tables\Actions\ReplicateAction;
 use App\Filament\Resources\ProvisionResource\Pages;
 

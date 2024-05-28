@@ -85,22 +85,22 @@ class Price
         return $this;
     }
 
-    public function cost(string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
+    public function cost(?string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
     {
         return $this->generateFormatted($this->cost, $format, $in, $locale);
     }
 
-    public function amount(string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
+    public function amount(?string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
     {
         return $this->generateFormatted($this->amount, $format, $in, $locale);
     }
 
-    public function netAmount(string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
+    public function netAmount(?string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
     {
         return $this->generateFormatted($this->net_amount, $format, $in, $locale);
     }
 
-    public function taxAmount(string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
+    public function taxAmount(?string $format = null, string $in = 'CHF', string $locale = 'fr_CH')
     {
         return $this->generateFormatted($this->tax_amount, $format, $in, $locale);
     }
@@ -108,11 +108,11 @@ class Price
     public function generateFormatted(int|float $value, ?string $format, string $in = 'CHF', string $locale = 'fr_CH')
     {
         $formats = (object) [
-            's' => (string) $value,
-            'v' => $value,
-            'n' => number_format($value, 2, '.', ' '),
-            'c' => Number::currency($value, in: $in, locale: $locale),
-            'pdf' => str(Number::currency($value, in: $in, locale: $locale))->replace(' ', ' ')->toString(),
+            's'    => (string) $value,
+            'v'    => $value,
+            'n'    => number_format($value, 2, '.', ' '),
+            'c'    => Number::currency($value, in: $in, locale: $locale),
+            'pdf'  => str(Number::currency($value, in: $in, locale: $locale))->replace(' ', ' ')->toString(),
             'npdf' => number_format($value, 2, '.', ' '),
         ];
 
