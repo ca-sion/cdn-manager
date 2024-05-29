@@ -24,6 +24,13 @@ class ContactResource extends Resource
 
     protected static ?string $modelLabel = 'Contact';
 
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['first_name', 'last_name', 'email', 'phone'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -67,11 +74,14 @@ class ContactResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Nom'),
+                    ->label('Nom')
+                    ->searchable(),
                 TextColumn::make('email')
-                    ->label('Email'),
+                    ->label('Email')
+                    ->searchable(),
                 TextColumn::make('phone')
-                    ->label('Téléphone'),
+                    ->label('Téléphone')
+                    ->searchable(),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
