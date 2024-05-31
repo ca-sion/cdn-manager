@@ -132,9 +132,6 @@ class AdvertiserForm extends Component implements HasForms
                                         ->email()
                                         ->maxLength(255)
                                         ->live(),
-                                    TextInput::make('email')
-                                        ->hidden()
-                                        ->formatStateUsing(fn (Get $get) => $get('contacts.email')),
                                 ]),
                             Section::make('Adresse de facturation')
                                 ->columns(12)
@@ -165,9 +162,11 @@ class AdvertiserForm extends Component implements HasForms
                         ]),
                     Wizard\Step::make('Récapitulatif')
                         ->schema([
-                            Placeholder::make('total')
-                                ->label(new HtmlString('<div class="format"><h2>Total qui sera facturé</h2></div>'))
-                                ->content(function (Get $get) {
+                            Textarea::make('note')
+                                ->label('Remarque ou ajout que vous aimeriez communiquer'),
+                            Placeholder::make('details')
+                                ->label(new HtmlString('<div class="format"><h2>Détails de la commande</h2></div>'))
+                                ->content(function (Get $get, Component $livewire) {
                                     $provisionIds = collect($get('journal_provisions'))->merge($get('screen_provisions'))->merge($get('banner_provisions'));
 
                                     $provisions = Provision::find($provisionIds);
@@ -179,55 +178,14 @@ class AdvertiserForm extends Component implements HasForms
                                     $totalTaxes = $provisionTaxes;
                                     $totalNet = $provisionCost + ((float) $get('donnation_provision_amount'));
 
-                                    return new HtmlString(
-                                        '<table>'.
-                                        '<tr><td>Net</td><td>'.Price::of($totalNet)->amount('c').'</td></tr>'.
-                                        '<tr><td>TVA</td><td>'.($totalTaxes > 0 ? Price::of($totalTaxes)->amount('c') : '-').'</td></tr>'.
-                                        '<tr><td style="width: 50px;">Total</td><td>'.Price::of($total)->amount('c').'</td></tr>'.
-                                        '</table>');
+                                    return view('livewire.advertiser-form-order-details', [
+                                        'total_net' => Price::of($totalNet)->amount('c'),
+                                        'total_taxes' => $totalTaxes > 0 ? Price::of($totalTaxes)->amount('c') : '-',
+                                        'total' => Price::of($total)->amount('c'),
+                                        'data' => json_decode(json_encode($livewire->data)),
+                                        'provisions' => $provisions,
+                                    ]);
                                 }),
-                            Textarea::make('note')
-                                ->label('Note général que vous aimeriez communiquer'),
-
-                            Placeholder::make('journal_indications')
-                                ->label('')
-                                ->visible(fn (Get $get) => $get('journal_provisions'))
-                                ->content(new HtmlString(Blade::render(<<<'BLADE'
-                                            <div class="format">
-                                                <h2>Annonces journalistique</h2>
-                                                <p>Transmettre votre visuel au format numérique à <a href="mailto:pub@coursedenoel.ch">pub@coursedenoel.ch</a></p>
-                                                <ul>
-                                                    <li>Délai : 9 octobre 2024</li>
-                                                    <li>Dimensions : selon les dimensions sélectionnées en mm</li>
-                                                    <li>Format : PDF/X ou image très haute résolution</li>
-                                                </ul>
-                                            </div>
-                                        BLADE))),
-                            Placeholder::make('screen_indications')
-                                ->label('')
-                                ->visible(fn (Get $get) => $get('screen_provisions'))
-                                ->content(new HtmlString(Blade::render(<<<'BLADE'
-                                            <div class="format">
-                                                <h2>Écran dans la tente principale</h2>
-                                                <p>Transmettre votre visuel au format numérique à <a href="mailto:pub@coursedenoel.ch">pub@coursedenoel.ch</a></p>
-                                                <ul>
-                                                    <li>Délai : 17 novembre 2024</li>
-                                                    <li>Contenu : Votre logo ou un visuel spécifique</li>
-                                                    <li>Dimensions : 1920x1080</li>
-                                                    <li>Définition : 300 dpi</li>
-                                                    <li>Format : JPEG, JPG, TIFF ou PNG</li>
-                                                </ul>
-                                            </div>
-                                        BLADE))),
-                            Placeholder::make('banner_indications')
-                                ->label('')
-                                ->visible(fn (Get $get) => $get('banner_provisions'))
-                                ->content(new HtmlString(Blade::render(<<<'BLADE'
-                                            <div class="format">
-                                                <h2>Banderoles</h2>
-                                                <p>Les banderoles seront collectées le jeudi N décembre au plus tard.</a></p>
-                                            </div>
-                                        BLADE))),
                         ]),
                 ])
                     ->submitAction(new HtmlString(Blade::render(<<<'BLADE'
@@ -247,6 +205,8 @@ class AdvertiserForm extends Component implements HasForms
     {
         $data = $this->form->getState();
         $dataObject = json_decode(json_encode($data));
+
+        dd('beforeSave');
 
         // Client
         $client = Client::create([
@@ -342,6 +302,7 @@ class AdvertiserForm extends Component implements HasForms
             $client->provisionElements()->save($donationProvisionElement);
         }
 
+        // Email
         dd('redirect');
     }
 
