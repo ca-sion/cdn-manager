@@ -2,6 +2,6 @@
 
 return [
 
-    'edition_default' => env('CDN_EDITION_DEFAULT', 1),
+    'default_edition_id' => env('CDN_DEFAULT_EDITION_ID', 1),
 
 ];

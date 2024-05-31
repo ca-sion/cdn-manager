@@ -28,7 +28,7 @@ class Settings extends BaseSettings
         return [
             Select::make('edition_id')
                 ->options(Edition::all()->pluck('name', 'id'))
-                ->default(config('cdn.edition_default')),
+                ->default(config('cdn.default_edition_id')),
             Section::make('Formulaire annonceur')
                 ->schema([
                     Select::make('advertiser_form_client_category')

@@ -15,7 +15,7 @@ class Edition
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $editionId = $request->session()->get('edition_id', config('cdn.edition_default'));
+        $editionId = $request->session()->get('edition_id', config('cdn.default_edition_id'));
         $request->session()->put('edition_id', $editionId);
 
         return $next($request);

@@ -153,7 +153,7 @@
         </table>
         @endif
 
-        @if ($client->provisionElements->count() > 0)
+        @if ($client->currentProvisionElements()->count() > 0)
         <br>
         <br>
         <table class="table table-border-between">
@@ -164,7 +164,7 @@
                 <td align="right" class="text-sm" width="8%">TVA</td>
                 <td align="right" class="text-sm" width="15%">Montant</td>
             </tr>
-            @foreach ($client->provisionElements as $pe)
+            @foreach ($client->currentProvisionElements() as $pe)
             <tr class="text-sm">
                 <td valign="top">
                     <div>{{ $pe->provision->name }}</div>
@@ -184,6 +184,35 @@
             </tr>
             @endforeach
         </table>
+
+        <table width="100%" style="font-size: x-small;margin-top: 10px;;margin-bottom: 10px;">
+            <tr>
+                <td style="width: 70%;">
+
+                </td>
+                <td style="width: 30%;">
+                    <table width="100%">
+                        <tr>
+                            <td align="right" style="width: 50%;">
+                                TVA
+                            </td>
+                            <td align="right" style="width: 50%;">
+                                {{ App\Classes\Price::of($client->currentProvisionElementsTaxeAmount())->amount('pdf') }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right" style="width: 50%;">
+                                Total
+                            </td>
+                            <td align="right" style="width: 50%;">
+                                {{ App\Classes\Price::of($client->currentProvisionElementsAmount())->amount('pdf') }}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
         @endif
 
     </div>

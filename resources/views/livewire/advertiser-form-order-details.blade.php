@@ -17,6 +17,16 @@
             </ul>
         </div>
         @endforeach
+        @if ($donnationProvisionAmount)
+        <div class="">
+            <p class="text-base font-bold text-gray-900 dark:text-white">Don de {{ $donnationProvisionAmount }}</p>
+            <ul class="ms-2">
+                    @if ($donnationProvisionMention)
+                    <li>Mention : {{ $donnationProvisionMention }}</li>
+                    @endif
+            </ul>
+        </div>
+        @endif
     </div>
 </div>
 

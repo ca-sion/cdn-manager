@@ -63,7 +63,7 @@ class InvoiceService
     {
         $lastInvoice = Invoice::latest()->first();
         $lastInvoiceId = $lastInvoice ? $lastInvoice->id : 0;
-        $edition = Edition::find(config('cdn.edition_default'));
+        $edition = Edition::find(config('cdn.default_edition_id'));
         $editionYear = $edition->year;
 
         $invoiceNumber = str_pad($lastInvoiceId + 1, 3, '0', STR_PAD_LEFT);

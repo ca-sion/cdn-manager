@@ -10,6 +10,7 @@ use Livewire\Component;
 use Filament\Forms\Form;
 use App\Models\Provision;
 use App\Models\ProvisionElement;
+use App\Notifications\ClientAdvertiserFormCreated;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\View\View;
 use Filament\Forms\Components\Wizard;
@@ -21,6 +22,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Illuminate\Routing\Redirector;
 
 class AdvertiserForm extends Component implements HasForms
 {
@@ -131,6 +133,7 @@ class AdvertiserForm extends Component implements HasForms
                                         ->required()
                                         ->email()
                                         ->maxLength(255)
+                                        ->rules(['email:rfc,dns'])
                                         ->live(),
                                 ]),
                             Section::make('Adresse de facturation')
@@ -174,9 +177,12 @@ class AdvertiserForm extends Component implements HasForms
                                     $provisionTaxes = $provisions->pluck('product.price.tax_amount', 'id')->sum();
                                     $provisionCost = $provisions->pluck('product.price.cost', 'id')->sum();
 
-                                    $total = $provisionPrices + ((float) $get('donnation_provision_amount'));
+                                    $donnation_provision_amount = (float) $get('donnation_provision_amount');
+                                    $donnation_provision_mention = $get('donnation_provision_mention');
+
+                                    $total = $provisionPrices + $donnation_provision_amount;
                                     $totalTaxes = $provisionTaxes;
-                                    $totalNet = $provisionCost + ((float) $get('donnation_provision_amount'));
+                                    $totalNet = $provisionCost + $donnation_provision_amount;
 
                                     return view('livewire.advertiser-form-order-details', [
                                         'total_net' => Price::of($totalNet)->amount('c'),
@@ -184,6 +190,8 @@ class AdvertiserForm extends Component implements HasForms
                                         'total' => Price::of($total)->amount('c'),
                                         'data' => json_decode(json_encode($livewire->data)),
                                         'provisions' => $provisions,
+                                        'donnationProvisionAmount' => $donnation_provision_amount ? Price::of($donnation_provision_amount)->amount('c') : null,
+                                        'donnationProvisionMention' => $donnation_provision_mention,
                                     ]);
                                 }),
                         ]),
@@ -201,16 +209,15 @@ class AdvertiserForm extends Component implements HasForms
             ->model(Client::class);
     }
 
-    public function create(): void
+    public function create()
     {
         $data = $this->form->getState();
         $dataObject = json_decode(json_encode($data));
 
-        dd('beforeSave');
-
         // Client
         $client = Client::create([
             'name'                        => $dataObject->name,
+            'email'                       => $dataObject->contact->email,
             'address'                     => $dataObject->address,
             'postal_code'                 => $dataObject->postal_code,
             'locality'                    => $dataObject->locality,
@@ -303,7 +310,9 @@ class AdvertiserForm extends Component implements HasForms
         }
 
         // Email
-        dd('redirect');
+        $client->notify(new ClientAdvertiserFormCreated());
+        //dd('redirect');
+        return redirect()->route('message.success');
     }
 
     public function render(): View

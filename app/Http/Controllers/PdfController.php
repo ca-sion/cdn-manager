@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Edition;
 use Barryvdh\DomPDF\Facade\Pdf;
