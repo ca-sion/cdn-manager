@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
+use App\Livewire\FrontEditClient;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
 
 Route::get('/', function () {
@@ -18,6 +19,7 @@ Route::get('/pdf/clients', [PdfController::class, 'clients'])->name('pdf.clients
 Route::get('/pdf/client/{client}', [PdfController::class, 'client'])->middleware('signed')->name('pdf.client');
 
 Route::get('clients', FrontListClients::class)->middleware(SiteProtection::class)->name('front.clients');
-Route::get('advertisers/form', AdvertiserForm::class)->name('advertisers.form');
+Route::get('clients/{record}', FrontEditClient::class)->name('front.client');
 
-Route::get('message/success', [MessageController::class, 'success'])->name('message.success');
+Route::get('advertisers/form', AdvertiserForm::class)->name('advertisers.form');
+Route::get('advertisers/success', [MessageController::class, 'adertiserSuccess'])->middleware('signed')->name('advertisers.success');

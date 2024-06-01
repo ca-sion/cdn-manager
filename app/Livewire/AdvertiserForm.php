@@ -23,6 +23,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Illuminate\Routing\Redirector;
+use Illuminate\Support\Facades\URL;
 
 class AdvertiserForm extends Component implements HasForms
 {
@@ -311,8 +312,10 @@ class AdvertiserForm extends Component implements HasForms
 
         // Email
         $client->notify(new ClientAdvertiserFormCreated());
+
+        // Redirect
         //dd('redirect');
-        return redirect()->route('message.success');
+        return redirect()->to(URL::signedRoute('advertisers.success', ['client' => $client]));
     }
 
     public function render(): View

@@ -172,7 +172,7 @@
                         <div style="color: gray; font-size: xx-small;">{{ $pe->provision->description }}</div>
                     @endif
                 </td>
-                <td valign="top" class="text-xs">{{ $pe->status ? $pe->status->getLabel() : null }}</td>
+                <td valign="top" class="text-xs">{{-- $pe->status ? $pe->status->getLabel() : null --}}</td>
                 <td valign="top" class="text-xs">{{ str($pe->precision) }}</td>
                 <td valign="top" align="right">
                     <div>{{ $pe->tax_rate ? $pe->price?->taxAmount('npdf') : null }}</div>
