@@ -48,7 +48,8 @@ class ClientAdvertiserFormCreated extends Notification
 
         return (new MailMessage)
                     ->subject('CDN - Commande annonceur effectuée ('.$notifiable->name.')')
-                    ->cc('info@coursedenoel.ch', 'Course de Noël')
+                    ->replyTo('pub@coursedenoel.ch')
+                    ->bcc('pub@coursedenoel.ch')
                     ->greeting($notifiable->name.',')
                     ->line('Vous venez de passer une commande pour une prestation en tant qu\'annonceur pour la Course de Noël. Nous vous remercions beaucoup pour votre soutien.')
                     ->line('En cliquant sur le bouton ci-dessous, vous pouvez voir la commande passée.')
