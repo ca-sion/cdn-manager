@@ -29,6 +29,13 @@ class ProvisionElement extends Model implements HasMedia
     protected $guarded = [];
 
     /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['provision'];
+
+    /**
      * Get the attributes that should be cast.
      */
     protected function casts(): array
@@ -71,12 +78,22 @@ class ProvisionElement extends Model implements HasMedia
     }
 
     /**
-     * Get the provision element's topricetal.
+     * Get the provision element's price.
      */
     protected function price(): Attribute
     {
         return Attribute::make(
             get: fn () => Price::of($this->cost)->taxRate($this->tax_rate)->includeTaxInPrice($this->include_vat ?? false),
+        );
+    }
+
+    /**
+     * Get the provision element's name.
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->provision?->name,
         );
     }
 }

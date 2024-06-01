@@ -3,9 +3,10 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\HtmlString;
+use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 class ClientAdvertiserFormCreated extends Notification
 {
@@ -35,7 +36,7 @@ class ClientAdvertiserFormCreated extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $provisionElements = '';
-        foreach ($notifiable->currentProvisionElements()->load('provision') as $pe) {
+        foreach ($notifiable->currentProvisionElements as $pe) {
             $provisionElements .= ($pe->provision->description ? '## '.$pe->provision->description : '## '.$pe->provision->name).' - '.$pe->price->amount('c')."\n" ;
             $provisionElements .= $pe->provision->dimensions_indicator ? '- Dimensions : '.$pe->provision->dimensions_indicator."\n" : null ;
             $provisionElements .= $pe->provision->format_indicator ? '- Format : '.$pe->provision->format_indicator."\n" : null ;
@@ -49,11 +50,13 @@ class ClientAdvertiserFormCreated extends Notification
                     ->subject('CDN - Commande annonceur effectuée ('.$notifiable->name.')')
                     ->cc('info@coursedenoel.ch', 'Course de Noël')
                     ->greeting($notifiable->name.',')
-                    ->line('Vous venez de passer une commande pour une prestattion en tant qu\'annonceur pour la Course de Noël. Nous vous remercions beaucoup pour votre soutien.')
+                    ->line('Vous venez de passer une commande pour une prestation en tant qu\'annonceur pour la Course de Noël. Nous vous remercions beaucoup pour votre soutien.')
                     ->line('En cliquant sur le bouton ci-dessous, vous pouvez voir la commande passée.')
                     ->action('Voir la commande', $notifiable->pdfLink)
-                    ->line('Les éléments de votre commande :')
+                    ->line('Vous pouvez déjà ajouter vos visuels ou modifier votre commande en cliquant sur le lien ci-après : **[Modifier votre commande]('.$notifiable->frontEditLink.')**')
+                    ->line('Éléments et indications liés à votre commande :')
                     ->line([$provisionElements])
+                    ->lineIf($notifiable->note, '**Note** : '.$notifiable->note)
                     ->line('Nous restons à disposition en cas de questions ou pour tout complément d\'information.')
                     ->salutation('Le Comité de la Course de Noël');
     }

@@ -153,7 +153,7 @@
         </table>
         @endif
 
-        @if ($client->currentProvisionElements()->count() > 0)
+        @if ($client->currentProvisionElements->count() > 0)
         <br>
         <br>
         <table class="table table-border-between">
@@ -164,7 +164,7 @@
                 <td align="right" class="text-sm" width="8%">TVA</td>
                 <td align="right" class="text-sm" width="15%">Montant</td>
             </tr>
-            @foreach ($client->currentProvisionElements() as $pe)
+            @foreach ($client->currentProvisionElements as $pe)
             <tr class="text-sm">
                 <td valign="top">
                     <div>{{ $pe->provision->name }}</div>
@@ -197,7 +197,7 @@
                                 TVA
                             </td>
                             <td align="right" style="width: 50%;">
-                                {{ App\Classes\Price::of($client->currentProvisionElementsTaxeAmount())->amount('pdf') }}
+                                {{ App\Classes\Price::of($client->currentProvisionElementsTaxAmount())->amount('pdf') }}
                             </td>
                         </tr>
                         <tr>

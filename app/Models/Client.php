@@ -31,6 +31,13 @@ class Client extends Model implements HasMedia
     protected $guarded = [];
 
     /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['provisionElements'];
+
+    /**
      * The provisions that belong to the client.
      */
     public function provisionElements(): MorphMany
@@ -81,11 +88,21 @@ class Client extends Model implements HasMedia
     }
 
     /**
-     * The current edition provisions for the client.
+     * Get the front edit url.
      */
-    public function currentProvisionElements(): Collection
+    protected function frontEditLink(): Attribute
     {
-        return $this->provisionElements()->where('edition_id', setting('edition_id', config('cdn.default_edition_id')))->get();
+        return Attribute::make(
+            get: fn () => URL::signedRoute('front.client', $this->id),
+        );
+    }
+
+    /**
+     * The current edition provisions that belong to the client.
+     */
+    public function currentProvisionElements(): MorphMany
+    {
+        return $this->morphMany(ProvisionElement::class, 'recipient')->where('edition_id', setting('edition_id', config('cdn.default_edition_id')));
     }
 
     /**
@@ -93,15 +110,23 @@ class Client extends Model implements HasMedia
      */
     public function currentProvisionElementsAmount(): float
     {
-        return $this->currentProvisionElements()->pluck('price.amount')->sum();
+        return $this->currentProvisionElements->pluck('price.amount')->sum();
     }
 
     /**
      * The current edition provisions taxe amount for the client.
      */
-    public function currentProvisionElementsTaxeAmount(): float
+    public function currentProvisionElementsNetAmount(): float
     {
-        return $this->currentProvisionElements()->pluck('price.tax_amount')->sum();
+        return $this->currentProvisionElements->pluck('price.net_amount')->sum();
+    }
+
+    /**
+     * The current edition provisions taxe amount for the client.
+     */
+    public function currentProvisionElementsTaxAmount(): float
+    {
+        return $this->currentProvisionElements->pluck('price.tax_amount')->sum();
     }
 
     /**
