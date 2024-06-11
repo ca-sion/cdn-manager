@@ -56,6 +56,7 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
+            ->favicon(asset('https://coursedenoel.ch/assets/ssk/logo-cdn.svg'))
             ->databaseNotifications()
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
