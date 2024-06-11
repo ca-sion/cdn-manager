@@ -71,9 +71,9 @@ class ProvisionResource extends Resource
                         /*
                         Forms\Components\Toggle::make('has_content')
                             ->label('Contenu'),
+                        */
                         Forms\Components\Toggle::make('has_due_date')
                             ->label('Délai'),
-                        */
                         Forms\Components\Toggle::make('has_precision')
                             ->label('Précision')
                             ->default(true),

@@ -71,6 +71,9 @@ class ProvisionElementResource extends Resource
                     ->columns(3)
                     ->live()
                     ->schema([
+                        Forms\Components\DatePicker::make('due_date')
+                            ->label('Echéance')
+                            ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_due_date : false),
                         Forms\Components\TextInput::make('precision')
                             ->label('Précision')
                             ->maxLength(255)
@@ -318,7 +321,7 @@ class ProvisionElementResource extends Resource
                 Tables\Columns\TextColumn::make('price')
                     ->label('Montant')
                     ->state(fn (Model $record) => $record->has_product ? $record->price->amount('c') : null),
-                    // ->description(fn (Model $record) => $record->has_product && $record->price->netAmount('c') != $record->price->amount('c') ? $record->price->netAmount('c') : null),
+                // ->description(fn (Model $record) => $record->has_product && $record->price->netAmount('c') != $record->price->amount('c') ? $record->price->netAmount('c') : null),
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()

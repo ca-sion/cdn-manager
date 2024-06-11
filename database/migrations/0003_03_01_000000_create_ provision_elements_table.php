@@ -19,6 +19,7 @@ return new class extends Migration
 
             $table->string('status')->nullable();
             $table->string('secondary_status')->nullable();
+            $table->date('due_date')->nullable();
             $table->string('precision')->nullable();
             $table->float('numeric_indicator')->nullable();
             $table->string('textual_indicator')->nullable();
@@ -52,6 +53,7 @@ return new class extends Migration
 
             $table->integer('order')->nullable();
             $table->string('note')->nullable();
+            $table->json('content')->nullable();
             $table->json('meta')->nullable();
             $table->softDeletes();
             $table->timestamps();

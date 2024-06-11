@@ -180,7 +180,8 @@ class ClientResource extends Resource
                 Tables\Actions\Action::make('pdf')
                     ->label('Fiche')
                     ->url(fn (Model $record): string => $record->pdfLink)
-                    ->openUrlInNewTab(),
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-document'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

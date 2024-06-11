@@ -136,7 +136,11 @@
         <br>
 
         <h2 style="font-size: medium;">
-            {{ $invoice->title }}
+            @if ($invoice->is_pro_forma)
+                Facture proforma {{ $invoice->number }}
+            @else
+                {{ $invoice->title }}
+            @endif
             @if ($invoice->edition?->name)
                 · {{ $invoice->edition->name }}
             @endif
@@ -144,7 +148,11 @@
 
         <div style="font-size: x-small;">
             <p>Madame, Monsieur,</p>
-            <p>Nous vous adressons la présente facture pour le versement du montant convenu.</p>
+            @if ($invoice->is_pro_forma)
+                <p>Nous vous adressons la présente facture proforma comme convenu.</p>
+            @else
+                <p>Nous vous adressons la présente facture pour le versement du montant convenu.</p>
+            @endif
 
             @if ($invoice->client_reference)
             <table>
@@ -204,13 +212,21 @@
             </tbody>
         </table>
 
-        <table width="100%" style="font-size: x-small;margin-top: 10px;;margin-bottom: 10px;">
+        <table width="100%" style="font-size: x-small;margin-top: 10px;margin-bottom: 10px;" class="break-avoid">
             <tr>
                 <td style="width: 70%;">
 
                 </td>
                 <td style="width: 30%;">
                     <table width="100%">
+                        <tr>
+                            <td align="right" style="width: 50%;">
+                                Net
+                            </td>
+                            <td align="right" style="width: 50%;">
+                                {{ App\Classes\Price::of($invoice->total_net)->amount('pdf') }}
+                            </td>
+                        </tr>
                         <tr>
                             <td align="right" style="width: 50%;">
                                 TVA
@@ -220,10 +236,10 @@
                             </td>
                         </tr>
                         <tr>
-                            <td align="right" style="width: 50%;">
+                            <td align="right" style="width: 50%;font-weight: bold;">
                                 Total
                             </td>
-                            <td align="right" style="width: 50%;">
+                            <td align="right" style="width: 50%;font-weight: bold;">
                                 {{ App\Classes\Price::of($invoice->total)->amount('pdf') }}
                             </td>
                         </tr>
@@ -232,10 +248,18 @@
             </tr>
         </table>
 
+        @if ($invoice->is_pro_forma)
+        <div style="font-size: x-small;">
+            <p>Facture proforma, aucun flux d'argent.</p>
+        </div>
+        @endif
+
     </div>
     <!-- container -->
 
+    @if (! $invoice->is_pro_forma)
     {!! $qrBillOutput !!}
+    @endif
 
 </body>
 </html>

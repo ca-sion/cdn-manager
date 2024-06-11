@@ -42,7 +42,8 @@ class InvoicesRelationManager extends RelationManager
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('pdf')
                     ->url(fn (Model $record): string => $record->link)
-                    ->openUrlInNewTab(),
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-document'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

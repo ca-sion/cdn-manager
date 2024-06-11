@@ -14,7 +14,6 @@ use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
 use App\Services\PricingService;
 use Filament\Resources\Resource;
-use Filament\Support\Enums\FontWeight;
 use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\InvoiceResource\Pages;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
@@ -43,19 +42,23 @@ class InvoiceResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('client_id')
+                    ->label('Client')
                     ->relationship('client', 'name')
                     ->searchable()
                     ->preload()
                     ->hiddenOn(InvoicesRelationManager::class),
                 Forms\Components\Select::make('status')
+                    ->label('Statut')
                     ->default('draft')
                     ->options(InvoiceStatusEnum::class)
                     ->live()
                     ->required(),
                 Forms\Components\TextInput::make('title')
+                    ->label('Titre')
                     ->default(fn () => InvoiceService::generateInvoiceTitle())
                     ->maxLength(255),
                 Forms\Components\TextInput::make('number')
+                    ->label('Numéro de facture')
                     ->default(fn () => InvoiceService::generateInvoiceNumber())
                     ->hintAction(
                         Forms\Components\Actions\Action::make('syncQrReference')
@@ -66,13 +69,17 @@ class InvoiceResource extends Resource
                             })
                     )
                     ->maxLength(255),
-                Forms\Components\DatePicker::make('date'),
-                Forms\Components\DatePicker::make('due_date'),
+                Forms\Components\DatePicker::make('date')->label('Date'),
+                Forms\Components\DatePicker::make('due_date')->label('Echéance'),
+                Forms\Components\DatePicker::make('paid_on')->label('Payé le'),
                 Forms\Components\TextInput::make('reference')
+                    ->label('Référence')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('client_reference')
+                    ->label('Référence pour le client')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('qr_reference')
+                    ->label('Référence QR')
                     ->hintAction(
                         Forms\Components\Actions\Action::make('syncQrReference')
                             ->label('Générer')
@@ -86,8 +93,11 @@ class InvoiceResource extends Resource
                     ->live()
                     ->maxLength(255),
                 Forms\Components\Toggle::make('is_pro_forma')
+                    ->label('Facture proforma ?')
                     ->default(false),
                 Forms\Components\Repeater::make('positions')
+                    ->label('Positions')
+                    ->addActionLabel('Ajouter une position')
                     ->columnSpanFull()
                     ->columns(6)
                     ->live()
@@ -99,7 +109,7 @@ class InvoiceResource extends Resource
                     )
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('nom'),
+                            ->label('Nom'),
                         Forms\Components\TextInput::make('quantity')
                             ->label('Quantité')
                             ->numeric()
@@ -134,13 +144,14 @@ class InvoiceResource extends Resource
                             }),
                     ]),
                 Forms\Components\TextInput::make('total')
+                    ->label('Total')
                     ->numeric()
                     ->readOnly()
                     ->prefix('CHF')
                     ->dehydrated(false),
-                Forms\Components\RichEditor::make('content'),
-                Forms\Components\Textarea::make('footer'),
-                Forms\Components\Textarea::make('note'),
+                Forms\Components\RichEditor::make('content')->label('Contenu'),
+                Forms\Components\Textarea::make('footer')->label('Pied de page'),
+                Forms\Components\Textarea::make('note')->label('Note'),
             ]);
     }
 
@@ -159,8 +170,11 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('client.name')
                     ->label('Client')
                     ->searchable(),
+                /*
                 Tables\Columns\TextColumn::make('title')
+                    ->label('Titre')
                     ->searchable(),
+                */
                 Tables\Columns\TextColumn::make('number')
                     ->label('Numéro')
                     ->sortable(),
@@ -176,6 +190,9 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('totalTax')
                     ->label('Taxes')
                     ->money('CHF', 0, 'fr_CH'),
+                Tables\Columns\TextColumn::make('paid_on')
+                    ->label('Payé le')
+                    ->date('d M Y'),
             ])
             ->filters([
                 //
@@ -184,7 +201,8 @@ class InvoiceResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('pdf')
                     ->url(fn (Invoice $record): string => $record->link)
-                    ->openUrlInNewTab(),
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-document'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

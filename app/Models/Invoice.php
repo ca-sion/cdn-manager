@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Classes\Price;
-use App\Enums\InvoiceStatusEnum;
 use App\Traits\Editionable;
+use App\Enums\InvoiceStatusEnum;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -30,7 +30,7 @@ class Invoice extends Model
     {
         return [
             'positions' => 'array',
-            'status' => InvoiceStatusEnum::class,
+            'status'    => InvoiceStatusEnum::class,
         ];
     }
 
@@ -89,6 +89,16 @@ class Invoice extends Model
     {
         return Attribute::make(
             get: fn () => $this->items->pluck('price.amount')->sum(),
+        );
+    }
+
+    /**
+     * Get the invoice's net total.
+     */
+    protected function totalNet(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->items->pluck('price.net_amount')->sum(),
         );
     }
 
