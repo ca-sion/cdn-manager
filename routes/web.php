@@ -1,12 +1,12 @@
 <?php
 
 use App\Livewire\AdvertiserForm;
+use App\Livewire\FrontEditClient;
 use App\Livewire\FrontListClients;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
-use App\Livewire\FrontEditClient;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
 
 Route::get('/', function () {

@@ -79,7 +79,7 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('tax_rate')
                     ->label('TVA')
                     ->numeric(),
-                    Tables\Columns\SelectColumn::make('tax_rate')
+                Tables\Columns\SelectColumn::make('tax_rate')
                     ->label('TVA')
                     ->options([
                         '8.1' => '8.1',
@@ -87,7 +87,7 @@ class ProductResource extends Resource
                         '2.6' => '2.1',
                     ]),
 
-                    Tables\Columns\CheckboxColumn::make('include_vat')
+                Tables\Columns\CheckboxColumn::make('include_vat')
                     ->label('Inclure TVA'),
                 /*
                 Tables\Columns\TextColumn::make('unit')

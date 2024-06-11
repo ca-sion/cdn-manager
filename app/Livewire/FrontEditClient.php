@@ -2,23 +2,20 @@
 
 namespace App\Livewire;
 
-use Filament\Forms;
 use App\Models\Client;
-use Filament\Forms\Get;
 use Livewire\Component;
 use Filament\Forms\Form;
-use App\Models\Provision;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\View\View;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Repeater;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Notifications\Notification;
 
 class FrontEditClient extends Component implements HasForms
 {
@@ -65,7 +62,7 @@ class FrontEditClient extends Component implements HasForms
                                     ->downloadable()
                                     ->imagePreviewHeight('50')
                                     ->visible(fn (Model $record) => $record->provision->has_media),
-                            ])
+                            ]),
                     ]),
 
                 Section::make('Données de contact')

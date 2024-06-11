@@ -10,9 +10,9 @@ use Livewire\Component;
 use Filament\Forms\Form;
 use App\Models\Provision;
 use App\Models\ProvisionElement;
-use App\Notifications\ClientAdvertiserFormCreated;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\URL;
 use Filament\Forms\Components\Wizard;
 use Illuminate\Support\Facades\Blade;
 use Filament\Forms\Components\Section;
@@ -22,8 +22,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Concerns\InteractsWithForms;
-use Illuminate\Routing\Redirector;
-use Illuminate\Support\Facades\URL;
+use App\Notifications\ClientAdvertiserFormCreated;
 
 class AdvertiserForm extends Component implements HasForms
 {
@@ -186,12 +185,12 @@ class AdvertiserForm extends Component implements HasForms
                                     $totalNet = $provisionCost + $donnation_provision_amount;
 
                                     return view('livewire.advertiser-form-order-details', [
-                                        'total_net' => Price::of($totalNet)->amount('c'),
-                                        'total_taxes' => $totalTaxes > 0 ? Price::of($totalTaxes)->amount('c') : '-',
-                                        'total' => Price::of($total)->amount('c'),
-                                        'data' => json_decode(json_encode($livewire->data)),
-                                        'provisions' => $provisions,
-                                        'donnationProvisionAmount' => $donnation_provision_amount ? Price::of($donnation_provision_amount)->amount('c') : null,
+                                        'total_net'                 => Price::of($totalNet)->amount('c'),
+                                        'total_taxes'               => $totalTaxes > 0 ? Price::of($totalTaxes)->amount('c') : '-',
+                                        'total'                     => Price::of($total)->amount('c'),
+                                        'data'                      => json_decode(json_encode($livewire->data)),
+                                        'provisions'                => $provisions,
+                                        'donnationProvisionAmount'  => $donnation_provision_amount ? Price::of($donnation_provision_amount)->amount('c') : null,
                                         'donnationProvisionMention' => $donnation_provision_mention,
                                     ]);
                                 }),

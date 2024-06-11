@@ -23,15 +23,15 @@ enum InvoiceStatusEnum: string implements HasColor, HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::Draft      => 'Brouillon',
-            self::Ready      => 'Prêt',
+            self::Draft          => 'Brouillon',
+            self::Ready          => 'Prêt',
             self::Sent           => 'Envoyé',
             self::SentByPost     => 'Envoyé par poste',
             self::ToModify       => 'À modifier',
             self::ToRelaunch     => 'À relancer',
             self::Relaunched     => 'Relancé',
             self::ActionRequired => 'Action requise',
-            self::Payed       => 'Payé',
+            self::Payed          => 'Payé',
             self::Suspended      => 'Suspendu',
             self::Cancelled      => 'Annulé',
             self::MadeBy         => 'Fait par…',
@@ -41,15 +41,15 @@ enum InvoiceStatusEnum: string implements HasColor, HasLabel
     public function getColor(): string|array|null
     {
         return match ($this) {
-            self::Draft      => 'warning',
-            self::Ready      => 'warning',
+            self::Draft          => 'warning',
+            self::Ready          => 'warning',
             self::Sent           => 'success',
             self::SentByPost     => 'success',
             self::ToModify       => 'warning',
             self::ToRelaunch     => 'warning',
             self::Relaunched     => 'info',
             self::ActionRequired => 'danger',
-            self::Payed       => 'success',
+            self::Payed          => 'success',
             self::Suspended      => 'gray',
             self::Cancelled      => 'gray',
             self::MadeBy         => 'gray',
