@@ -2,13 +2,13 @@
 
 namespace App\Filament\Imports;
 
-use App\Enums\InvoiceStatusEnum;
 use App\Models\Invoice;
+use Illuminate\Support\Carbon;
+use App\Enums\InvoiceStatusEnum;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Models\Import;
 use Filament\Actions\Imports\Exceptions\RowImportFailedException;
-use Illuminate\Support\Carbon;
 
 class ReconcileInvoiceImporter extends Importer
 {
@@ -85,10 +85,10 @@ class ReconcileInvoiceImporter extends Importer
 
     public static function getCompletedNotificationBody(Import $import): string
     {
-        $body = 'Le rapprochement de factures a été fait sur ' . number_format($import->successful_rows) . ' transactions.';
+        $body = 'Le rapprochement de factures a été fait sur '.number_format($import->successful_rows).' transactions.';
 
         if ($failedRowsCount = $import->getFailedRowsCount()) {
-            $body .= ' ' . number_format($failedRowsCount). ' transactions n\'ont pas pu être traitées correctement.';
+            $body .= ' '.number_format($failedRowsCount).' transactions n\'ont pas pu être traitées correctement.';
         }
 
         return $body;
