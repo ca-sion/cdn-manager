@@ -7,6 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <title>{{ config('app.name') }}</title>
+        <meta name="description" content="La Course de Noël se déroule chaque année au mois de décembre à travers les rues de la Vieille ville de Sion. Ces courses conviviales, sur une boucle d'un kilomètre, débutent par les catégories des plus jeunes pour terminer avec la course des Elites.">
         <link rel="icon" type="image/svg+xml" href="https://coursedenoel.ch/assets/ssk/logo-cdn.svg">
         <link rel="mask-icon" href="https://coursedenoel.ch/assets/ssk/logo-cdn.svg" color="#5bbad5">
 
