@@ -311,7 +311,7 @@ class AdvertiserForm extends Component implements HasForms
                 'recipient_id'   => $client->id,
                 'recipient_type' => 'App\Models\Client',
                 'provision_id'   => $packProvision,
-                'status'         => 'approved',
+                'status'         => 'to_modify',
                 'has_product'    => true,
                 'quantity'       => 1,
                 'cost'           => $provision->product?->cost,
