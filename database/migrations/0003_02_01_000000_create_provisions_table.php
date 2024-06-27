@@ -40,6 +40,7 @@ return new class extends Migration
             $table->boolean('has_accreditation')->nullable();
             $table->boolean('has_vip')->nullable();
             $table->boolean('has_placeholder')->nullable();
+            $table->boolean('has_subprovision')->nullable();
 
             $table->foreignId('dicastry_id')->nullable()->constrained('dicastries')->cascadeOnUpdate()->nullOnDelete();
             $table->foreignId('category_id')->nullable()->constrained('provision_categories')->cascadeOnUpdate()->nullOnDelete();

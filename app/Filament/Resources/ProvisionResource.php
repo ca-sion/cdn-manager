@@ -103,6 +103,9 @@ class ProvisionResource extends Resource
                             ->label('VIP'),
                         Forms\Components\Toggle::make('has_placeholder')
                             ->label('Placeholder'),
+                        Forms\Components\Toggle::make('has_subprovision')
+                            ->label('Sous-provisions')
+                            ->live(),
                     ]),
                 Forms\Components\Select::make('product_id')
                     ->label('Produit')
@@ -111,10 +114,14 @@ class ProvisionResource extends Resource
                     ->preload()
                     ->createOptionForm(fn (Form $form): Form => ProductResource::form($form))
                     ->visible(fn (Get $get) => $get('has_product')),
-                /*
-                    Forms\Components\TextInput::make('type')
-                    ->label('Type'),
-                */
+                Forms\Components\Select::make('subProvisions')
+                    ->label('Sous-provisions')
+                    ->relationship('subProvisions', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm(fn (Form $form): Form => ProductResource::form($form))
+                    ->visible(fn (Get $get) => $get('has_subprovision')),
             ]);
     }
 

@@ -74,6 +74,15 @@ class AdvertiserForm extends Component implements HasForms
                                         ->descriptions(Provision::all()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->netAmount('c')]))
                                         ->live(),
                                 ]),
+                            Section::make('Packs')
+                                ->schema([
+                                    CheckboxList::make('pack_provisions')
+                                        ->label('')
+                                        ->hint('Prix avec TVA')
+                                        ->options(Provision::where('category_id', setting('advertiser_form_pack_category'))->get()->mapWithKeys(fn ($item) => [$item->id => $item->description ?? $item->name]))
+                                        ->descriptions(Provision::all()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->amount('c')]))
+                                        ->live(),
+                                ]),
                             Section::make('Don d\'honneur')
                                 ->description('Crédité dans l\'encarté du Nouvelliste')
                                 ->columns(3)
@@ -170,9 +179,13 @@ class AdvertiserForm extends Component implements HasForms
                             Placeholder::make('details')
                                 ->label(new HtmlString('<div class="format"><h2>Détails de la commande</h2></div>'))
                                 ->content(function (Get $get, Component $livewire) {
-                                    $provisionIds = collect($get('journal_provisions'))->merge($get('screen_provisions'))->merge($get('banner_provisions'));
+                                    $provisionIds = collect($get('journal_provisions'))
+                                        ->merge($get('screen_provisions'))
+                                        ->merge($get('banner_provisions'))
+                                        ->merge($get('pack_provisions'));
 
                                     $provisions = Provision::find($provisionIds);
+                                    $subProvisions = $provisions->load('subProvisions')->pluck('subProvisions')->collapse();
                                     $provisionPrices = $provisions->pluck('product.price.amount', 'id')->sum();
                                     $provisionTaxes = $provisions->pluck('product.price.tax_amount', 'id')->sum();
                                     $provisionCost = $provisions->pluck('product.price.cost', 'id')->sum();
@@ -189,7 +202,7 @@ class AdvertiserForm extends Component implements HasForms
                                         'total_taxes'               => $totalTaxes > 0 ? Price::of($totalTaxes)->amount('c') : '-',
                                         'total'                     => Price::of($total)->amount('c'),
                                         'data'                      => json_decode(json_encode($livewire->data)),
-                                        'provisions'                => $provisions,
+                                        'provisions'                => $provisions->merge($subProvisions),
                                         'donnationProvisionAmount'  => $donnation_provision_amount ? Price::of($donnation_provision_amount)->amount('c') : null,
                                         'donnationProvisionMention' => $donnation_provision_mention,
                                     ]);
@@ -289,6 +302,36 @@ class AdvertiserForm extends Component implements HasForms
                 'include_vat'    => $provision->product?->include_vat ?? false,
             ]);
             $client->provisionElements()->save($screenProvisionElement);
+        }
+
+        // Pack
+        foreach ($dataObject->pack_provisions as $packProvision) {
+            $provision = Provision::find($packProvision);
+            $packProvisionElement = ProvisionElement::create([
+                'recipient_id'   => $client->id,
+                'recipient_type' => 'App\Models\Client',
+                'provision_id'   => $packProvision,
+                'status'         => 'approved',
+                'has_product'    => true,
+                'quantity'       => 1,
+                'cost'           => $provision->product?->cost,
+                'tax_rate'       => $provision->product?->tax_rate,
+                'include_vat'    => $provision->product?->include_vat ?? false,
+            ]);
+            $client->provisionElements()->save($packProvisionElement);
+
+            // Subprovisions
+            foreach ($provision->subProvisions as $subProvision) {
+                $provision = Provision::find($subProvision);
+                $subProvisionElement = ProvisionElement::create([
+                    'recipient_id'   => $client->id,
+                    'recipient_type' => 'App\Models\Client',
+                    'provision_id'   => $subProvision->id,
+                    'status'         => 'to_prepare',
+                ]);
+                $client->provisionElements()->save($subProvisionElement);
+            }
+
         }
 
         // Donation

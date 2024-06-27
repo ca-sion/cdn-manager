@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Provision extends Model
 {
@@ -48,5 +49,21 @@ class Provision extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProvisionCategory::class);
+    }
+
+    /**
+     * The sub provisions that belong to the provision.
+     */
+    public function subProvisions(): BelongsToMany
+    {
+        return $this->belongsToMany(Provision::class, 'provision_subprovision', 'subprovision_id', 'provision_id');
+    }
+
+    /**
+     * The parent provision that belong to the provision.
+     */
+    public function parentProvisions(): BelongsToMany
+    {
+        return $this->belongsToMany(Provision::class, 'provision_subprovision', 'provision_id', 'subprovision_id');
     }
 }

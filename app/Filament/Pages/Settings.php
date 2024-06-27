@@ -43,6 +43,9 @@ class Settings extends BaseSettings
                     Select::make('advertiser_form_screen_category')
                         ->label('Ecran : Catégorie des prestations')
                         ->options(ProvisionCategory::all()->pluck('name', 'id')),
+                    Select::make('advertiser_form_pack_category')
+                        ->label('Packs : Catégorie des prestations')
+                        ->options(ProvisionCategory::all()->pluck('name', 'id')),
                     Select::make('advertiser_form_donation_provision')
                         ->label('Donation : Prestation')
                         ->options(Provision::all()->pluck('name', 'id')),
