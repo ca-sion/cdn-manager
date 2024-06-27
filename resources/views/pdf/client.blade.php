@@ -168,9 +168,14 @@
             <tr class="text-sm">
                 <td valign="top">
                     <div>{{ $pe->provision->name }}</div>
-                    @if ($pe->provision->description)
-                        <div style="color: gray; font-size: xx-small;">{{ $pe->provision->description }}</div>
-                    @endif
+                    <div style="color: gray; font-size: xx-small;">
+                        @if ($pe->provision->description)
+                            {{ $pe->provision->description }}
+                        @endif
+                        @if ($pe->textual_indicator)
+                            {{ str($pe->textual_indicator) }}
+                        @endif
+                    </div>
                 </td>
                 <td valign="top" class="text-xs">{{-- $pe->status ? $pe->status->getLabel() : null --}}</td>
                 <td valign="top" class="text-xs">{{ str($pe->precision) }}</td>
