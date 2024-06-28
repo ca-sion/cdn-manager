@@ -17,6 +17,50 @@
                 @if ($provision->precision)
                     - {{ $provision->precision }}
                 @endif
+                <span style="font-size: xx-small;">
+                @if ($provision->textual_indicator)
+                    - {{ str($provision->textual_indicator) }}
+                @endif
+                @if ($provision->numeric_indicator)
+                    - ({{ str($provision->numeric_indicator) }})
+                @endif
+                @if ($provision->goods_to_be_delivered)
+                    - {{ str($provision->goods_to_be_delivered) }}
+                @endif
+                @if ($provision->vip_invitation_number)
+                    - Nb. invit. : {{ str($provision->vip_invitation_number) }}
+                @endif
+                @if ($provision->vip_category)
+                <!--[{{ str($provision->vip_category) }}]-->
+                @endif
+                @if ($provision->accreditation_type)
+                    <!--[{{ str($provision->accreditation_type) }}]-->
+                @endif
+                @if ($provision->media_status)
+                    <!--[{{ str($provision->media_status) }}]-_>
+                @endif
+                @if ($provision->tracking_status)
+                    <!--[{{ str($provision->tracking_status) }}]-->
+                @endif
+                @if ($provision->tracking_date)
+                    - Suivi le {{ str($provision->tracking_date->locale('fr_CH')->isoFormat('L')) }}
+                @endif
+                @if ($provision->contact_date)
+                    - Rendez-vous : {{ str($provision->contact_date->locale('fr_CH')->isoFormat('L')) }}
+                @endif
+                @if ($provision->contact_time)
+                    - {{ str($provision->contact_time) }}
+                @endif
+                @if ($provision->contact_location)
+                    - {{ str($provision->contact_location) }}
+                @endif
+                @if ($provision->contact_text)
+                    - Contact : {{ str($provision->contact_text) }}
+                @endif
+                @if ($provision->contact_id)
+                    - Contact : {{ str($provision->contact?->name) }}
+                @endif
+                </span>
             </td>
             <td class="px-2" style="font-size: xx-small;">
                 @if ($provision->cost)

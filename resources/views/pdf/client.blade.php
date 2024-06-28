@@ -195,7 +195,7 @@
                         {{ str($pe->goods_to_be_delivered) }}
                     @endif
                     @if ($pe->vip_invitation_number)
-                        Invitations : {{ str($pe->vip_invitation_number) }}
+                        Nb. invit. : {{ str($pe->vip_invitation_number) }}
                     @endif
                     @if ($pe->vip_category)
                         <!--[{{ str($pe->vip_category) }}]-->
