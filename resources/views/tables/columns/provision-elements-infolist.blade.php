@@ -22,7 +22,7 @@
                     - {{ str($provision->textual_indicator) }}
                 @endif
                 @if ($provision->numeric_indicator)
-                    - ({{ str($provision->numeric_indicator) }})
+                    ({{ str($provision->numeric_indicator) }})
                 @endif
                 @if ($provision->goods_to_be_delivered)
                     - {{ str($provision->goods_to_be_delivered) }}
