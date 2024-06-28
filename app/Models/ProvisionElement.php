@@ -42,6 +42,9 @@ class ProvisionElement extends Model implements HasMedia
     {
         return [
             'status' => ProvisionElementStatusEnum::class,
+            'due_date' => 'date',
+            'contact_date' => 'date',
+            'tracking_date' => 'date',
         ];
     }
 

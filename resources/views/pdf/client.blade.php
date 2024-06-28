@@ -172,13 +172,62 @@
                         @if ($pe->provision->description)
                             {{ $pe->provision->description }}
                         @endif
-                        @if ($pe->textual_indicator)
-                            {{ str($pe->textual_indicator) }}
+                        @if ($pe->note)
+                            ({{ str($pe->note) }})
+                        @endif
+                        @if ($pe->due_date)
+                            Délai : {{ str($pe->due_date->locale('fr_CH')->isoFormat('L')) }}
                         @endif
                     </div>
                 </td>
                 <td valign="top" class="text-xs">{{-- $pe->status ? $pe->status->getLabel() : null --}}</td>
-                <td valign="top" class="text-xs">{{ str($pe->precision) }}</td>
+                <td valign="top" class="text-xs">
+                    @if ($pe->precision)
+                        {{ str($pe->precision) }}
+                    @endif
+                    @if ($pe->textual_indicator)
+                        {{ str($pe->textual_indicator) }}
+                    @endif
+                    @if ($pe->numeric_indicator)
+                        ({{ str($pe->numeric_indicator) }})
+                    @endif
+                    @if ($pe->goods_to_be_delivered)
+                        {{ str($pe->goods_to_be_delivered) }}
+                    @endif
+                    @if ($pe->vip_invitation_number)
+                        Invitations : {{ str($pe->vip_invitation_number) }}
+                    @endif
+                    @if ($pe->vip_category)
+                        <!--[{{ str($pe->vip_category) }}]-->
+                    @endif
+                    @if ($pe->accreditation_type)
+                        <!--[{{ str($pe->accreditation_type) }}]-->
+                    @endif
+                    @if ($pe->media_status)
+                        <!--[{{ str($pe->media_status) }}]-_>
+                    @endif
+                    @if ($pe->tracking_status)
+                        <!--[{{ str($pe->tracking_status) }}]-->
+                    @endif
+                    @if ($pe->tracking_date)
+                        Suivi le {{ str($pe->tracking_date->locale('fr_CH')->isoFormat('L')) }}
+                    @endif
+                    @if ($pe->contact_date)
+                        Rendez-vous : {{ str($pe->contact_date->locale('fr_CH')->isoFormat('L')) }}
+                    @endif
+                    @if ($pe->contact_time)
+                        {{ str($pe->contact_time) }}
+                    @endif
+                    @if ($pe->contact_location)
+                        {{ str($pe->contact_location) }}
+                    @endif
+                    @if ($pe->contact_text)
+                        Contact : {{ str($pe->contact_text) }}
+                    @endif
+                    @if ($pe->contact_id)
+                        Contact : {{ str($pe->contact?->name) }}
+                    @endif
+                </td>
                 <td valign="top" align="right">
                     <div>{{ $pe->tax_rate ? $pe->price?->taxAmount('npdf') : null }}</div>
                 </td>
