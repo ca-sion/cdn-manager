@@ -16,6 +16,7 @@ use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 
 class FrontListClients extends Component implements HasForms, HasTable
@@ -60,6 +61,12 @@ class FrontListClients extends Component implements HasForms, HasTable
             ->extremePaginationLinks()
             ->striped()
             ->columns([
+                IconColumn::make('pdfLink')
+                    ->label('')
+                    ->icon('heroicon-o-document')
+                    ->url(fn (Model $record): string => $record->pdfLink)
+                    ->openUrlInNewTab()
+                    ->size(IconColumn\IconColumnSize::Small),
                 TextColumn::make('category.name')
                     ->label('Catégorie')
                     ->html()
@@ -114,6 +121,7 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->html()
                     ->formatStateUsing(fn (Model $record, string $state): HtmlString => new HtmlString(
                         '<a href="'.$record->invoices?->where('id', $state)->first()?->link.'" target="_blank">'.
+                        '🧾 '.
                         $record->invoices?->where('id', $state)->first()?->number.' ('.
                         \Carbon\Carbon::parse($record->invoices?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'

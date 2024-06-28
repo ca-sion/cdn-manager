@@ -18,9 +18,10 @@
                     - {{ $provision->precision }}
                 @endif
             </td>
-            <td class="px-2">
+            <td class="px-2" style="font-size: xx-small;">
                 @if ($provision->cost)
                     {{ $provision->price->amount('c') }}
+                    <span style="color: gray;">({{ $provision->price->netAmount('c') }})</span>
                 @endif
             </td>
         </tr>
