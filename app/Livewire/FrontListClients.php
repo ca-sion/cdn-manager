@@ -108,6 +108,7 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->html()
                     ->formatStateUsing(fn (Model $record, string $state): HtmlString => new HtmlString(
                         '<a href="'.$record->documents?->where('id', $state)->first()?->getFirstMediaUrl('*').'">'.
+                        '📄 '.
                         $record->documents?->where('id', $state)->first()?->name.' ('.
                         \Carbon\Carbon::parse($record->documents?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'
