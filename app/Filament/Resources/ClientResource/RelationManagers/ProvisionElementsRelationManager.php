@@ -27,6 +27,8 @@ class ProvisionElementsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('name')
+            ->reorderable('order_column')
+            ->defaultSort('order_column')
             ->columns([
                 Tables\Columns\TextColumn::make('provision.name'),
                 Tables\Columns\TextColumn::make('status_view')
