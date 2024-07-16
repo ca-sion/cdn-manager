@@ -51,7 +51,7 @@ return new class extends Migration
             $table->string('vip_response_status')->nullable();
             $table->string('vip_guests')->nullable();
 
-            $table->integer('order')->nullable();
+            $table->integer('order_column')->nullable();
             $table->string('note')->nullable();
             $table->json('content')->nullable();
             $table->json('meta')->nullable();

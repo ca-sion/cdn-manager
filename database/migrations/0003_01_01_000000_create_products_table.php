@@ -21,6 +21,7 @@ return new class extends Migration
             $table->float('cost')->nullable();
             $table->float('tax_rate')->nullable();
             $table->boolean('include_vat')->nullable();
+            $table->integer('order_column')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();
         });

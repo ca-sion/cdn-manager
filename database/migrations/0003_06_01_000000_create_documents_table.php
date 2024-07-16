@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('validity_year_end')->nullable();
             $table->json('medias')->nullable();
 
+            $table->integer('order_column')->nullable();
             $table->string('note')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();

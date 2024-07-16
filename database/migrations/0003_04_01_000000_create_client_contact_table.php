@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained('clients')->cascadeOnUpdate()->cascadeOnDelete();
             $table->foreignId('contact_id')->constrained('contacts')->cascadeOnUpdate()->cascadeOnDelete();
             $table->string('type')->nullable();
+            $table->integer('order_column')->nullable();
             $table->string('note')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();

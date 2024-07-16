@@ -13,13 +13,16 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 
-class ProvisionElement extends Model implements HasMedia
+class ProvisionElement extends Model implements HasMedia, Sortable
 {
     use Editionable;
     use HasFactory;
     use InteractsWithMedia;
     use SoftDeletes;
+    use SortableTrait;
 
     /**
      * The attributes that aren't mass assignable.

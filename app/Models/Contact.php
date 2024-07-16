@@ -36,7 +36,7 @@ class Contact extends Model
      */
     public function clients(): BelongsToMany
     {
-        return $this->belongsToMany(Client::class)->withPivot(['type', 'note'])->withTimestamps();
+        return $this->belongsToMany(Client::class)->withPivot(['type', 'note', 'order_column'])->withTimestamps();
     }
 
     /**

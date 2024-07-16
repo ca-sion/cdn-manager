@@ -37,6 +37,7 @@ return new class extends Migration
 
             $table->string('content')->nullable();
             $table->string('footer')->nullable();
+            $table->integer('order_column')->nullable();
             $table->string('note')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();

@@ -48,7 +48,7 @@ class Client extends Model implements HasMedia
      */
     public function contacts(): BelongsToMany
     {
-        return $this->belongsToMany(Contact::class)->withPivot(['type', 'note'])->withTimestamps();
+        return $this->belongsToMany(Contact::class)->withPivot(['type', 'note', 'order_column'])->withTimestamps();
     }
 
     /**

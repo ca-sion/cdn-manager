@@ -40,6 +40,7 @@ return new class extends Migration
 
             $table->foreignId('category_id')->nullable()->constrained('client_categories')->cascadeOnUpdate()->nullOnDelete();
 
+            $table->integer('order_column')->nullable();
             $table->string('note')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();
