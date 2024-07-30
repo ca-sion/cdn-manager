@@ -51,8 +51,8 @@ class AdvertiserForm extends Component implements HasForms
                                     CheckboxList::make('journal_provisions')
                                         ->label('')
                                         ->hint('Prix hors TVA')
-                                        ->options(Provision::where('category_id', setting('advertiser_form_journal_category'))->get()->mapWithKeys(fn ($item) => [$item->id => $item->description ?? $item->name]))
-                                        ->descriptions(Provision::where('category_id', setting('advertiser_form_journal_category'))->get()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->netAmount() ? $item->product?->price->netAmount('c') : null]))
+                                        ->options(Provision::where('category_id', setting('advertiser_form_journal_category'))->orderBy('order_column')->get()->mapWithKeys(fn ($item) => [$item->id => $item->description ?? $item->name]))
+                                        ->descriptions(Provision::where('category_id', setting('advertiser_form_journal_category'))->orderBy('order_column')->get()->mapWithKeys(fn ($item) => [$item->id => $item->product?->price->netAmount() ? $item->product?->price->netAmount('c') : null]))
                                         ->columns(2)
                                         ->live(),
                                 ]),
