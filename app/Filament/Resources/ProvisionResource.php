@@ -128,6 +128,8 @@ class ProvisionResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->reorderable('order_column')
+            ->defaultSort('order_column')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),

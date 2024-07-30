@@ -46,7 +46,7 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained('provision_categories')->cascadeOnUpdate()->nullOnDelete();
             $table->string('type')->nullable();
 
-            $table->integer('order')->nullable();
+            $table->integer('order_column')->nullable();
             $table->string('note')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();

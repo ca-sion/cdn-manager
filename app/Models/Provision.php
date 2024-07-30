@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 
-class Provision extends Model
+class Provision extends Model implements Sortable
 {
     use HasFactory;
+    use SortableTrait;
 
     /**
      * The attributes that aren't mass assignable.
