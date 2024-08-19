@@ -37,7 +37,7 @@
                     <!--[{{ str($provision->accreditation_type) }}]-->
                 @endif
                 @if ($provision->media_status)
-                    <!--[{{ str($provision->media_status) }}]-_>
+                    <!--[{{ str($provision->media_status) }}]-->
                 @endif
                 @if ($provision->tracking_status)
                     <!--[{{ str($provision->tracking_status) }}]-->
