@@ -4,8 +4,8 @@
         <label for="category" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Catégorie</label>
         <select name="category" id="category" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             <option value="">Toutes</option>
-            @foreach ($clientCategories as $cat)
-            <option value="{{ $cat->id }}" @selected($category == $cat->id)>{{ $cat->name }}</option>
+            @foreach ($clientCategories as $category)
+            <option value="{{ $category->id }}" @selected($categoryId == $category->id)>{{ $category->name }}</option>
             @endforeach
         </select>
     </div>
@@ -13,8 +13,8 @@
         <label for="provision" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Prestation</label>
         <select name="provision" id="provision" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             <option value="">Toutes</option>
-            @foreach ($provisions as $prov)
-            <option value="{{ $prov->id }}" @selected($provision == $prov->id)>{{ $prov->name }}</option>
+            @foreach ($provisions as $provision)
+            <option value="{{ $provision->id }}" @selected($provisionId == $provision->id)>{{ $provision->name }}</option>
             @endforeach
         </select>
     </div>
@@ -130,7 +130,7 @@
                     --}}
                     <td class="px-4 py-2">
                         <table>
-                            @foreach (($provision ? $client->provisionElements->where('provision.id', $provision) : $client->provisionElements) as $provision)
+                            @foreach (($provisionId ? $client->provisionElements->where('provision_id', $provisionId) : $client->provisionElements) as $provision)
                             <tr class="border-b border-gray-200 last:border-0">
                                 <td>
                                     <span

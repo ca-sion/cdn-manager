@@ -17,19 +17,16 @@ class PdfController extends Controller
         $displayAmount = (bool) request()->input('amount');
         $displayContacts = request()->input('contacts');
 
-        $category = request()->input('category');
-        $provision = request()->input('provision');
+        $categoryId = request()->input('category');
+        $provisionId = request()->input('provision');
         $provisions = request()->input('provisions', []);
 
         $clients = Client::with(['contacts', 'invoices', 'documents', 'category', 'provisionElements.provision'])
-        ->when($category, function (Builder $query, int $category) {
-            $query->where('category_id', $category);
+        ->when($categoryId, function (Builder $query, int $categoryId) {
+            $query->where('category_id', $categoryId);
         })
-        ->when($provision, function (Builder $query, int $provision) {
-            $query->whereRelation('provisionElements.provision', 'id', '=', $provision);
-        })
-        ->when($provisions, function (Builder $query, array $provisions) {
-            $query->whereRelation('provisionElements', 'id', '=', $provisions);
+        ->when($provisionId, function (Builder $query, int $provisionId) {
+            $query->whereRelation('provisionElements', 'provision_id', $provisionId);
         })
         ->get();
 
@@ -37,7 +34,7 @@ class PdfController extends Controller
         $clientCategories = ClientCategory::all();
         $provisions = Provision::all();
 
-        return view('pdf.clients', compact('clients', 'displayAmount', 'displayContacts', 'clientCategories', 'category', 'provision', 'provisions'));
+        return view('pdf.clients', compact('clients', 'displayAmount', 'displayContacts', 'clientCategories', 'categoryId', 'provisionId', 'provisions'));
     }
 
     public function client(Client $client)
