@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\ClientCategory;
 use App\Models\Edition;
 use App\Models\Provision;
+use App\Models\ProvisionCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,6 +20,8 @@ class PdfController extends Controller
 
         $categoryId = request()->input('category');
         $provisionId = request()->input('provision');
+        $provisionCategoryId = request()->input('provision_category');
+
         $provisions = request()->input('provisions', []);
 
         $clients = Client::with(['contacts', 'invoices', 'documents', 'category', 'provisionElements.provision'])
@@ -28,13 +31,17 @@ class PdfController extends Controller
         ->when($provisionId, function (Builder $query, int $provisionId) {
             $query->whereRelation('provisionElements', 'provision_id', $provisionId);
         })
+        ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
+            $query->whereRelation('provisionElements.provision', 'category_id', $provisionCategoryId);
+        })
         ->get();
 
         // Form
         $clientCategories = ClientCategory::all();
         $provisions = Provision::all();
+        $provisionCategories = ProvisionCategory::all();
 
-        return view('pdf.clients', compact('clients', 'displayAmount', 'displayContacts', 'clientCategories', 'categoryId', 'provisionId', 'provisions'));
+        return view('pdf.clients', compact('clients', 'provisions', 'displayAmount', 'displayContacts', 'clientCategories', 'provisionCategories', 'categoryId', 'provisionId', 'provisionCategoryId'));
     }
 
     public function client(Client $client)

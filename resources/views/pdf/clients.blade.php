@@ -10,6 +10,15 @@
         </select>
     </div>
     <div>
+        <label for="provisionCategory" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Catégorie de prestation</label>
+        <select name="provision_category" id="provisionCategory" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <option value="">Toutes</option>
+            @foreach ($provisionCategories as $provisionCategory)
+            <option value="{{ $provisionCategory->id }}" @selected($provisionCategoryId == $provisionCategory->id)>{{ $provisionCategory->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
         <label for="provision" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Prestation</label>
         <select name="provision" id="provision" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             <option value="">Toutes</option>
@@ -130,7 +139,13 @@
                     --}}
                     <td class="px-4 py-2">
                         <table>
-                            @foreach (($provisionId ? $client->provisionElements->where('provision_id', $provisionId) : $client->provisionElements) as $provision)
+                            @foreach ((
+                                $provisionCategoryId ? $client->provisionElements->filter(function ($provisionElement) use($provisionCategoryId) {
+                                    return $provisionElement->provision->category_id == $provisionCategoryId;
+                                }) :
+                                ($provisionId ? $client->provisionElements->where('provision_id', $provisionId) :
+                                $client->provisionElements)
+                                ) as $provision)
                             <tr class="border-b border-gray-200 last:border-0">
                                 <td>
                                     <span
@@ -139,8 +154,8 @@
                                         {{ $provision->status->getLabel() }}
                                     </span>
                                 </td>
-                                <td>{{ $provision->provision?->name }}</td>
-                                <td>{{ $provision->precision }}</td>
+                                <td><span class="me-2">{{ $provision->provision?->name }}</span></td>
+                                <td><span class="me-2">{{ $provision->precision }}</td>
                                 <td>{{ $provision->cost ? $provision->price->amount('c') : null }}</td>
                             </tr>
                             @endforeach
