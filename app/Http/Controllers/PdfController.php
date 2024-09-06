@@ -3,17 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\ClientCategory;
 use App\Models\Edition;
+use App\Models\Provision;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;
+use Illuminate\Database\Eloquent\Builder;
 
 class PdfController extends Controller
 {
     public function clients()
     {
-        $clients = Client::with(['contacts', 'invoices', 'documents', 'category', 'provisionElements.provision'])->get();
+        $displayAmount = (bool) request()->input('amount');
+        $displayContacts = request()->input('contacts');
 
-        return view('pdf.clients', ['clients' => $clients]);
+        $category = request()->input('category');
+        $provision = request()->input('provision');
+        $provisions = request()->input('provisions', []);
+
+        $clients = Client::with(['contacts', 'invoices', 'documents', 'category', 'provisionElements.provision'])
+        ->when($category, function (Builder $query, int $category) {
+            $query->where('category_id', $category);
+        })
+        ->when($provision, function (Builder $query, int $provision) {
+            $query->whereRelation('provisionElements', 'id', '=', $provision);
+        })
+        ->when($provisions, function (Builder $query, array $provisions) {
+            $query->whereRelation('provisionElements', 'id', '=', $provisions);
+        })
+        ->get();
+
+        // Form
+        $clientCategories = ClientCategory::all();
+        $provisions = Provision::all();
+
+        return view('pdf.clients', compact('clients', 'displayAmount', 'displayContacts', 'clientCategories', 'category', 'provision', 'provisions'));
     }
 
     public function client(Client $client)

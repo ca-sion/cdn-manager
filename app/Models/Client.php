@@ -112,7 +112,7 @@ class Client extends Model implements HasMedia
     }
 
     /**
-     * The current edition provisions taxe amount for the client.
+     * The current edition provisions net amount for the client.
      */
     public function currentProvisionElementsNetAmount(): float
     {
@@ -120,7 +120,7 @@ class Client extends Model implements HasMedia
     }
 
     /**
-     * The current edition provisions taxe amount for the client.
+     * The current edition provisions tax amount for the client.
      */
     public function currentProvisionElementsTaxAmount(): float
     {
