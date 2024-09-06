@@ -130,7 +130,7 @@
                     --}}
                     <td class="px-4 py-2">
                         <table>
-                            @foreach ($client->provisionElements->whereIn('id', [$provision]) as $provision)
+                            @foreach (($provision ? $client->provisionElements->where('provision.id', $provision) : $client->provisionElements) as $provision)
                             <tr class="border-b border-gray-200 last:border-0">
                                 <td>
                                     <span

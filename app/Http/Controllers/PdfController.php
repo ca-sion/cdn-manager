@@ -26,7 +26,7 @@ class PdfController extends Controller
             $query->where('category_id', $category);
         })
         ->when($provision, function (Builder $query, int $provision) {
-            $query->whereRelation('provisionElements', 'id', '=', $provision);
+            $query->whereRelation('provisionElements.provision', 'id', '=', $provision);
         })
         ->when($provisions, function (Builder $query, array $provisions) {
             $query->whereRelation('provisionElements', 'id', '=', $provisions);
