@@ -155,8 +155,66 @@
                                     </span>
                                 </td>
                                 <td><span class="me-2">{{ $provision->provision?->name }}</span></td>
+                                @if ($provision->precision)
                                 <td><span class="me-2">{{ $provision->precision }}</td>
-                                <td>{{ $provision->cost ? $provision->price->amount('c') : null }}</td>
+                                @endif
+                                @if ($provision->numeric_indicator)
+                                <td><span class="me-2">{{ $provision->numeric_indicator }}</td>
+                                @endif
+                                @if ($provision->textual_indicator)
+                                <td><span class="me-2">{{ $provision->textual_indicator }}</td>
+                                @endif
+                                @if ($provision->goods_to_be_delivered)
+                                <td><span class="me-2">{{ $provision->goods_to_be_delivered }}</td>
+                                @endif
+                                @if ($provision->contact)
+                                <td><span class="me-2">{{ $provision->contact?->name }}</td>
+                                @endif
+                                @if ($provision->contact_text)
+                                <td><span class="me-2">{{ $provision->contact_text }}</td>
+                                @endif
+                                @if ($provision->contact_location)
+                                <td><span class="me-2">{{ $provision->contact_location }}</td>
+                                @endif
+                                @if ($provision->contact_date)
+                                <td><span class="me-2">{{ $provision->contact_date }}</td>
+                                @endif
+                                @if ($provision->contact_time)
+                                <td><span class="me-2">{{ $provision->contact_time }}</td>
+                                @endif
+                                @if ($provision->media_status)
+                                <td><span class="me-2">{{ $provision->media_status }}</td>
+                                @endif
+                                @if ($provision->responsible)
+                                <td><span class="me-2">{{ $provision->responsible }}</td>
+                                @endif
+                                @if ($provision->dicastry)
+                                <td><span class="me-2">{{ $provision->dicastry?->name }}</td>
+                                @endif
+                                @if ($provision->tracking_status)
+                                <td><span class="me-2">{{ $provision->tracking_status }}</td>
+                                @endif
+                                @if ($provision->tracking_date)
+                                <td><span class="me-2">{{ $provision->tracking_date }}</td>
+                                @endif
+                                @if ($provision->accreditation_type)
+                                <td><span class="me-2">{{ $provision->accreditation_type }}</td>
+                                @endif
+                                @if ($provision->vip_category)
+                                <td><span class="me-2">{{ $provision->vip_category }}</td>
+                                @endif
+                                @if ($provision->vip_invitation_number)
+                                <td><span class="me-2">{{ $provision->vip_invitation_number }}</td>
+                                @endif
+                                @if ($provision->vip_response_status)
+                                <td><span class="me-2">{{ $provision->vip_response_status }}</td>
+                                @endif
+                                @if ($provision->vip_guests)
+                                <td><span class="me-2">{{ $provision->vip_guests }}</td>
+                                @endif
+                                @if ($provision->note)
+                                <td><span class="me-2">{{ $provision->note }}</td>
+                                @endif
                             </tr>
                             @endforeach
                         </table>
