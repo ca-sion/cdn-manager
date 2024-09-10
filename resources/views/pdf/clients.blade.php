@@ -154,7 +154,7 @@
                                         {{ $provision->status->getLabel() }}
                                     </span>
                                 </td>
-                                <td class="w-[300px]"><span class="me-2">{{ $provision->provision?->name }}</span></td>
+                                <td class="w-[250px]"><span class="me-2">{{ $provision->provision?->name }}</span></td>
                                 @if ($provision->precision)
                                 <td class="min-w-[80px] max-w-[200px]"><span class="me-2">{{ $provision->precision }}</td>
                                 @endif
