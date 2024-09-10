@@ -36,12 +36,20 @@ class PdfController extends Controller
         })
         ->get();
 
+        // Aggragates
+        $amountSum = $clients->sum(function ($client) {
+            return $client->currentProvisionElementsAmount();
+        });
+        $netAmountSum = $clients->sum(function ($client) {
+            return $client->currentProvisionElementsNetAmount();
+        });
+
         // Form
         $clientCategories = ClientCategory::all();
         $provisions = Provision::all();
         $provisionCategories = ProvisionCategory::all();
 
-        return view('pdf.clients', compact('clients', 'provisions', 'displayAmount', 'displayContacts', 'clientCategories', 'provisionCategories', 'categoryId', 'provisionId', 'provisionCategoryId'));
+        return view('pdf.clients', compact('clients', 'provisions', 'displayAmount', 'displayContacts', 'amountSum', 'netAmountSum', 'clientCategories', 'provisionCategories', 'categoryId', 'provisionId', 'provisionCategoryId'));
     }
 
     public function client(Client $client)

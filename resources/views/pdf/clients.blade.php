@@ -221,14 +221,51 @@
                     </td>
                     @if ($displayAmount)
                     <td class="px-4 py-2">
+                        @if ($client->currentProvisionElementsAmount() > 0)
                         <span class="text-gray-900">{{ \App\Classes\Price::of($client->currentProvisionElementsAmount())->amount('pdf') }}</span>
                         <span class="text-gray-500" style="font-size: xx-small;">({{ \App\Classes\Price::of($client->currentProvisionElementsNetAmount())->amount('pdf') }})</span>
+                        @endif
                     </td>
                     @endif
                 </tr>
                 @endforeach
+
+                @if ($displayAmount)
+                <tr class="border-t-2 border-gray-600">
+                    <td></td>
+                    @if ($displayContacts)
+                    <td></td>
+                    @endif
+                    <td class="text-right">Total</td>
+                    <td class="px-4 py-2">
+                        <span class="text-gray-900">{{ \App\Classes\Price::of($amountSum)->amount('pdf') }}</span>
+                        <span class="text-gray-500" style="font-size: xx-small;">({{ \App\Classes\Price::of($netAmountSum)->amount('pdf') }})</span>
+                    </td>
+                </tr>
+                @endif
             </tbody>
         </table>
     </div>
+
+    <style>
+        @media print {
+            /*
+            .text-sm {
+                font-size: 60%;
+            }
+            .text-xs {
+                font-size: 50%;
+            }
+            .px-4 {
+                padding-left: 4px;
+                padding-right: 4px;
+            }
+            py-2 {
+                padding-top: 2px;
+                padding-bottom: 2px;
+            }
+            */
+        }
+    </style>
 
 </x-layouts.app>
