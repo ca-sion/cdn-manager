@@ -154,7 +154,7 @@
                                         {{ $provision->status->getLabel() }}
                                     </span>
                                 </td>
-                                <td class="min-w-[120px] max-w-[400px]"><span class="me-2">{{ $provision->provision?->name }}</span></td>
+                                <td class="min-w-[200px] max-w-[400px]"><span class="me-2">{{ $provision->provision?->name }}</span></td>
                                 @if ($provision->precision)
                                 <td class="min-w-[40px] max-w-[200px]"><span class="me-2">{{ $provision->precision }}</td>
                                 @endif
@@ -174,43 +174,43 @@
                                 <td class="min-w-[40px] max-w-[200px]"><span class="me-2">{{ $provision->contact_text }}</td>
                                 @endif
                                 @if ($provision->contact_location)
-                                <td class="min-w-[40px] max-w-[100px]"><span class="me-2">{{ $provision->contact_location }}</td>
+                                <td class="min-w-[40px] max-w-[200px]"><span class="me-2">{{ $provision->contact_location }}</td>
                                 @endif
                                 @if ($provision->contact_date)
-                                <td class="min-w-[40px] max-w-[40px]"><span class="me-2">{{ $provision->contact_date }}</td>
+                                <td class="min-w-[80px] max-w-[80px]"><span class="me-2">{{ $provision->contact_date }}</td>
                                 @endif
                                 @if ($provision->contact_time)
                                 <td class="min-w-[40px] max-w-[40px]"><span class="me-2">{{ $provision->contact_time }}</td>
                                 @endif
                                 @if ($provision->media_status)
-                                <td class="min-w-[40px] max-w-[40px]"><span class="me-2">{{ $provision->media_status }}</td>
+                                <td class="min-w-[60px] max-w-[60px]"><span class="me-2">{{ $provision->media_status }}</td>
                                 @endif
                                 @if ($provision->responsible)
-                                <td class="min-w-[40px] max-w-[100px]"><span class="me-2">{{ $provision->responsible }}</td>
+                                <td class="min-w-[100px] max-w-[100px]"><span class="me-2">{{ $provision->responsible }}</td>
                                 @endif
                                 @if ($provision->dicastry)
-                                <td class="min-w-[40px] max-w-[100px]"><span class="me-2">{{ $provision->dicastry?->name }}</td>
+                                <td class="min-w-[100px] max-w-[100px]"><span class="me-2">{{ $provision->dicastry?->name }}</td>
                                 @endif
                                 @if ($provision->tracking_status)
-                                <td class="min-w-[40px] max-w-[40px]"><span class="me-2">{{ $provision->tracking_status }}</td>
+                                <td class="min-w-[80px] max-w-[80px]"><span class="me-2">{{ $provision->tracking_status }}</td>
                                 @endif
                                 @if ($provision->tracking_date)
-                                <td class="min-w-[40px] max-w-[40px]"><span class="me-2">{{ $provision->tracking_date }}</td>
+                                <td class="min-w-[80px] max-w-[80px]"><span class="me-2">{{ $provision->tracking_date }}</td>
                                 @endif
                                 @if ($provision->accreditation_type)
-                                <td class="min-w-[40px] max-w-[200px]"><span class="me-2">{{ $provision->accreditation_type }}</td>
+                                <td class="min-w-[80px] max-w-[80px]"><span class="me-2">{{ $provision->accreditation_type }}</td>
                                 @endif
                                 @if ($provision->vip_category)
-                                <td class="min-w-[40px] max-w-[200px]"><span class="me-2">{{ $provision->vip_category }}</td>
+                                <td class="min-w-[80px] max-w-[80pc]"><span class="me-2">{{ $provision->vip_category }}</td>
                                 @endif
                                 @if ($provision->vip_invitation_number)
                                 <td class="min-w-[20px] max-w-[20px]"><span class="me-2">{{ $provision->vip_invitation_number }}</td>
                                 @endif
                                 @if ($provision->vip_response_status)
-                                <td class="min-w-[20px] max-w-[40px]"><span class="me-2">{{ $provision->vip_response_status }}</td>
+                                <td class="min-w-[40px] max-w-[40px]"><span class="me-2">{{ $provision->vip_response_status }}</td>
                                 @endif
                                 @if ($provision->vip_guests)
-                                <td class="min-w-[40px] max-w-[200px]"><span class="me-2">{{ $provision->vip_guests }}</td>
+                                <td class="min-w-[200px] max-w-[200px]"><span class="me-2">{{ $provision->vip_guests }}</td>
                                 @endif
                                 @if ($provision->note)
                                 <td><span class="me-2">{{ $provision->note }}</td>
