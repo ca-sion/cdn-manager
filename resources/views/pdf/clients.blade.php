@@ -177,7 +177,7 @@
                                 <td class="w-[200px]"><span class="me-2">{{ $provision->contact_location }}</td>
                                 @endif
                                 @if ($provision->contact_date)
-                                <td class="w-[80px]"><span class="me-2">{{ $provision->contact_date }}</td>
+                                <td class="w-[80px]"><span class="me-2">{{ \Carbon\Carbon::parse($provision->contact_date)->locale('fr_CH')->isoFormat('L') }}</td>
                                 @endif
                                 @if ($provision->contact_time)
                                 <td class="w-[40px]"><span class="me-2">{{ $provision->contact_time }}</td>
