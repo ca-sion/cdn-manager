@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use App\Models\ClientCategory;
 use App\Models\Edition;
 use App\Models\Provision;
-use App\Models\ProvisionCategory;
+use App\Models\ClientCategory;
+use App\Models\Contact;
+use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\ProvisionElement;
+use App\Models\ProvisionCategory;
 use Illuminate\Support\Facades\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class PdfController extends Controller
 {
@@ -18,15 +22,15 @@ class PdfController extends Controller
         $displayAmount = (bool) request()->input('amount');
         $displayContacts = request()->input('contacts');
 
-        $categoryId = request()->input('category');
+        $provisionCategoryId = request()->input('category');
         $provisionId = request()->input('provision');
         $provisionCategoryId = request()->input('provision_category');
 
         $provisions = request()->input('provisions', []);
 
         $clients = Client::with(['contacts', 'invoices', 'documents', 'category', 'provisionElements.provision'])
-        ->when($categoryId, function (Builder $query, int $categoryId) {
-            $query->where('category_id', $categoryId);
+        ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
+            $query->where('category_id', $provisionCategoryId);
         })
         ->when($provisionId, function (Builder $query, int $provisionId) {
             $query->whereRelation('provisionElements', 'provision_id', $provisionId);
@@ -66,5 +70,50 @@ class PdfController extends Controller
             ->stream(str($client->name)->slug().'.pdf');
 
         return $pdf;
+    }
+
+    public function provisions()
+    {
+        $displayAmount = (bool) request()->input('amount');
+        $displayClient = request()->input('client');
+
+        $clientCategoryId = request()->input('client_category');
+        $provisionCategoryId = request()->input('provision_category');
+        $provisionId = request()->input('provision');
+
+        $provisions = ProvisionElement::
+        with(['recipient' => function (MorphTo $morphTo) {
+            $morphTo->morphWith([
+                Contact::class => ['provisionElements'],
+                Client::class => ['provisionElements'],
+            ]);
+        }, 'provision', 'provision.category'])
+        ->when($provisionId, function (Builder $query, int $provisionId) {
+            $query->where('provision_id', $provisionId);
+        })
+        ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
+            $query->whereRelation('provision.category', 'id', $provisionCategoryId);
+        })
+        ->get();
+
+        // Filter
+        if ($clientCategoryId) {
+            $provisions = $provisions->where('recipient.category_id', $clientCategoryId);
+        }
+
+        // Aggragates
+        $amountSum = $provisions->sum(function ($provision) {
+            return $provision->price->amount;
+        });
+        $netAmountSum = $provisions->sum(function ($provision) {
+            return $provision->price->net_amount;
+        });
+
+        // Form
+        $clientCategories = ClientCategory::all();
+        $provisionsList = Provision::all();
+        $provisionCategories = ProvisionCategory::all();
+
+        return view('pdf.provisions', compact('provisions', 'displayAmount', 'displayClient', 'amountSum', 'netAmountSum', 'provisionsList', 'clientCategories', 'provisionCategories', 'provisionCategoryId', 'provisionId', 'clientCategoryId'));
     }
 }
