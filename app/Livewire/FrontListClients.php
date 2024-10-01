@@ -10,13 +10,13 @@ use Illuminate\Support\HtmlString;
 use Filament\Support\Enums\Alignment;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 
 class FrontListClients extends Component implements HasForms, HasTable

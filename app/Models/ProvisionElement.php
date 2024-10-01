@@ -5,16 +5,16 @@ namespace App\Models;
 use App\Classes\Price;
 use App\Traits\Editionable;
 use Spatie\MediaLibrary\HasMedia;
+use Spatie\EloquentSortable\Sortable;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\ProvisionElementStatusEnum;
+use Spatie\EloquentSortable\SortableTrait;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\EloquentSortable\Sortable;
-use Spatie\EloquentSortable\SortableTrait;
 
 class ProvisionElement extends Model implements HasMedia, Sortable
 {
@@ -44,9 +44,9 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     protected function casts(): array
     {
         return [
-            'status' => ProvisionElementStatusEnum::class,
-            'due_date' => 'date',
-            'contact_date' => 'date',
+            'status'        => ProvisionElementStatusEnum::class,
+            'due_date'      => 'date',
+            'contact_date'  => 'date',
             'tracking_date' => 'date',
         ];
     }

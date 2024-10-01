@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Contact;
 use App\Models\Edition;
 use App\Models\Provision;
 use App\Models\ClientCategory;
-use App\Models\Contact;
-use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProvisionElement;
 use App\Models\ProvisionCategory;
@@ -29,16 +28,16 @@ class PdfController extends Controller
         $provisions = request()->input('provisions', []);
 
         $clients = Client::with(['contacts', 'invoices', 'documents', 'category', 'provisionElements.provision'])
-        ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
-            $query->where('category_id', $provisionCategoryId);
-        })
-        ->when($provisionId, function (Builder $query, int $provisionId) {
-            $query->whereRelation('provisionElements', 'provision_id', $provisionId);
-        })
-        ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
-            $query->whereRelation('provisionElements.provision', 'category_id', $provisionCategoryId);
-        })
-        ->get();
+            ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
+                $query->where('category_id', $provisionCategoryId);
+            })
+            ->when($provisionId, function (Builder $query, int $provisionId) {
+                $query->whereRelation('provisionElements', 'provision_id', $provisionId);
+            })
+            ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
+                $query->whereRelation('provisionElements.provision', 'category_id', $provisionCategoryId);
+            })
+            ->get();
 
         // Aggragates
         $amountSum = $clients->sum(function ($client) {
@@ -81,20 +80,19 @@ class PdfController extends Controller
         $provisionCategoryId = request()->input('provision_category');
         $provisionId = request()->input('provision');
 
-        $provisions = ProvisionElement::
-        with(['recipient' => function (MorphTo $morphTo) {
+        $provisions = ProvisionElement::with(['recipient' => function (MorphTo $morphTo) {
             $morphTo->morphWith([
                 Contact::class => ['provisionElements'],
-                Client::class => ['provisionElements'],
+                Client::class  => ['provisionElements'],
             ]);
         }, 'provision', 'provision.category'])
-        ->when($provisionId, function (Builder $query, int $provisionId) {
-            $query->where('provision_id', $provisionId);
-        })
-        ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
-            $query->whereRelation('provision.category', 'id', $provisionCategoryId);
-        })
-        ->get();
+            ->when($provisionId, function (Builder $query, int $provisionId) {
+                $query->where('provision_id', $provisionId);
+            })
+            ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
+                $query->whereRelation('provision.category', 'id', $provisionCategoryId);
+            })
+            ->get();
 
         // Filter
         if ($clientCategoryId) {
