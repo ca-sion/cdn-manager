@@ -80,7 +80,6 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->alignStart()
                     ->verticallyAlignStart()
                     ->wrapHeader()
-                    ->weight(FontWeight::Bold)
                     ->toggleable(),
                 TextColumn::make('recipient.address')
                     ->label('Adresse')
@@ -98,9 +97,72 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->verticallyAlignStart()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('status')
+                    ->label('Statut')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->toggleable(),
                 TextColumn::make('precision')
                     ->label('Précision')
                     ->visible($this->isFieldInUrl('precision')),
+                TextColumn::make('numeric_indicator')
+                    ->label('Indicateur')
+                    ->numeric()
+                    ->visible($this->isFieldInUrl('numeric_indicator')),
+                TextColumn::make('textual_indicator')
+                    ->label('Indicateur')
+                    ->visible($this->isFieldInUrl('textual_indicator')),
+                TextColumn::make('goods_to_be_delivered')
+                    ->label('Marchandise')
+                    ->visible($this->isFieldInUrl('goods_to_be_delivered')),
+                TextColumn::make('contact.name')
+                    ->label('Contact')
+                    ->visible($this->isFieldInUrl('contact')),
+                TextColumn::make('contact_text')
+                    ->label('Contact')
+                    ->visible($this->isFieldInUrl('contact_text')),
+                TextColumn::make('contact_location')
+                    ->label('Lieu')
+                    ->visible($this->isFieldInUrl('contact_location')),
+                TextColumn::make('contact_date')
+                    ->label('Date')
+                    ->visible($this->isFieldInUrl('contact_date')),
+                TextColumn::make('contact_time')
+                    ->label('Heure')
+                    ->visible($this->isFieldInUrl('contact_time')),
+                TextColumn::make('media_status')
+                    ->label('Statut (média)')
+                    ->visible($this->isFieldInUrl('media_status')),
+                TextColumn::make('responsible')
+                    ->label('Responsable')
+                    ->visible($this->isFieldInUrl('responsible')),
+                TextColumn::make('dicastry.name')
+                    ->label('Dicastère')
+                    ->visible($this->isFieldInUrl('dicastry')),
+                TextColumn::make('tracking_status')
+                    ->label('Statut (suivi)')
+                    ->visible($this->isFieldInUrl('tracking_status')),
+                TextColumn::make('accreditation_type')
+                    ->label('Type (accréditation)')
+                    ->visible($this->isFieldInUrl('accreditation_type')),
+                TextColumn::make('vip_category')
+                    ->label('Catégorie (VIP)')
+                    ->visible($this->isFieldInUrl('vip_category')),
+                TextColumn::make('vip_invitation_number')
+                    ->label('Nombre d\'invitation')
+                    ->visible($this->isFieldInUrl('vip_invitation_number')),
+                TextColumn::make('vip_response_status')
+                    ->label('Réponse (VIP)')
+                    ->visible($this->isFieldInUrl('vip_response_status')),
+                TextColumn::make('vip_guests')
+                    ->label('Invités')
+                    ->visible($this->isFieldInUrl('vip_guests')),
+                TextColumn::make('note')
+                    ->label('Note')
+                    ->verticallyAlignStart()
+                    ->visible($this->isFieldInUrl('note')),
+
                 TextColumn::make('cost')
                     ->label('Montant')
                     ->formatStateUsing(fn (float $state) => $state > 0 ? Price::of($state)->amount('c') : null)
@@ -145,10 +207,6 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ))
                     ->verticallyAlignStart()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('note')
-                    ->label('Note')
-                    ->verticallyAlignStart()
-                    ->visible($this->isFieldInUrl('note')),
             ])
             ->filters([
                 SelectFilter::make('provision')
