@@ -72,7 +72,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->verticallyAlignStart()
                     ->toggleable(),
                 TextColumn::make('recipient.name')
-                    ->label('Nom')
+                    ->label('Client')
                     ->searchable()
                     ->sortable()
                     ->description(fn (Model $record): string => "{$record->long_name}")
@@ -96,6 +96,11 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->formatStateUsing(fn (Model $record, string $state): HtmlString => new HtmlString("<a href='mailto:{$record->recipient?->contacts?->where('name', $state)->first()?->email}'>{$state}</a>"))
                     ->verticallyAlignStart()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('name')
+                    ->label('Nom')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
 
                 TextColumn::make('status')
                     ->label('Statut')
