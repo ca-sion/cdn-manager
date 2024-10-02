@@ -138,6 +138,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->visible($this->isFieldInUrl('contact_time')),
                 TextColumn::make('media_status')
                     ->label('Statut (média)')
+                    ->badge()
                     ->visible($this->isFieldInUrl('media_status')),
                 TextColumn::make('responsible')
                     ->label('Responsable')
