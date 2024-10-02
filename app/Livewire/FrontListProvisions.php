@@ -74,7 +74,6 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                 TextColumn::make('recipient.name')
                     ->label('Client')
                     ->searchable()
-                    ->sortable()
                     ->description(fn (Model $record): string => "{$record->long_name}")
                     ->alignment(Alignment::Start)
                     ->alignStart()
