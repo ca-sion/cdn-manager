@@ -96,7 +96,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->formatStateUsing(fn (Model $record, string $state): HtmlString => new HtmlString("<a href='mailto:{$record->recipient?->contacts?->where('name', $state)->first()?->email}'>{$state}</a>"))
                     ->verticallyAlignStart()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('name')
+                TextColumn::make('provision.name')
                     ->label('Nom')
                     ->searchable()
                     ->sortable()
