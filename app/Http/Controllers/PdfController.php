@@ -21,15 +21,15 @@ class PdfController extends Controller
         $displayAmount = (bool) request()->input('amount');
         $displayContacts = request()->input('contacts');
 
-        $provisionCategoryId = request()->input('category');
+        $categoryId = request()->input('category');
         $provisionId = request()->input('provision');
         $provisionCategoryId = request()->input('provision_category');
 
         $provisions = request()->input('provisions', []);
 
         $clients = Client::with(['contacts', 'invoices', 'documents', 'category', 'provisionElements.provision'])
-            ->when($provisionCategoryId, function (Builder $query, int $provisionCategoryId) {
-                $query->where('category_id', $provisionCategoryId);
+            ->when($categoryId, function (Builder $query, int $categoryId) {
+                $query->where('category_id', $categoryId);
             })
             ->when($provisionId, function (Builder $query, int $provisionId) {
                 $query->whereRelation('provisionElements', 'provision_id', $provisionId);
