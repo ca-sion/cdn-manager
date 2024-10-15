@@ -371,6 +371,7 @@ class ProvisionElementResource extends Resource
                 TextColumn::make('media_status')
                     ->label('Statut (média)')
                     ->badge()
+                    ->sortable()
                     ->toggleable(),
 
                 /*
@@ -455,6 +456,10 @@ class ProvisionElementResource extends Resource
                     ->multiple()
                     ->preload()
                     ->relationship('provision', 'name'),
+                Tables\Filters\SelectFilter::make('media_status')
+                    ->label('Statut (média)')
+                    ->multiple()
+                    ->options(MediaStatusEnum::class),
                 Tables\Filters\SelectFilter::make('edition')
                     ->label('Édition')
                     ->multiple()
