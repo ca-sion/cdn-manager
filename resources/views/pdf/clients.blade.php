@@ -183,7 +183,7 @@
                                 <td class="w-[40px]"><span class="me-2">{{ \Carbon\Carbon::parse($provision->contact_time)->locale('fr_CH')->isoFormat('LT') }}</td>
                                 @endif
                                 @if ($provision->media_status)
-                                <td class="w-[60px]"><span class="me-2">{{ $provision->media_status }}</td>
+                                <td class="w-[60px]"><span class="me-2">{{ $provision->media_status->getLabel() }}</td>
                                 @endif
                                 @if ($provision->responsible)
                                 <td class="w-[120px]"><span class="me-2">{{ $provision->responsible }}</td>

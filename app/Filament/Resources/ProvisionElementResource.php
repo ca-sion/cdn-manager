@@ -36,6 +36,7 @@ use App\Filament\Resources\ProvisionElementResource\Pages;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
+use Filament\Tables\Actions\Action;
 
 class ProvisionElementResource extends Resource
 {
@@ -479,6 +480,14 @@ class ProvisionElementResource extends Resource
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\ReplicateAction::make(),
                     Tables\Actions\DeleteAction::make(),
+                    Action::make('frontEditLink')
+                        ->label('Lien d\'édition client')
+                        ->url(fn (Model $record) => $record->client?->frontEditLink)
+                        ->openUrlInNewTab(),
+                    Action::make('pdfLink')
+                        ->label('Fiche client')
+                        ->url(fn (Model $record) => $record->client?->pdfLink)
+                        ->openUrlInNewTab(),
                 ]),
             ])
             ->bulkActions([

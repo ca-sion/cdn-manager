@@ -204,7 +204,7 @@
                         <!--[{{ str($pe->accreditation_type) }}]-->
                     @endif
                     @if ($pe->media_status)
-                        <!--[{{ str($pe->media_status) }}]-->
+                        <!--[{{ str($pe->media_status->getLabel()) }}]-->
                     @endif
                     @if ($pe->tracking_status)
                         <!--[{{ str($pe->tracking_status) }}]-->
