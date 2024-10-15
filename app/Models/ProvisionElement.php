@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Classes\Price;
 use App\Traits\Editionable;
+use App\Enums\MediaStatusEnum;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\EloquentSortable\Sortable;
 use Illuminate\Database\Eloquent\Model;
@@ -45,6 +46,7 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     {
         return [
             'status'        => ProvisionElementStatusEnum::class,
+            'media_status'  => MediaStatusEnum::class,
             'due_date'      => 'date',
             'contact_date'  => 'date',
             'tracking_date' => 'date',

@@ -12,6 +12,7 @@ use Filament\Forms\Set;
 use Filament\Forms\Form;
 use App\Models\Provision;
 use Filament\Tables\Table;
+use App\Enums\MediaStatusEnum;
 use Illuminate\Support\Number;
 use App\Models\ProvisionElement;
 use App\Services\PricingService;
@@ -116,21 +117,16 @@ class ProvisionElementResource extends Resource
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Forms\Components\DatePicker::make('contact_date')
                             ->label('Date du contact')
+                            ->native(false)
+                            ->displayFormat('d.m.Y')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Forms\Components\TimePicker::make('contact_time')
                             ->label('Heure du contact')
+                            ->seconds(false)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Forms\Components\Select::make('media_status')
                             ->label('Statut du média')
-                            ->options([
-                                'requested'           => 'Demandé',
-                                'to_relaunch'         => 'À relancer',
-                                'relaunched'          => 'Relancé',
-                                'to_modify'           => 'À modifier',
-                                'received'            => 'Reçu',
-                                'physically_received' => 'Reçu physiquement',
-                                'missing'             => 'Manquant',
-                            ])
+                            ->options(MediaStatusEnum::class)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_media : false),
                         SpatieMediaLibraryFileUpload::make('medias')
                             ->label('Médias')
@@ -263,7 +259,7 @@ class ProvisionElementResource extends Resource
                         Forms\Components\Select::make('vip_category')
                             ->label('Catégorie VIP')
                             ->options([
-                                'individual'        => 'individu',
+                                'individual'        => 'Individu',
                                 'company'           => 'Entreprise',
                                 'sponsor'           => 'Sponsor',
                                 'partner'           => 'Partenaire',
@@ -362,9 +358,11 @@ class ProvisionElementResource extends Resource
                     ->toggleable(),
                 TextColumn::make('contact_date')
                     ->label('Date')
+                    ->date('d.m.Y')
                     ->toggleable(),
                 TextColumn::make('contact_time')
                     ->label('Heure')
+                    ->time('H:i')
                     ->toggleable(),
                 SpatieMediaLibraryImageColumn::make('medias')
                     ->label('Média')
@@ -374,6 +372,17 @@ class ProvisionElementResource extends Resource
                     ->label('Statut (média)')
                     ->badge()
                     ->toggleable(),
+
+                /*
+                TextColumn::make('media_status_view')
+                    ->label('Statut (média)')
+                    ->badge()
+                    ->sortable()
+                    ->state(fn (Model $record) => $record->media_status),
+                SelectColumn::make('media_status')
+                    ->label('')
+                    ->options(MediaStatusEnum::class),
+                */
                 TextColumn::make('responsible')
                     ->label('Responsable')
                     ->toggleable(),
