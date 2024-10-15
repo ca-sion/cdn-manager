@@ -10,7 +10,6 @@ use App\Models\ProvisionElement;
 use Illuminate\Support\HtmlString;
 use Filament\Support\Enums\Alignment;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;

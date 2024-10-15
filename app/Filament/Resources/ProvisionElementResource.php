@@ -331,7 +331,6 @@ class ProvisionElementResource extends Resource
                     ->label('')
                     ->options(ProvisionElementStatusEnum::class),
 
-
                 TextColumn::make('precision')
                     ->label('Précision')
                     ->searchable(),
@@ -391,7 +390,7 @@ class ProvisionElementResource extends Resource
                     TextColumn::make('vip_guests')
                         ->label('Invités')
                         ->toggleable(),
-                    ]),
+                ]),
                 TextColumn::make('note')
                     ->label('Note')
                     ->verticallyAlignStart()
