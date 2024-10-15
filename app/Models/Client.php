@@ -52,6 +52,16 @@ class Client extends Model implements HasMedia
     }
 
     /**
+     * Get the client contact email.
+     */
+    protected function contactEmail(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->contacts()?->firstWhere('type', '=', 'commercial')?->email ?? $this->contacts()?->firstWhere('type', '=', 'administration')?->email ?? $this->contacts()?->firstWhere('type', '=', 'executive')?->email ?? $this->email,
+        );
+    }
+
+    /**
      * The invoices that belong to the client.
      */
     public function invoices(): HasMany

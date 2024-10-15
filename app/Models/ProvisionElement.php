@@ -76,7 +76,7 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     public function clientAdministrationEmail(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->client?->contacts()?->firstWhere('type', '=', 'administration')?->email ?? $this->client?->email,
+            get: fn () => $this->client?->contactEmail,
         );
     }
 
