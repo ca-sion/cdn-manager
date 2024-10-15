@@ -324,7 +324,7 @@ class ProvisionElementResource extends Resource
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->recipient?->address}<br>".($record->recipient?->address_extension ? "{$record->recipient?->address_extension}<br>" : null)."{$record->recipient?->postal_code} {$record->recipient?->locality}"))
                     ->verticallyAlignStart()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('clientEmail')
+                TextColumn::make('clientAdministrationEmail')
                     ->label('Email')
                     ->copyable(),
                 TextColumn::make('status_view')
