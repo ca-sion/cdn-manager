@@ -327,7 +327,8 @@ class ProvisionElementResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('clientAdministrationEmail')
                     ->label('Email')
-                    ->copyable(),
+                    ->copyable()
+                    ->toggleable(),
                 TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
