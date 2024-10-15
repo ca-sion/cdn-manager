@@ -4,9 +4,9 @@ namespace App\Filament\Exports;
 
 use App\Models\ProvisionElement;
 use Filament\Actions\Exports\Exporter;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Models\Export;
-use Illuminate\Database\Eloquent\Model;
 
 class ProvisionElementExporter extends Exporter
 {

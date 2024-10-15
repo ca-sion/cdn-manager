@@ -18,6 +18,7 @@ use App\Models\ProvisionElement;
 use App\Services\PricingService;
 use Filament\Resources\Resource;
 use Illuminate\Support\HtmlString;
+use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Fieldset;
@@ -32,11 +33,11 @@ use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
 use App\Filament\Exports\ProvisionElementExporter;
+use App\Notifications\ClientAdvertiserMediaMissing;
 use App\Filament\Resources\ProvisionElementResource\Pages;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
-use Filament\Tables\Actions\Action;
 
 class ProvisionElementResource extends Resource
 {
@@ -489,6 +490,9 @@ class ProvisionElementResource extends Resource
                         ->label('Fiche client')
                         ->url(fn (Model $record) => $record->client?->pdfLink)
                         ->openUrlInNewTab(),
+                    Action::make('ClientAdvertiserMediaMissing')
+                        ->label('Envoyer email pour média manquant')
+                        ->action(fn (Model $record) => $record->client?->notify(new ClientAdvertiserMediaMissing())),
                 ]),
             ])
             ->bulkActions([
