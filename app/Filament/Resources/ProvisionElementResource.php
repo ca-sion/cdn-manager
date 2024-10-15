@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use Filament\Forms;
 use Filament\Tables;
+use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Contact;
 use Filament\Forms\Get;
@@ -15,11 +16,16 @@ use Illuminate\Support\Number;
 use App\Models\ProvisionElement;
 use App\Services\PricingService;
 use Filament\Resources\Resource;
+use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Fieldset;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Tables\Columns\ColumnGroup;
 use App\Enums\ProvisionElementStatusEnum;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
 use App\Filament\Resources\ProvisionElementResource\Pages;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
@@ -294,43 +300,126 @@ class ProvisionElementResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('edition.year')
+                TextColumn::make('edition.year')
                     ->label('Édition')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('provision.name')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('recipient.category.name')
+                    ->label('Catégorie')
+                    ->html()
+                    ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString('<span class="text-white text-xs font-medium me-2 px-2.5 py-0.5 rounded" style="background-color:'.$record->recipient?->category?->color.';">'.$record->recipient?->category?->name.'</span>'))
+                    ->verticallyAlignStart()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('provision.name')
                     ->label('Prestation')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('recipient.name')
+                TextColumn::make('recipient.name')
                     ->label('Bénéficiaire')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status_view')
+                TextColumn::make('recipient.address')
+                    ->label('Adresse')
+                    ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->recipient?->address}<br>".($record->recipient?->address_extension ? "{$record->recipient?->address_extension}<br>" : null)."{$record->recipient?->postal_code} {$record->recipient?->locality}"))
+                    ->verticallyAlignStart()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
                     ->sortable()
                     ->state(fn (Model $record) => $record->status),
-                Tables\Columns\SelectColumn::make('status')
+                SelectColumn::make('status')
                     ->label('')
                     ->options(ProvisionElementStatusEnum::class),
-                Tables\Columns\TextColumn::make('precision')
+
+
+                TextColumn::make('precision')
                     ->label('Précision')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('note')
+                TextColumn::make('numeric_indicator')
+                    ->label('Indicateur num.')
+                    ->numeric()
+                    ->summarize(Sum::make())
+                    ->toggleable(),
+                TextColumn::make('textual_indicator')
+                    ->label('Indicateur')
+                    ->toggleable(),
+                TextColumn::make('goods_to_be_delivered')
+                    ->label('Marchandise')
+                    ->toggleable(),
+                TextColumn::make('contact.name')
+                    ->label('Contact')
+                    ->toggleable(),
+                TextColumn::make('contact_text')
+                    ->label('Contact')
+                    ->toggleable(),
+                TextColumn::make('contact_location')
+                    ->label('Lieu')
+                    ->toggleable(),
+                TextColumn::make('contact_date')
+                    ->label('Date')
+                    ->toggleable(),
+                TextColumn::make('contact_time')
+                    ->label('Heure')
+                    ->toggleable(),
+                TextColumn::make('media_status')
+                    ->label('Statut (média)')
+                    ->badge()
+                    ->toggleable(),
+                TextColumn::make('responsible')
+                    ->label('Responsable')
+                    ->toggleable(),
+                TextColumn::make('dicastry.name')
+                    ->label('Dicastère')
+                    ->toggleable(),
+                TextColumn::make('tracking_status')
+                    ->label('Statut (suivi)')
+                    ->toggleable(),
+                TextColumn::make('accreditation_type')
+                    ->label('Type (accréditation)')
+                    ->toggleable(),
+                ColumnGroup::make('VIP', [
+                    TextColumn::make('vip_category')
+                        ->label('Catégorie (VIP)')
+                        ->toggleable(),
+                    TextColumn::make('vip_invitation_number')
+                        ->label('Nombre d\'invitation')
+                        ->summarize(Sum::make())
+                        ->toggleable(),
+                    TextColumn::make('vip_response_status')
+                        ->label('Réponse (VIP)')
+                        ->toggleable(),
+                    TextColumn::make('vip_guests')
+                        ->label('Invités')
+                        ->toggleable(),
+                    ]),
+                TextColumn::make('note')
+                    ->label('Note')
+                    ->verticallyAlignStart()
                     ->searchable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('price')
+                    ->toggleable(),
+
+                TextColumn::make('cost')
                     ->label('Montant')
-                    ->state(fn (Model $record) => $record->has_product ? $record->price->amount('c') : null),
-                // ->description(fn (Model $record) => $record->has_product && $record->price->netAmount('c') != $record->price->amount('c') ? $record->price->netAmount('c') : null),
-                Tables\Columns\TextColumn::make('deleted_at')
+                    ->formatStateUsing(fn (float $state) => $state > 0 ? Price::of($state)->amount('c') : null)
+                    ->summarize(Sum::make()->label('Total')->formatStateUsing(fn (float $state) => Price::of($state)->amount('c')))
+                    ->toggleable(),
+                TextColumn::make('net_cost')
+                    ->state(function (Model $record): ?float {
+                        return $record->price->net_amount;
+                    })
+                    ->label('Montant net')
+                    ->formatStateUsing(fn (float $state) => $state > 0 ? Price::of($state)->amount('c') : null)
+                    ->toggleable(),
+
+                TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -343,6 +432,7 @@ class ProvisionElementResource extends Resource
                 Tables\Filters\SelectFilter::make('provision')
                     ->label('Prestation')
                     ->multiple()
+                    ->preload()
                     ->relationship('provision', 'name'),
                 Tables\Filters\SelectFilter::make('edition')
                     ->label('Édition')
