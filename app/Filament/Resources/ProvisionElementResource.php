@@ -324,6 +324,9 @@ class ProvisionElementResource extends Resource
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->recipient?->address}<br>".($record->recipient?->address_extension ? "{$record->recipient?->address_extension}<br>" : null)."{$record->recipient?->postal_code} {$record->recipient?->locality}"))
                     ->verticallyAlignStart()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('clientEmail')
+                    ->label('Email')
+                    ->copyable(),
                 TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
@@ -460,6 +463,11 @@ class ProvisionElementResource extends Resource
                     ->label('Statut (média)')
                     ->multiple()
                     ->options(MediaStatusEnum::class),
+                Tables\Filters\SelectFilter::make('client')
+                    ->label('Client')
+                    ->multiple()
+                    ->preload()
+                    ->relationship('client', 'name'),
                 Tables\Filters\SelectFilter::make('edition')
                     ->label('Édition')
                     ->multiple()

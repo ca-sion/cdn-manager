@@ -13,6 +13,7 @@ use Spatie\EloquentSortable\SortableTrait;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -59,6 +60,24 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     public function recipient(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * The client that belong to the provision.
+     */
+    public function client(): HasOne
+    {
+        return $this->hasOne(Client::class, 'id', 'recipient_id');
+    }
+
+    /**
+     * The client that belong to the provision.
+     */
+    public function clientEmail(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->client?->email ?? null,
+        );
     }
 
     /**
