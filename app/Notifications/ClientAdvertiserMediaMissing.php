@@ -48,7 +48,7 @@ class ClientAdvertiserMediaMissing extends Notification
             ->subject('🏃‍♂️ Course de Noël et Trail des Châteaux 2024 - Visuel manquant ('.$notifiable->name.')')
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
-            ->greeting($notifiable->name.',')
+            ->greeting('Bonjour,')
             ->line('Sauf erreur de notre part, nous n\'avons pas reçu de visuel·s de votre part.')
             ->line('Seriez-vous d\'accord de me faire parvenir le·s visuel·s selon les spécifications suivantes ?')
             ->line([$provisionElements])
