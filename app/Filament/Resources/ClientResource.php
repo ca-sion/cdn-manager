@@ -9,7 +9,10 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Tabs;
+use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
+use Spatie\MediaLibrary\Support\MediaStream;
 use App\Filament\Resources\ClientResource\Pages;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -134,7 +137,9 @@ class ClientResource extends Resource
                                     ->label('Logo')
                                     ->collection('logos')
                                     ->image()
-                                    ->imagePreviewHeight('100'),
+                                    ->imagePreviewHeight('100')
+                                    ->openable()
+                                    ->downloadable(),
                             ]),
                     ]),
             ]);
@@ -186,6 +191,26 @@ class ClientResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    BulkAction::make('export_logos')
+                        ->label('Exporter les logos (.zip)')
+                        ->icon('heroicon-o-arrow-down-on-square-stack')
+                        ->action(function (Collection $records) {
+                            $downloads = $records->map(function ($record) {
+                                $media = $record->getMedia('logos')->first();
+                                if ($media) {
+                                    $media->name = str()->slug($record->name.'-logo');
+                                    $media->file_name = str()->slug($record->name).'-logo.'.pathinfo($media->file_name, PATHINFO_EXTENSION);
+                                    $media->save();
+
+                                    return $media;
+                                }
+
+                                return null;
+                            });
+                            $downloads = $downloads->filter();
+
+                            return MediaStream::create('logos.zip')->addMedia($downloads);
+                        }),
                 ]),
             ]);
     }

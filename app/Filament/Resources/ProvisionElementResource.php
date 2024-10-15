@@ -20,13 +20,19 @@ use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Fieldset;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Columns\ColumnGroup;
 use App\Enums\ProvisionElementStatusEnum;
+use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Illuminate\Database\Eloquent\Collection;
+use Spatie\MediaLibrary\Support\MediaStream;
+use App\Filament\Exports\ProvisionElementExporter;
 use App\Filament\Resources\ProvisionElementResource\Pages;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 
@@ -360,6 +366,10 @@ class ProvisionElementResource extends Resource
                 TextColumn::make('contact_time')
                     ->label('Heure')
                     ->toggleable(),
+                SpatieMediaLibraryImageColumn::make('medias')
+                    ->label('Média')
+                    ->collection('provision_elements')
+                    ->toggleable(),
                 TextColumn::make('media_status')
                     ->label('Statut (média)')
                     ->badge()
@@ -411,14 +421,17 @@ class ProvisionElementResource extends Resource
                     ->toggleable(),
 
                 TextColumn::make('deleted_at')
+                    ->label('Supprimé')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
+                    ->label('Créé')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('Mis à jour')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -449,7 +462,32 @@ class ProvisionElementResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    BulkAction::make('export_medias')
+                        ->label('Exporter les médias (.zip)')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->action(function (Collection $records) {
+                            $downloads = $records->map(function ($record) {
+                                $media = $record->getMedia('provision_elements')->first();
+                                if ($media) {
+                                    $mediaName = $record->recipient?->name ?? $media->name;
+                                    $media->file_name = str()->slug($mediaName).'-'.$media->id.'.'.pathinfo($media->file_name, PATHINFO_EXTENSION);
+                                    $media->save();
+
+                                    return $media;
+                                }
+
+                                return null;
+                            });
+                            $downloads = $downloads->filter();
+
+                            return MediaStream::create('medias.zip')->addMedia($downloads);
+                        }),
                 ]),
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(ProvisionElementExporter::class)
+                    ->columnMapping(false),
             ]);
     }
 
