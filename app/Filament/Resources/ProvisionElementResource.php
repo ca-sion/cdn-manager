@@ -518,6 +518,7 @@ class ProvisionElementResource extends Resource
             ])
             ->headerActions([
                 ExportAction::make()
+                    ->label('Exporter')
                     ->exporter(ProvisionElementExporter::class)
                     ->columnMapping(false),
             ]);

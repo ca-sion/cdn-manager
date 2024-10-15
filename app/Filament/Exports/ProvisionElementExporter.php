@@ -6,6 +6,7 @@ use App\Models\ProvisionElement;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Models\Export;
+use Illuminate\Database\Eloquent\Model;
 
 class ProvisionElementExporter extends Exporter
 {
@@ -24,6 +25,7 @@ class ProvisionElementExporter extends Exporter
             ExportColumn::make('provision.name'),
             ExportColumn::make('recipient_type'),
             ExportColumn::make('recipient_id'),
+            ExportColumn::make('clientAdministrationEmail'),
             ExportColumn::make('status')->formatStateUsing(fn ($state): string => $state->value),
             ExportColumn::make('secondary_status'),
             ExportColumn::make('due_date'),
@@ -58,6 +60,8 @@ class ProvisionElementExporter extends Exporter
             ExportColumn::make('order_column'),
             ExportColumn::make('note'),
             ExportColumn::make('content'),
+            ExportColumn::make('frontEditLink')->state(fn (Model $record): string => $record->client?->frontEditLink),
+            ExportColumn::make('pdfLink')->state(fn (Model $record): string => $record->client?->pdfLink),
             ExportColumn::make('meta'),
             ExportColumn::make('deleted_at'),
             ExportColumn::make('created_at'),
