@@ -144,6 +144,12 @@ class Client extends Model implements HasMedia
      */
     public function routeNotificationForMail(Notification $notification): array|string
     {
-        return [$this->email ?? $this->invoicing_email => $this->name];
+        /*
+        if ($notification instanceof ClientSendInvoice) {
+            return [$this->invoicing_email ?? $this->email => $this->name];
+        }
+        */
+
+        return [$this->contactEmail ?? $this->email => $this->name];
     }
 }

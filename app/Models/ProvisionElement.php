@@ -73,7 +73,7 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     /**
      * The client that belong to the provision.
      */
-    public function clientAdministrationEmail(): Attribute
+    public function clientContactEmail(): Attribute
     {
         return Attribute::make(
             get: fn () => $this->client?->contactEmail,
