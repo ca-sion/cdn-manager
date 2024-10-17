@@ -6,19 +6,19 @@ use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use App\Models\ClientCategory;
+use App\Models\ContactCategory;
 use Filament\Resources\Resource;
-use App\Filament\Resources\ClientCategoryResource\Pages;
+use App\Filament\Resources\ContactCategoryResource\Pages;
 
-class ClientCategoryResource extends Resource
+class ContactCategoryResource extends Resource
 {
-    protected static ?string $model = ClientCategory::class;
+    protected static ?string $model = ContactCategory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $modelLabel = 'Catégorie de client';
+    protected static ?string $modelLabel = 'Catégorie de contacts';
 
-    protected static ?string $pluralModelLabel = 'Catégories de clients';
+    protected static ?string $pluralModelLabel = 'Catégories de contacts';
 
     protected static bool $hasTitleCaseModelLabel = false;
 
@@ -78,9 +78,9 @@ class ClientCategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListClientCategories::route('/'),
-            'create' => Pages\CreateClientCategory::route('/create'),
-            'edit'   => Pages\EditClientCategory::route('/{record}/edit'),
+            'index'  => Pages\ListContactCategories::route('/'),
+            'create' => Pages\CreateContactCategory::route('/create'),
+            'edit'   => Pages\EditContactCategory::route('/{record}/edit'),
         ];
     }
 }

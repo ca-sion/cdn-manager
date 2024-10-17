@@ -11,6 +11,7 @@ use App\Models\Dicastry;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Provision;
 use App\Models\ClientCategory;
+use App\Models\ContactCategory;
 use Illuminate\Database\Seeder;
 use App\Models\ProvisionElement;
 use App\Models\ProvisionCategory;
@@ -46,6 +47,7 @@ class DatabaseSeeder extends Seeder
         Provision::factory(5)->create();
         Dicastry::factory(5)->create();
         ClientCategory::factory(5)->create();
+        ContactCategory::factory(5)->create();
         ProvisionCategory::factory(5)->create();
 
         // Elements

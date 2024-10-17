@@ -40,7 +40,8 @@ class ContactResource extends Resource
                     ->label('Prénom')
                     ->required(),
                 TextInput::make('last_name')
-                    ->label('Nom'),
+                    ->label('Nom')
+                    ->required(),
                 TextInput::make('email')
                     ->label('Email')
                     ->email(),
@@ -66,6 +67,9 @@ class ContactResource extends Resource
                 Select::make('language')
                     ->label('Langue')
                     ->options(['fr', 'de', 'en', 'it']),
+                Select::make('category_id')
+                    ->label('Catégorie')
+                    ->relationship('category', 'name'),
             ]);
     }
 
@@ -75,13 +79,19 @@ class ContactResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->label('Nom')
-                    ->searchable(),
+                    ->sortable()
+                    ->searchable(['first_name', 'last_name']),
                 TextColumn::make('email')
                     ->label('Email')
+                    ->sortable()
                     ->searchable(),
                 TextColumn::make('phone')
                     ->label('Téléphone')
+                    ->sortable()
                     ->searchable(),
+                TextColumn::make('category.name')
+                    ->label('Catégorie')
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

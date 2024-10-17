@@ -32,6 +32,9 @@ return new class extends Migration
             $table->string('country_code')->nullable();
             $table->string('salutation')->nullable();
             $table->string('language')->nullable();
+
+            $table->foreignId('category_id')->nullable()->constrained('contact_categories')->cascadeOnUpdate()->nullOnDelete();
+
             $table->json('meta')->nullable();
             $table->softDeletes();
             $table->timestamps();

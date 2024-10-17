@@ -150,8 +150,10 @@ class ClientResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('long_name')
+                    ->sortable()
                     ->toggleable()
                     ->searchable(),
                 /*Tables\Columns\ImageColumn::make('logo')
@@ -160,21 +162,27 @@ class ClientResource extends Resource
                     ->collection('logos'),
                 Tables\Columns\TextColumn::make('email')
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address_extension')
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('locality')
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('postal_code')
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
                     ->searchable(),
             ])
             ->filters([

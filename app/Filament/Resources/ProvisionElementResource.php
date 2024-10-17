@@ -45,9 +45,11 @@ class ProvisionElementResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-queue-list';
 
-    protected static ?string $pluralModelLabel = 'Éléments de prestation';
+    protected static ?string $modelLabel = 'Élément de prestations';
 
-    protected static ?string $modelLabel = 'Élément de prestation';
+    protected static ?string $pluralModelLabel = 'Éléments de prestations';
+
+    protected static bool $hasTitleCaseModelLabel = false;
 
     public static function form(Form $form): Form
     {
@@ -341,34 +343,42 @@ class ProvisionElementResource extends Resource
 
                 TextColumn::make('precision')
                     ->label('Précision')
+                    ->sortable()
                     ->searchable(),
                 TextColumn::make('numeric_indicator')
                     ->label('Indicateur num.')
                     ->numeric()
                     ->summarize(Sum::make())
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('textual_indicator')
                     ->label('Indicateur')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('goods_to_be_delivered')
                     ->label('Marchandise')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('contact.name')
                     ->label('Contact')
                     ->toggleable(),
                 TextColumn::make('contact_text')
                     ->label('Contact')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('contact_location')
                     ->label('Lieu')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('contact_date')
                     ->label('Date')
                     ->date('d.m.Y')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('contact_time')
                     ->label('Heure')
                     ->time('H:i')
+                    ->sortable()
                     ->toggleable(),
                 SpatieMediaLibraryImageColumn::make('medias')
                     ->label('Média')
@@ -392,26 +402,33 @@ class ProvisionElementResource extends Resource
                 */
                 TextColumn::make('responsible')
                     ->label('Responsable')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('dicastry.name')
                     ->label('Dicastère')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('tracking_status')
                     ->label('Statut (suivi)')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('accreditation_type')
                     ->label('Type (accréditation)')
+                    ->sortable()
                     ->toggleable(),
                 ColumnGroup::make('VIP', [
                     TextColumn::make('vip_category')
                         ->label('Catégorie (VIP)')
+                        ->sortable()
                         ->toggleable(),
                     TextColumn::make('vip_invitation_number')
                         ->label('Nombre d\'invitation')
                         ->summarize(Sum::make())
+                        ->sortable()
                         ->toggleable(),
                     TextColumn::make('vip_response_status')
                         ->label('Réponse (VIP)')
+                        ->sortable()
                         ->toggleable(),
                     TextColumn::make('vip_guests')
                         ->label('Invités')
@@ -421,12 +438,14 @@ class ProvisionElementResource extends Resource
                     ->label('Note')
                     ->verticallyAlignStart()
                     ->searchable()
+                    ->sortable()
                     ->toggleable(),
 
                 TextColumn::make('cost')
                     ->label('Montant')
                     ->formatStateUsing(fn (float $state) => $state > 0 ? Price::of($state)->amount('c') : null)
                     ->summarize(Sum::make()->label('Total')->formatStateUsing(fn (float $state) => Price::of($state)->amount('c')))
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('net_cost')
                     ->state(function (Model $record): ?float {
