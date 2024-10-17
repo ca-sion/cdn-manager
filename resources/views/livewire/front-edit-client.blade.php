@@ -6,7 +6,7 @@
         <div class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Adresse</h2>
             @if ($record->name)
-                {{ $record->name }}<br>
+                {{ $record->long_name ?? $record->name }}<br>
             @endif
             @if ($record->address)
                 {{ $record->address }}<br>
