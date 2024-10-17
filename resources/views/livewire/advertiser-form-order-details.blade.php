@@ -60,7 +60,7 @@
                 <td class="text-base font-normal text-gray-500 dark:text-gray-400 md:w-[150px]">Annonceur</td>
                 <td class="text-base font-medium text-gray-900 dark:text-white">
                     @if ($data?->name)
-                        {{ $data?->name }}<br>
+                        {{ $data?->long_name ?? $data?->name }}<br>
                     @endif
                     @if ($data?->address)
                         {{ $data?->address }}<br>
