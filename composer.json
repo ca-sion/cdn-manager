@@ -14,8 +14,7 @@
         "laravel/tinker": "^2.9",
         "outerweb/filament-settings": "^1.2",
         "spatie/eloquent-sortable": "^4.4",
-        "sprain/swiss-qr-bill": "^4.12",
-        "staudenmeir/eloquent-has-many-deep": "^1.7"
+        "sprain/swiss-qr-bill": "^4.12"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
