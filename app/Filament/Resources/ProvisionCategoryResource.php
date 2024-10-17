@@ -16,7 +16,10 @@ class ProvisionCategoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $pluralModelLabel = 'Catégories de prestation';
+    public static function getNavigationLabel(): string
+    {
+        return 'Catégories de prestation';
+    }
 
     protected static ?string $modelLabel = 'Catégorie de prestation';
 

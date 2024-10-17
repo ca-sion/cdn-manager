@@ -40,7 +40,7 @@ class ContactResource extends Resource
                     ->label('Prénom')
                     ->required(),
                 TextInput::make('last_name')
-                    ->label('Prénom'),
+                    ->label('Nom'),
                 TextInput::make('email')
                     ->label('Email')
                     ->email(),

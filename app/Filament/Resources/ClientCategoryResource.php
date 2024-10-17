@@ -16,7 +16,10 @@ class ClientCategoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $pluralModelLabel = 'Catégories de client';
+    public static function getNavigationLabel(): string
+    {
+        return 'Catégories de client';
+    }
 
     protected static ?string $modelLabel = 'Catégorie de client';
 
