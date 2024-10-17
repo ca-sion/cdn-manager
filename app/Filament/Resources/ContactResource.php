@@ -13,6 +13,7 @@ use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ContactResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 
 class ContactResource extends Resource
 {
@@ -111,7 +112,7 @@ class ContactResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ProvisionElementsRelationManager::class,
         ];
     }
 
