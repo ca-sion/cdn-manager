@@ -29,6 +29,7 @@ use Filament\Tables\Columns\ColumnGroup;
 use App\Enums\ProvisionElementStatusEnum;
 use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
@@ -503,17 +504,20 @@ class ProvisionElementResource extends Resource
                     Tables\Actions\DeleteAction::make(),
                     Action::make('frontEditLink')
                         ->label('Lien d\'édition client')
+                        ->icon('heroicon-o-pencil-square')
                         ->url(fn (Model $record) => $record->client?->frontEditLink)
                         ->openUrlInNewTab(),
                     Action::make('pdfLink')
                         ->label('Fiche client')
+                        ->icon('heroicon-o-document')
                         ->url(fn (Model $record) => $record->client?->pdfLink)
                         ->openUrlInNewTab(),
                     Action::make('ClientAdvertiserMediaMissing')
-                        ->label('Envoyer email pour média manquant')
+                        ->label('Envoyer (média manquant)')
+                        ->icon('heroicon-o-envelope')
                         ->action(fn (Model $record) => $record->client?->notify(new ClientAdvertiserMediaMissing())),
                 ]),
-            ])
+            ], position: ActionsPosition::BeforeColumns)
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

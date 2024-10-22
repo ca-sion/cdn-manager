@@ -5,6 +5,7 @@ namespace App\Models;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
+use App\Notifications\ClientSendInvoice;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -57,7 +58,17 @@ class Client extends Model implements HasMedia
     protected function contactEmail(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->contacts()?->firstWhere('type', '=', 'commercial')?->email ?? $this->contacts()?->firstWhere('type', '=', 'administration')?->email ?? $this->contacts()?->firstWhere('type', '=', 'executive')?->email ?? $this->email,
+            get: fn () => $this->contacts()?->orderBy('order_column')->firstWhere('type', '=', 'commercial')?->email ?? $this->contacts()?->orderBy('order_column')->firstWhere('type', '=', 'administration')?->email ?? $this->contacts()?->orderBy('order_column')->firstWhere('type', '=', 'executive')?->email ?? $this->email,
+        );
+    }
+
+    /**
+     * Get the client invoicing contact email.
+     */
+    protected function invoicingContactEmail(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->contacts()?->orderBy('order_column')->firstWhere('type', '=', 'invoicing')?->email ?? $this->invoicing_email ?? $this->email,
         );
     }
 
@@ -144,11 +155,9 @@ class Client extends Model implements HasMedia
      */
     public function routeNotificationForMail(Notification $notification): array|string
     {
-        /*
         if ($notification instanceof ClientSendInvoice) {
-            return [$this->invoicing_email ?? $this->email => $this->name];
+            return [$this->invoicingContactEmail ?? $this->contactEmail => $this->name];
         }
-        */
 
         return [$this->contactEmail ?? $this->email => $this->name];
     }

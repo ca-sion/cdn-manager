@@ -43,8 +43,8 @@ enum InvoiceStatusEnum: string implements HasColor, HasLabel
         return match ($this) {
             self::Draft          => 'warning',
             self::Ready          => 'warning',
-            self::Sent           => 'success',
-            self::SentByPost     => 'success',
+            self::Sent           => 'info',
+            self::SentByPost     => 'info',
             self::ToModify       => 'warning',
             self::ToRelaunch     => 'warning',
             self::Relaunched     => 'info',

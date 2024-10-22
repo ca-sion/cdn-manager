@@ -50,11 +50,13 @@ class ClientResource extends Resource
                             ->columns(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
-                                    ->label('Nom'),
+                                    ->label('Nom')
+                                    ->required(),
                                 Forms\Components\TextInput::make('long_name')
                                     ->label('Nom long'),
                                 Forms\Components\Select::make('category_id')
                                     ->label('Catégorie')
+                                    ->required()
                                     ->relationship('category', 'name'),
                                 Forms\Components\Textarea::make('note')
                                     ->label('Note'),
@@ -75,15 +77,18 @@ class ClientResource extends Resource
                                     ->columnSpan(4),
                                 Forms\Components\TextInput::make('address')
                                     ->label('Adresse')
+                                    ->required()
                                     ->columnSpan(4),
                                 Forms\Components\TextInput::make('address_extension')
                                     ->label('Adresse (complément)')
                                     ->columnSpan(3),
                                 Forms\Components\TextInput::make('postal_code')
                                     ->label('Code postal')
+                                    ->required()
                                     ->columnSpan(2),
                                 Forms\Components\TextInput::make('locality')
                                     ->label('Localité')
+                                    ->required()
                                     ->columnSpan(3),
                                 /*
                             Forms\Components\TextInput::make('country_code')
