@@ -41,6 +41,8 @@ class ProvisionElementExporter extends Exporter
             ExportColumn::make('placeholders'),
             ExportColumn::make('medias'),
             ExportColumn::make('media_status')->formatStateUsing(fn ($state): ?string => $state?->value),
+            ExportColumn::make('media_file_name')->state(fn (Model $record): ?string => $record->getFirstMedia('*')?->file_name),
+            ExportColumn::make('media_url')->state(fn (Model $record): ?string => $record->getFirstMediaUrl('*')),
             ExportColumn::make('responsible'),
             ExportColumn::make('dicastry.name'),
             ExportColumn::make('tracking_status'),
