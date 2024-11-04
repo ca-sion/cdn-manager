@@ -8,7 +8,9 @@ use App\Models\Client;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\Tabs;
+use Illuminate\Contracts\View\View;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
@@ -189,6 +191,13 @@ class ClientResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('currentInvoices.number')
+                    ->label('Factures')
+                    ->toggleable()
+                    ->formatStateUsing(fn (Model $record): View => view(
+                        'tables.columns.client-invoices',
+                        ['record' => $record],
+                    )),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('category')

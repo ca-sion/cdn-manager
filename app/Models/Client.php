@@ -117,6 +117,14 @@ class Client extends Model implements HasMedia
     }
 
     /**
+     * The current edition invoices that belong to the client.
+     */
+    public function currentInvoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)->where('edition_id', setting('edition_id', config('cdn.default_edition_id')));
+    }
+
+    /**
      * The current edition provisions that belong to the client.
      */
     public function currentProvisionElements(): MorphMany
