@@ -16,6 +16,8 @@ class InvoicesRelationManager extends RelationManager
 {
     protected static string $relationship = 'invoices';
 
+    protected static ?string $title = 'Factures';
+
     public function form(Form $form): Form
     {
         return InvoiceResource::form($form);
@@ -70,7 +72,12 @@ class InvoicesRelationManager extends RelationManager
                 Tables\Actions\Action::make('ClientSendInvoice')
                     ->label('Envoyer')
                     ->icon('heroicon-o-envelope')
-                    ->action(fn (Model $record) => $record->client?->notify(new ClientSendInvoice($record))),
+                    ->action(function (Model $record) {
+                        $record->client?->notify(new ClientSendInvoice($record));
+                        $record->status = InvoiceStatusEnum::Sent;
+                        $record->save();
+                    })
+                    ->requiresConfirmation(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
