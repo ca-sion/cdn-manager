@@ -51,6 +51,8 @@ class InvoicesRelationManager extends RelationManager
                     ->sortable(),
                 Tables\Columns\TextColumn::make('client_reference')
                     ->label('Référence client'),
+                Tables\Columns\TextColumn::make('client.invoicingContactEmail')
+                    ->label('Email'),
             ])
             ->filters([
                 //
@@ -63,8 +65,6 @@ class InvoicesRelationManager extends RelationManager
                     ->action(fn () => InvoiceService::generateInvoiceByClient($this->ownerRecord->id)),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('pdf')
                     ->url(fn (Model $record): string => $record->link)
                     ->openUrlInNewTab()
@@ -78,6 +78,10 @@ class InvoicesRelationManager extends RelationManager
                         $record->save();
                     })
                     ->requiresConfirmation(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
