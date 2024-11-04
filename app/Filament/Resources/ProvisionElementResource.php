@@ -336,7 +336,7 @@ class ProvisionElementResource extends Resource
                 TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
-                    ->sortable()
+                    ->sortable(['status'])
                     ->state(fn (Model $record) => $record->status),
                 SelectColumn::make('status')
                     ->label('')
@@ -395,7 +395,7 @@ class ProvisionElementResource extends Resource
                 TextColumn::make('media_status_view')
                     ->label('Statut (média)')
                     ->badge()
-                    ->sortable()
+                    ->sortable(['media_status'])
                     ->state(fn (Model $record) => $record->media_status),
                 SelectColumn::make('media_status')
                     ->label('')

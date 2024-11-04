@@ -162,7 +162,7 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
-                    ->sortable()
+                    ->sortable(['status'])
                     ->state(fn (Model $record) => $record->status),
                 Tables\Columns\SelectColumn::make('status')
                     ->label('')
@@ -192,10 +192,14 @@ class InvoiceResource extends Resource
                     ->money('CHF', 0, 'fr_CH'),
                 Tables\Columns\TextColumn::make('paid_on')
                     ->label('Payé le')
-                    ->date('d M Y'),
+                    ->date('d M Y')
+                    ->sortable(),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Statut')
+                    ->multiple()
+                    ->options(InvoiceStatusEnum::class),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

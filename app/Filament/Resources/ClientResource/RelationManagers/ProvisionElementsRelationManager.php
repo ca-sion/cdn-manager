@@ -34,7 +34,7 @@ class ProvisionElementsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
-                    ->sortable()
+                    ->sortable(['status'])
                     ->state(fn (Model $record) => $record->status),
                 Tables\Columns\SelectColumn::make('status')
                     ->label('')
