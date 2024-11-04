@@ -191,7 +191,11 @@ class ClientResource extends Resource
                     ->searchable(),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('category')
+                    ->label('Catégorie')
+                    ->multiple()
+                    ->preload()
+                    ->relationship('category', 'name'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
