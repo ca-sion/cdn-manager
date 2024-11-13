@@ -12,7 +12,6 @@ use Filament\Tables\Table;
 use App\Models\ProvisionElement;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
@@ -21,8 +20,6 @@ use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Resources\ContactResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
-use Illuminate\Support\HtmlString;
-use Livewire\Livewire;
 
 class ContactResource extends Resource
 {
