@@ -83,6 +83,7 @@ class AdminPanelProvider extends PanelProvider
                     ->pages([
                         Settings::class,
                     ]),
-            ]);
+            ])
+            ->viteTheme('resources/css/filament/admin/theme.css');
     }
 }
