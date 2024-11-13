@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\Contact;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Livewire\Component;
 use Filament\Forms\Form;
 use App\Models\Provision;
 use Filament\Tables\Table;
@@ -522,6 +523,20 @@ class ProvisionElementResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    BulkAction::make('copyEmail')
+                        ->label('Copier emails')
+                        ->icon('heroicon-m-clipboard-document-list')
+                        ->action(function (Component $livewire, Collection $records) {
+                            $clipboard = '';
+                            foreach ($records as $record) {
+                                $email = $record->clientContactEmail;
+                                $clipboard .= "$email\n";
+                            }
+                            $livewire->dispatch('copy-to-clipboard', $clipboard);
+                        })
+                        ->extraAttributes([
+                            'x-on:copy-to-clipboard.window' => 'navigator.clipboard.writeText($event.detail)',
+                        ]),
                     BulkAction::make('bulkEdit')
                         ->icon('heroicon-m-pencil-square')
                         ->form([

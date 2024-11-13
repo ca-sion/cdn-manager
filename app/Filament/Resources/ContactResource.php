@@ -4,10 +4,15 @@ namespace App\Filament\Resources;
 
 use Filament\Tables;
 use App\Models\Contact;
+use App\Models\Edition;
+use Livewire\Component;
 use Filament\Forms\Form;
+use App\Models\Provision;
 use Filament\Tables\Table;
+use App\Models\ProvisionElement;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
@@ -16,6 +21,8 @@ use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Resources\ContactResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
+use Illuminate\Support\HtmlString;
+use Livewire\Livewire;
 
 class ContactResource extends Resource
 {
@@ -96,6 +103,9 @@ class ContactResource extends Resource
                 TextColumn::make('category.name')
                     ->label('Catégorie')
                     ->sortable(),
+                TextColumn::make('clients.name')
+                    ->label('Client')
+                    ->sortable(),
                 TextColumn::make('phone')
                     ->label('Fonction/Titre')
                     ->searchable()
@@ -149,6 +159,20 @@ class ContactResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
+                    BulkAction::make('copyEmail')
+                        ->label('Copier emails')
+                        ->icon('heroicon-m-clipboard-document-list')
+                        ->action(function (Component $livewire, Collection $records) {
+                            $clipboard = '';
+                            foreach ($records as $record) {
+                                $email = $record->email;
+                                $clipboard .= "$email\n";
+                            }
+                            $livewire->dispatch('copy-to-clipboard', $clipboard);
+                        })
+                        ->extraAttributes([
+                            'x-on:copy-to-clipboard.window' => 'navigator.clipboard.writeText($event.detail)',
+                        ]),
                     BulkAction::make('bulkEdit')
                         ->icon('heroicon-m-pencil-square')
                         ->form([
@@ -166,6 +190,59 @@ class ContactResource extends Resource
                                     if ($data[$key]) {
                                         $record->$key = $data[$key];
                                     }
+                                }
+                                $record->save();
+                            }
+                        }),
+                    BulkAction::make('addVipProvision')
+                        ->label('Prestation VIP')
+                        ->icon('heroicon-m-user-circle')
+                        ->form([
+                            Select::make('vip_category')
+                                ->label('Catégorie VIP')
+                                ->options([
+                                    'individual'        => 'Individu',
+                                    'company'           => 'Entreprise',
+                                    'sponsor'           => 'Sponsor',
+                                    'partner'           => 'Partenaire',
+                                    'town_council'      => 'Conseil municipal',
+                                    'general_council'   => 'Conseil général',
+                                    'states_council'    => 'Conseil d\'état',
+                                    'national_council'  => 'Conseil national',
+                                    'council_of_states' => 'Conseil des états',
+                                    'committee'         => 'Comité (CDN)',
+                                    'committee_trail'   => 'Comité (Trail)',
+                                    'trail'             => 'Trail',
+                                    'swisslife'         => 'Swisslife',
+                                ]),
+                            TextInput::make('vip_invitation_number')
+                                ->label('Nombre d\'invitation VIP')
+                                ->numeric()
+                                ->default(1),
+                            Select::make('edition_id')
+                                ->label('Edition')
+                                ->options(Edition::all()->pluck('year', 'id'))
+                                ->default(session('edition_id'))
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            foreach ($records as $record) {
+                                // $vipProvision = Provision::where('id', setting('vip_provision'))->first();
+                                $contactVipProvisionElement = $record->provisionElements()->where('provision_id', setting('vip_provision'))->first();
+                                if ($contactVipProvisionElement) {
+                                    $contactVipProvisionElement->vip_category = $data['vip_category'];
+                                    $contactVipProvisionElement->vip_invitation_number = $data['vip_invitation_number'];
+                                    $contactVipProvisionElement->save();
+                                } else {
+                                    $vipProvisionElement = new ProvisionElement;
+                                    $vipProvisionElement->edition_id = $data['edition_id'] ?? session('edition_id');
+                                    $vipProvisionElement->provision_id = setting('vip_provision');
+                                    $vipProvisionElement->recipient_type = 'App\Models\Contact';
+                                    $vipProvisionElement->recipient_id = $record->id;
+                                    $vipProvisionElement->status = 'to_prepare';
+                                    $vipProvisionElement->vip_category = $data['vip_category'];
+                                    $vipProvisionElement->vip_invitation_number = $data['vip_invitation_number'] ?? 1;
+                                    $vipProvisionElement->save();
                                 }
                                 $record->save();
                             }

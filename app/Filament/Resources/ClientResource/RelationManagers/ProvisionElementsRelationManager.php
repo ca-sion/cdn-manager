@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ClientResource\RelationManagers;
 use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\ProvisionElementStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,8 +31,8 @@ class ProvisionElementsRelationManager extends RelationManager
             ->reorderable('order_column')
             ->defaultSort('order_column')
             ->columns([
-                Tables\Columns\TextColumn::make('provision.name'),
-                Tables\Columns\TextColumn::make('status_view')
+                TextColumn::make('provision.name'),
+                TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
                     ->sortable(['status'])
@@ -39,13 +40,26 @@ class ProvisionElementsRelationManager extends RelationManager
                 Tables\Columns\SelectColumn::make('status')
                     ->label('')
                     ->options(ProvisionElementStatusEnum::class),
-                Tables\Columns\TextColumn::make('precision')
+                TextColumn::make('precision')
                     ->label('Précision'),
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->label('Montant')
                     ->state(fn (Model $record) => $record->has_product ? $record->price->amount('c') : null)
                     ->description(fn (Model $record) => $record->has_product && $record->price->netAmount('c') != $record->price->amount('c') ? $record->price->netAmount('c') : null),
-                Tables\Columns\TextColumn::make('note'),
+                TextColumn::make('vip_category')
+                    ->label('Catégorie (VIP)')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('vip_invitation_number')
+                    ->label('Nombre d\'invitation')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('note')
+                    ->label('Note')
+                    ->verticallyAlignStart()
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

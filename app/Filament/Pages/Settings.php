@@ -50,6 +50,12 @@ class Settings extends BaseSettings
                         ->label('Donation : Prestation')
                         ->options(Provision::all()->pluck('name', 'id')),
                 ]),
+            Section::make('VIP')
+                ->schema([
+                    Select::make('vip_provision')
+                        ->label('Prestation')
+                        ->options(Provision::all()->pluck('name', 'id')),
+                ]),
         ];
     }
 }

@@ -4,14 +4,8 @@
 
 .fi-ta-text,
 .fi-ta-select,
-.fi-ta-image {
-    @apply py-1 text-red-600
-}
-
-.fi-ta-table > .whitespace-nowrap {
-    @apply py-1
-}
-
+.fi-ta-image,
+.fi-ta-table > .whitespace-nowrap,
 .fi-ta-cell > div:has(.flex) {
-    @apply py-1
+    @apply py-1 text-red-600
 }
