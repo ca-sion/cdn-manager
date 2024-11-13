@@ -20,6 +20,7 @@ use Filament\Resources\Resource;
 use Illuminate\Support\HtmlString;
 use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Fieldset;
 use Filament\Tables\Actions\BulkAction;
@@ -521,6 +522,29 @@ class ProvisionElementResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    BulkAction::make('bulkEdit')
+                        ->icon('heroicon-m-pencil-square')
+                        ->form([
+                            Select::make('status')
+                                ->label('Statut')
+                                ->options(ProvisionElementStatusEnum::class),
+                            Select::make('media_status')
+                                ->label('Statut du média')
+                                ->options(MediaStatusEnum::class),
+                            Select::make('edition_id')
+                                ->label('Edition')
+                                ->relationship('edition', 'year'),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            foreach ($records as $record) {
+                                foreach (collect($data)->keys() as $key) {
+                                    if ($data[$key]) {
+                                        $record->$key = $data[$key];
+                                    }
+                                }
+                                $record->save();
+                            }
+                        }),
                     BulkAction::make('export_medias')
                         ->label('Exporter les médias (.zip)')
                         ->icon('heroicon-o-document-duplicate')
