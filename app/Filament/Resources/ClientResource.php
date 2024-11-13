@@ -8,7 +8,6 @@ use App\Models\Client;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
-use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\Tabs;
 use Illuminate\Contracts\View\View;
 use Filament\Tables\Actions\BulkAction;
