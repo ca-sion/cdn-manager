@@ -50,7 +50,7 @@ class ContactImporter extends Importer
             ImportColumn::make('language')
                 ->rules(['max:255']),
             ImportColumn::make('category')
-                ->relationship(),
+                ->relationship(resolveUsing: 'name'),
             // ImportColumn::make('meta'),
         ];
     }
