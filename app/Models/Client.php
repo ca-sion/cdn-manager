@@ -179,7 +179,7 @@ class Client extends Model implements HasMedia
         }
 
         if ($notification instanceof RecipientSendVipInvitation) {
-            return [$this->vipContactEmail ?? $this->email => $this->name];
+            return [$this->vipContactEmail ?? $this->contactEmail => $this->name];
         }
 
         return [$this->contactEmail ?? $this->email => $this->name];
