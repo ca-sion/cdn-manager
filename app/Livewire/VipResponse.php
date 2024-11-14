@@ -80,7 +80,7 @@ class VipResponse extends Component implements HasForms
                                 1 => 'success',
                             ]),
                         TagsInput::make('vip_guests')
-                            ->label('Liste invités')
+                            ->label('Noms des invités')
                             ->splitKeys([',', 'Tab'])
                             ->placeholder('Ajouter un invité (Prénom et nom de famille)')
                             ->reorderable()
@@ -106,9 +106,9 @@ class VipResponse extends Component implements HasForms
         $data = $this->form->getState();
         $recipient = $this->provisionElement->recipient;
 
-        $this->provisionElement->vip_response_status = $data['vip_response_status'];
-        $this->provisionElement->vip_guests = $data['vip_guests'];
-        $this->provisionElement->note = $data['note'];
+        $this->provisionElement->vip_response_status = data_get($data, 'vip_response_status');
+        $this->provisionElement->vip_guests = data_get($data, 'vip_guests');
+        $this->provisionElement->note = data_get($data, 'note');
         $this->provisionElement->save();
 
         // Email
@@ -116,8 +116,8 @@ class VipResponse extends Component implements HasForms
 
         // Notification
         Notification::make()
-            ->title('Réponse enregistrée')
-            ->body('Merci beaucoup !')
+            ->title('Magnifique !')
+            ->body('Merci beaucoup, votre réponse a été sauvegardée.')
             ->success()
             ->send();
     }

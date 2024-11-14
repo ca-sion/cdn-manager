@@ -9,6 +9,7 @@ use App\Notifications\ClientSendInvoice;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use App\Notifications\RecipientSendVipInvitation;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -175,6 +176,10 @@ class Client extends Model implements HasMedia
     {
         if ($notification instanceof ClientSendInvoice) {
             return [$this->invoicingContactEmail ?? $this->contactEmail => $this->name];
+        }
+
+        if ($notification instanceof RecipientSendVipInvitation) {
+            return [$this->vipContactEmail ?? $this->email => $this->name];
         }
 
         return [$this->contactEmail ?? $this->email => $this->name];

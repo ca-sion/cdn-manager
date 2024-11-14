@@ -28,4 +28,4 @@ Route::get('clients/{record}', FrontEditClient::class)->name('front.client');
 Route::get('advertisers/form', AdvertiserForm::class)->name('advertisers.form');
 Route::get('advertisers/success', [MessageController::class, 'adertiserSuccess'])->middleware('signed')->name('advertisers.success');
 
-Route::get('vip/response/{provisionElement}', VipResponse::class)->name('vip.response');
+Route::get('vip/response/{provisionElement}', VipResponse::class)->name('vip.response')->middleware('signed');

@@ -35,6 +35,7 @@ use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
+use App\Notifications\RecipientSendVipInvitation;
 use App\Filament\Exports\ProvisionElementExporter;
 use App\Notifications\ClientAdvertiserMediaMissing;
 use App\Filament\Resources\ProvisionElementResource\Pages;
@@ -543,6 +544,22 @@ class ProvisionElementResource extends Resource
                         ->extraAttributes([
                             'x-on:copy-to-clipboard.window' => 'navigator.clipboard.writeText($event.detail)',
                         ]),
+                    BulkAction::make('sendVipInvitation')
+                        ->label('Envoyer invitations VIP')
+                        ->icon('heroicon-m-envelope')
+                        ->requiresConfirmation()
+                        ->action(function (Collection $records) {
+                            foreach ($records as $record) {
+                                if ($record->recipient->vipContactEmail != null || $record->recipient->email != null) {
+                                    $record->client?->notify(new RecipientSendVipInvitation($record));
+                                    $record->status = ProvisionElementStatusEnum::Sent;
+                                    $record->save();
+                                } else {
+                                    $record->status = ProvisionElementStatusEnum::ActionRequired;
+                                    $record->save();
+                                }
+                            }
+                        }),
                     BulkAction::make('bulkEdit')
                         ->icon('heroicon-m-pencil-square')
                         ->form([
