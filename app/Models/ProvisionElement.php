@@ -51,6 +51,7 @@ class ProvisionElement extends Model implements HasMedia, Sortable
             'due_date'      => 'date',
             'contact_date'  => 'date',
             'tracking_date' => 'date',
+            'vip_guests'    => 'array',
         ];
     }
 

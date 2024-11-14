@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\VipResponse;
 use App\Livewire\AdvertiserForm;
 use App\Livewire\FrontEditClient;
 use App\Livewire\FrontListClients;
@@ -26,3 +27,5 @@ Route::get('clients/{record}', FrontEditClient::class)->name('front.client');
 
 Route::get('advertisers/form', AdvertiserForm::class)->name('advertisers.form');
 Route::get('advertisers/success', [MessageController::class, 'adertiserSuccess'])->middleware('signed')->name('advertisers.success');
+
+Route::get('vip/response/{provisionElement}', VipResponse::class)->name('vip.response');

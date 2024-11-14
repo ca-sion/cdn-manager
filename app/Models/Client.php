@@ -73,6 +73,16 @@ class Client extends Model implements HasMedia
     }
 
     /**
+     * Get the client vip contact email.
+     */
+    protected function vipContactEmail(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->contacts()?->orderBy('order_column')->firstWhere('type', '=', 'executive')?->email ?? $this->contactEmail ?? $this->email,
+        );
+    }
+
+    /**
      * The invoices that belong to the client.
      */
     public function invoices(): HasMany

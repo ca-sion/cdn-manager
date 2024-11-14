@@ -295,8 +295,14 @@ class ProvisionElementResource extends Resource
                                 false => 'Excusé',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
-                        Forms\Components\Textarea::make('vip_guests')
+                        Forms\Components\TagsInput::make('vip_guests')
                             ->label('Liste invités')
+                            ->splitKeys([',', 'Tab'])
+                            ->reorderable()
+                            ->nestedRecursiveRules([
+                                'min:3',
+                                'max:255',
+                            ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
                     ]),
                 Forms\Components\TextInput::make('note')
