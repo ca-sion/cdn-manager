@@ -550,13 +550,15 @@ class ProvisionElementResource extends Resource
                         ->requiresConfirmation()
                         ->action(function (Collection $records) {
                             foreach ($records as $record) {
-                                if ($record->recipient->vipContactEmail != null || $record->recipient->email != null) {
-                                    $record->client?->notify(new RecipientSendVipInvitation($record));
-                                    $record->status = ProvisionElementStatusEnum::Sent;
-                                    $record->save();
-                                } else {
-                                    $record->status = ProvisionElementStatusEnum::ActionRequired;
-                                    $record->save();
+                                if ($record->provision_id == (int) setting('vip_provision')) {
+                                    if ($record->recipient->vipContactEmail != null || $record->recipient->email != null) {
+                                        $record->client?->notify(new RecipientSendVipInvitation($record));
+                                        $record->status = ProvisionElementStatusEnum::Sent;
+                                        $record->save();
+                                    } else {
+                                        $record->status = ProvisionElementStatusEnum::ActionRequired;
+                                        $record->save();
+                                    }
                                 }
                             }
                         }),
