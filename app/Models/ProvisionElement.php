@@ -74,20 +74,32 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     /**
      * The client contact email that belong to the provision.
      */
-    public function clientContactEmail(): Attribute
+    public function recipientContactEmail(): Attribute
     {
+        if ($this->recipient instanceof Client) {
+            $value = $this->recipient?->contactEmail;
+        } elseif ($this->recipient instanceof Contact) {
+            $value = $this->recipient?->email;
+        }
+
         return Attribute::make(
-            get: fn () => $this->client?->contactEmail,
+            get: fn () => $value,
         );
     }
 
     /**
      * The client vip email that belong to the provision.
      */
-    public function clientVipContactEmail(): Attribute
+    public function recipientVipContactEmail(): Attribute
     {
+        if ($this->recipient instanceof Client) {
+            $value = $this->recipient?->vipContactEmail;
+        } elseif ($this->recipient instanceof Contact) {
+            $value = $this->recipient?->email;
+        }
+
         return Attribute::make(
-            get: fn () => $this->client?->vipContactEmail,
+            get: fn () => $value,
         );
     }
 

@@ -338,8 +338,12 @@ class ProvisionElementResource extends Resource
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->recipient?->address}<br>".($record->recipient?->address_extension ? "{$record->recipient?->address_extension}<br>" : null)."{$record->recipient?->postal_code} {$record->recipient?->locality}"))
                     ->verticallyAlignStart()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('clientContactEmail')
-                    ->label('Email')
+                TextColumn::make('recipientContactEmail')
+                    ->label('Email de contact')
+                    ->copyable()
+                    ->toggleable(),
+                TextColumn::make('recipientVipContactEmail')
+                    ->label('Email VIP')
                     ->copyable()
                     ->toggleable(),
                 TextColumn::make('status_view')
@@ -536,7 +540,7 @@ class ProvisionElementResource extends Resource
                         ->action(function (Component $livewire, Collection $records) {
                             $clipboard = '';
                             foreach ($records as $record) {
-                                $email = $record->clientContactEmail;
+                                $email = $record->recipientContactEmail;
                                 $clipboard .= "$email\n";
                             }
                             $livewire->dispatch('copy-to-clipboard', $clipboard);
@@ -551,8 +555,8 @@ class ProvisionElementResource extends Resource
                         ->action(function (Collection $records) {
                             foreach ($records as $record) {
                                 if ($record->provision_id == (int) setting('vip_provision')) {
-                                    if ($record->recipient->vipContactEmail != null || $record->recipient->email != null) {
-                                        $record->client?->notify(new RecipientSendVipInvitation($record));
+                                    if ($record->recipientVipContactEmail != null) {
+                                        $record->recipient->notify(new RecipientSendVipInvitation($record));
                                         $record->status = ProvisionElementStatusEnum::Sent;
                                         $record->save();
                                     } else {

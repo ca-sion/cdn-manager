@@ -55,8 +55,8 @@ class RecipientSendVipInvitation extends Notification
             ->line('Nous nous réjouissons de vous accueillir dans notre espace VIP Swiss Life et vous présentons, Mesdames, Messieurs, Chères Amies, Chers Amis, nos salutations sportives.')
             ->salutation(new HtmlString('Dominique Solioz<br>Président du Co de la Course de Noël<br><br>David Valterio<br>Président du Co du Trail des Châteaux'));
 
-        if ($this->provisionElement->clientVipContactEmail && $this->provisionElement->clientContactEmail && $this->provisionElement->clientVipContactEmail != $this->provisionElement->clientContactEmail) {
-            $message->cc($this->provisionElement->clientContactEmail);
+        if ($this->provisionElement->recipientVipContactEmail && $this->provisionElement->recipientContactEmail && $this->provisionElement->recipientVipContactEmail != $this->provisionElement->recipientContactEmail) {
+            $message->cc($this->provisionElement->recipientContactEmail);
         }
 
         return $message;
