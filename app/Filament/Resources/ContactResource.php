@@ -103,7 +103,7 @@ class ContactResource extends Resource
                 TextColumn::make('clients.name')
                     ->label('Client')
                     ->sortable(),
-                TextColumn::make('phone')
+                TextColumn::make('role')
                     ->label('Fonction/Titre')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -204,9 +204,9 @@ class ContactResource extends Resource
                                     'partner'           => 'Partenaire',
                                     'town_council'      => 'Conseil municipal',
                                     'general_council'   => 'Conseil général',
-                                    'states_council'    => 'Conseil d\'état',
+                                    'states_council'    => 'Conseil d\'État',
                                     'national_council'  => 'Conseil national',
-                                    'council_of_states' => 'Conseil des états',
+                                    'council_of_states' => 'Conseil des États',
                                     'committee'         => 'Comité (CDN)',
                                     'committee_trail'   => 'Comité (Trail)',
                                     'trail'             => 'Trail',
