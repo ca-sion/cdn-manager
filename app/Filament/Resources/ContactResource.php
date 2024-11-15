@@ -74,7 +74,7 @@ class ContactResource extends Resource
                 Select::make('language')
                     ->label('Langue')
                     ->options(['fr', 'de', 'en', 'it']),
-                Select::make('role')
+                Select::make('category_id')
                     ->label('Catégorie')
                     ->relationship('category', 'name'),
             ]);
