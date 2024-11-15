@@ -44,7 +44,7 @@ class ProvisionElementExporter extends Exporter
             ExportColumn::make('recipient.salutation'),
             ExportColumn::make('recipient.language'),
             ExportColumn::make('clientContactEmail'),
-            ExportColumn::make('vipContactEmail'),
+            ExportColumn::make('clientVipContactEmail'),
             ExportColumn::make('status')->formatStateUsing(fn ($state): ?string => $state->value),
             ExportColumn::make('secondary_status'),
             ExportColumn::make('due_date'),
