@@ -147,6 +147,16 @@ class ContactResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\SelectFilter::make('category_id')
+                    ->label('Catégorie')
+                    ->multiple()
+                    ->preload()
+                    ->relationship('category', 'name'),
+                Tables\Filters\SelectFilter::make('clients')
+                    ->label('Clients')
+                    ->multiple()
+                    ->preload()
+                    ->relationship('clients', 'name'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
