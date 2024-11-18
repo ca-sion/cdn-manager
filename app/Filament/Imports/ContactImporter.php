@@ -28,7 +28,7 @@ class ContactImporter extends Importer
             ImportColumn::make('last_name')
                 ->rules(['max:255']),
             ImportColumn::make('email')
-                ->rules(['email', 'max:255']),
+                ->rules(['nullable', 'email', 'max:255']),
             ImportColumn::make('phone')
                 ->rules(['max:255']),
             ImportColumn::make('company')
@@ -38,6 +38,8 @@ class ContactImporter extends Importer
             ImportColumn::make('department')
                 ->rules(['max:255']),
             ImportColumn::make('address')
+                ->rules(['max:255']),
+            ImportColumn::make('address_extension')
                 ->rules(['max:255']),
             ImportColumn::make('locality')
                 ->rules(['max:255']),

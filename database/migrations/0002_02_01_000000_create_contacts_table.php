@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('role')->nullable();
             $table->string('department')->nullable();
             $table->string('address')->nullable();
+            $table->string('address_extension')->nullable();
             $table->string('locality')->nullable();
             $table->string('postal_code')->nullable();
             $table->string('country_code')->nullable();
