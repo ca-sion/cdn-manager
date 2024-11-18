@@ -162,6 +162,10 @@
                 </tr>
             </table>
             @endif
+
+            @if ($invoice->content)
+                <div>{!! $invoice->content !!}</div>
+            @endif
         </div>
 
         <div style="font-size: x-small;">
@@ -252,6 +256,10 @@
         <div style="font-size: x-small;">
             <p>Facture proforma, aucun flux d'argent.</p>
         </div>
+        @endif
+
+        @if ($invoice->footer)
+            <p>{{ $invoice->footer }}</p>
         @endif
 
     </div>
