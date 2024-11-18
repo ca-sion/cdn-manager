@@ -24,9 +24,9 @@ class ContactImporter extends Importer
                 ->rules(['max:255']),
             */
             ImportColumn::make('first_name')
-                ->rules(['max:255']),
+                ->rules(['required', 'max:255']),
             ImportColumn::make('last_name')
-                ->rules(['max:255']),
+                ->rules(['required', 'max:255']),
             ImportColumn::make('email')
                 ->rules(['nullable', 'email', 'max:255']),
             ImportColumn::make('phone')
