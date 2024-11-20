@@ -60,10 +60,10 @@ class ContactResource extends Resource
                     ->label('Fonction/Titre'),
                 TextInput::make('department')
                     ->label('Département/Service'),
-                TextInput::make('address_extension')
-                    ->label('Adresse (complément)'),
                 TextInput::make('address')
                     ->label('Adresse'),
+                TextInput::make('address_extension')
+                    ->label('Adresse (complément)'),
                 TextInput::make('postal_code')
                     ->label('Code postal'),
                 TextInput::make('locality')

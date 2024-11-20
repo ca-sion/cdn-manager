@@ -34,10 +34,10 @@ use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
-use Spatie\MediaLibrary\Support\MediaStream;
-use App\Notifications\RecipientSendVipInvitation;
+use App\Filament\Actions\ExportMediaBulkAction;
 use App\Filament\Exports\ProvisionElementExporter;
 use App\Notifications\ClientAdvertiserMediaMissing;
+use App\Filament\Actions\SendVipInvitationBulkAction;
 use App\Filament\Resources\ProvisionElementResource\Pages;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -548,24 +548,8 @@ class ProvisionElementResource extends Resource
                         ->extraAttributes([
                             'x-on:copy-to-clipboard.window' => 'navigator.clipboard.writeText($event.detail)',
                         ]),
-                    BulkAction::make('sendVipInvitation')
-                        ->label('Envoyer invitations VIP')
-                        ->icon('heroicon-m-envelope')
-                        ->requiresConfirmation()
-                        ->action(function (Collection $records) {
-                            foreach ($records as $record) {
-                                if ($record->provision_id == (int) setting('vip_provision')) {
-                                    if ($record->recipientVipContactEmail != null) {
-                                        $record->recipient->notify(new RecipientSendVipInvitation($record));
-                                        $record->status = ProvisionElementStatusEnum::Sent;
-                                        $record->save();
-                                    } else {
-                                        $record->status = ProvisionElementStatusEnum::ActionRequired;
-                                        $record->save();
-                                    }
-                                }
-                            }
-                        }),
+                    SendVipInvitationBulkAction::make(),
+                    ExportMediaBulkAction::make(),
                     BulkAction::make('bulkEdit')
                         ->icon('heroicon-m-pencil-square')
                         ->form([
@@ -588,26 +572,6 @@ class ProvisionElementResource extends Resource
                                 }
                                 $record->save();
                             }
-                        }),
-                    BulkAction::make('export_medias')
-                        ->label('Exporter les médias (.zip)')
-                        ->icon('heroicon-o-document-duplicate')
-                        ->action(function (Collection $records) {
-                            $downloads = $records->map(function ($record) {
-                                $media = $record->getMedia('provision_elements')->first();
-                                if ($media) {
-                                    $mediaName = $record->recipient?->name ?? $media->name;
-                                    $media->file_name = str()->slug($mediaName).'-'.$media->id.'.'.pathinfo($media->file_name, PATHINFO_EXTENSION);
-                                    $media->save();
-
-                                    return $media;
-                                }
-
-                                return null;
-                            });
-                            $downloads = $downloads->filter();
-
-                            return MediaStream::create('medias.zip')->addMedia($downloads);
                         }),
                 ]),
             ])

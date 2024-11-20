@@ -9,8 +9,10 @@ use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\ProvisionElementStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Actions\ExportMediaBulkAction;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProvisionElementResource;
+use App\Filament\Actions\SendVipInvitationBulkAction;
 use Filament\Resources\RelationManagers\RelationManager;
 
 class ProvisionElementsRelationManager extends RelationManager
@@ -80,6 +82,8 @@ class ProvisionElementsRelationManager extends RelationManager
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
+                    SendVipInvitationBulkAction::make(),
+                    ExportMediaBulkAction::make(),
                 ]),
             ])
             ->modifyQueryUsing(fn (Builder $query) => $query->withoutGlobalScopes([
