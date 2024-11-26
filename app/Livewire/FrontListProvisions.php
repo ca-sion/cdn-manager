@@ -133,6 +133,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->visible($this->isFieldInUrl('contact_location')),
                 TextColumn::make('contact_date')
                     ->label('Date')
+                    ->date()
                     ->visible($this->isFieldInUrl('contact_date')),
                 TextColumn::make('contact_time')
                     ->label('Heure')
