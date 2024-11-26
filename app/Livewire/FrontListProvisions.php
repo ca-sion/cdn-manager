@@ -134,9 +134,11 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                 TextColumn::make('contact_date')
                     ->label('Date')
                     ->date('d.m.Y')
+                    ->sortable()
                     ->visible($this->isFieldInUrl('contact_date')),
                 TextColumn::make('contact_time')
                     ->label('Heure')
+                    ->sortable()
                     ->visible($this->isFieldInUrl('contact_time')),
                 TextColumn::make('media_status')
                     ->label('Statut (média)')
@@ -144,6 +146,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->visible($this->isFieldInUrl('media_status')),
                 TextColumn::make('responsible')
                     ->label('Responsable')
+                    ->sortable()
                     ->visible($this->isFieldInUrl('responsible')),
                 TextColumn::make('dicastry.name')
                     ->label('Dicastère')
