@@ -79,7 +79,7 @@
             <td align="left" valign="top" style="max-width:8cm;padding-top: 2.5cm;padding-left: 1.1cm">
                 <div style="text-wrap: nowrap;word-break: break-word;">
                     @if ($invoice->client->name || $invoice->client->invoicing_name)
-                        {{ $invoice->client->invoicing_name ?? $invoice->client->name }}<br>
+                        {{ $invoice->client->invoicing_name ?? $invoice->client->long_name ?? $invoice->client->name }}<br>
                     @endif
                     @if ($invoice->client->address || $invoice->client->invoicing_address)
                         {{ $invoice->client->invoicing_address ?? $invoice->client->address }}<br>
