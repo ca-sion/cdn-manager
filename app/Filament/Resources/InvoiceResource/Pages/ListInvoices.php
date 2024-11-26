@@ -17,7 +17,8 @@ class ListInvoices extends ListRecords
             Actions\CreateAction::make(),
             Actions\ImportAction::make()
                 ->importer(ReconcileInvoiceImporter::class)
-                ->label('Rapprocher'),
+                ->label('Rapprocher')
+                ->tooltip('UBS: Fortune et placement > Comptes > Transactions > CSV'),
         ];
     }
 }

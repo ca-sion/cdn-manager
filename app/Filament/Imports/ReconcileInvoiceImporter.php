@@ -63,7 +63,7 @@ class ReconcileInvoiceImporter extends Importer
         // return new Invoice();
 
         $invoice = Invoice::query()
-            ->where('qr_reference', $this->data['Description 2'])
+            ->where('qr_reference', $this->data['qr_reference'])
             ->first();
 
         if (! $invoice) {
