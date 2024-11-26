@@ -376,6 +376,9 @@ class ProvisionElementResource extends Resource
                 TextColumn::make('contact.name')
                     ->label('Contact')
                     ->toggleable(),
+                TextColumn::make('contact.phone')
+                    ->label('Contact - Tél')
+                    ->toggleable(),
                 TextColumn::make('contact_text')
                     ->label('Contact')
                     ->sortable()

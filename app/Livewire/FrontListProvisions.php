@@ -122,6 +122,9 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                 TextColumn::make('contact.name')
                     ->label('Contact')
                     ->visible($this->isFieldInUrl('contact')),
+                TextColumn::make('contact.phone')
+                    ->label('Contact - Tél.')
+                    ->visible($this->isFieldInUrl('phone')),
                 TextColumn::make('contact_text')
                     ->label('Contact')
                     ->visible($this->isFieldInUrl('contact_text')),
