@@ -49,10 +49,10 @@ return new class extends Migration
             $table->string('vip_category')->nullable();
             $table->integer('vip_invitation_number')->nullable();
             $table->string('vip_response_status')->nullable();
-            $table->string('vip_guests')->nullable();
+            $table->json('vip_guests')->nullable();
 
             $table->integer('order_column')->nullable();
-            $table->string('note')->nullable();
+            $table->string('note', 40000)->nullable();
             $table->json('content')->nullable();
             $table->json('meta')->nullable();
             $table->softDeletes();

@@ -93,6 +93,8 @@ class VipResponse extends Component implements HasForms
                             ->visible(fn (Get $get) => $get('vip_response_status') && $this->provisionElement->vip_invitation_number > 1),
                         Textarea::make('note')
                             ->label('Remarques')
+                            ->maxLength(40000)
+                            ->autosize()
                             ->columnSpanFull(),
                     ]),
 
