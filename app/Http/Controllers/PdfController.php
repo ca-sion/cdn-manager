@@ -20,6 +20,7 @@ class PdfController extends Controller
     {
         $displayAmount = (bool) request()->input('amount');
         $displayContacts = request()->input('contacts');
+        $displayProvisions = request()->input('provisions');
 
         $categoryId = request()->input('category');
         $provisionId = request()->input('provision');
@@ -52,7 +53,7 @@ class PdfController extends Controller
         $provisions = Provision::all();
         $provisionCategories = ProvisionCategory::all();
 
-        return view('pdf.clients', compact('clients', 'provisions', 'displayAmount', 'displayContacts', 'amountSum', 'netAmountSum', 'clientCategories', 'provisionCategories', 'categoryId', 'provisionId', 'provisionCategoryId'));
+        return view('pdf.clients', compact('clients', 'provisions', 'displayAmount', 'displayContacts', 'displayProvisions', 'amountSum', 'netAmountSum', 'clientCategories', 'provisionCategories', 'categoryId', 'provisionId', 'provisionCategoryId'));
     }
 
     public function client(Client $client)

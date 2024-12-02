@@ -35,6 +35,10 @@
         <input name="contacts" id="contacts" type="checkbox" value="1" @checked($displayContacts) onchange="this.form.submit()" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
         <label for="contacts" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Afficher les contacts</label>
     </div>
+    <div class="flex items-center mb-4">
+        <input name="provisions" id="provisions" type="checkbox" value="1" @checked($displayProvisions) onchange="this.form.submit()" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+        <label for="provisions" class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Afficher les prestations</label>
+    </div>
 </form>
     <div class="relative overflow-x-auto">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -56,9 +60,11 @@
                         Factures
                     </th>
                     --}}
+                    @if ($displayProvisions)
                     <th scope="col" class="px-4 py-2">
                         Prestations
                     </th>
+                    @endif
                     @if ($displayAmount)
                     <th scope="col" class="px-4 py-2">
                         Montant
@@ -137,6 +143,7 @@
                         @endforeach
                     </td>
                     --}}
+                    @if ($displayProvisions)
                     <td class="px-4 py-2">
                         <table>
                             @foreach ((
@@ -219,6 +226,7 @@
                             @endforeach
                         </table>
                     </td>
+                    @endif
                     @if ($displayAmount)
                     <td class="px-4 py-2">
                         @if ($client->currentProvisionElementsAmount() > 0)
