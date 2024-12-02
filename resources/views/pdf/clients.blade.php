@@ -210,7 +210,7 @@
                                 <td class="w-[40px]"><span class="me-2">{{ $provision->vip_response_status }}</td>
                                 @endif
                                 @if ($provision->vip_guests)
-                                <td class="w-[200px]"><span class="me-2">{{ $provision->vip_guests }}</td>
+                                <td class="w-[200px]"><span class="me-2">{{ implode(', ', $provision->vip_guests) }}</td>
                                 @endif
                                 @if ($provision->note)
                                 <td><span class="me-2">{{ $provision->note }}</td>
