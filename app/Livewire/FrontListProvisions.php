@@ -8,12 +8,14 @@ use Filament\Tables\Table;
 use Livewire\Attributes\Url;
 use App\Models\ProvisionElement;
 use Illuminate\Support\HtmlString;
+use Filament\Tables\Grouping\Group;
 use Filament\Support\Enums\Alignment;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -53,7 +55,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(ProvisionElement::query()->with(['provision', 'recipient']))
+            ->query(ProvisionElement::query()->with(['provision', 'recipient', 'client']))
             ->heading('Prestations')
             ->description('Toutes les prestations de la Course de Noël')
             ->defaultSort('created_at', 'desc')
@@ -62,12 +64,17 @@ class FrontListProvisions extends Component implements HasForms, HasTable
             ->defaultPaginationPageOption(25)
             ->extremePaginationLinks()
             ->striped()
+            ->groups([
+                Group::make('client.name')->label('Client'),
+                Group::make('contact.name')->label('Contact'),
+                Group::make('client.category.name')->label('Catégorie client'),
+                Group::make('contact.category.name')->label('Catégorie contact'),
+            ])
             ->columns([
                 TextColumn::make('recipient.category.name')
                     ->label('Catégorie')
                     ->html()
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString('<span class="text-white text-xs font-medium me-2 px-2.5 py-0.5 rounded" style="background-color:'.$record->recipient?->category?->color.';">'.$record->recipient?->category?->name.'</span>'))
-                    ->sortable()
                     ->verticallyAlignStart()
                     ->toggleable(),
                 TextColumn::make('recipient.name')
@@ -78,7 +85,18 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->alignStart()
                     ->verticallyAlignStart()
                     ->wrapHeader()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->sortable(
+                        query: fn (Builder $query, string $direction) => $query
+                            ->orderByRaw(<<<SQL
+                                (
+                                    SELECT name FROM clients
+                                    WHERE provision_elements.recipient_id = clients.id
+                                    ORDER BY name DESC
+                                    LIMIT 1
+                                ) {$direction}
+                            SQL)
+                    ),
                 TextColumn::make('recipient.address')
                     ->label('Adresse')
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->recipient?->address}<br>".($record->recipient?->address_extension ? "{$record->recipient?->address_extension}<br>" : null)."{$record->recipient?->postal_code} {$record->recipient?->locality}"))
@@ -112,7 +130,8 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                 TextColumn::make('numeric_indicator')
                     ->label('Indicateur')
                     ->numeric()
-                    ->visible($this->isFieldInUrl('numeric_indicator')),
+                    ->visible($this->isFieldInUrl('numeric_indicator'))
+                    ->summarize(Sum::make()->label('Total')),
                 TextColumn::make('textual_indicator')
                     ->label('Indicateur')
                     ->visible($this->isFieldInUrl('textual_indicator')),
