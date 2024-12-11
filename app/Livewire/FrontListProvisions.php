@@ -76,7 +76,27 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->html()
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString('<span class="text-white text-xs font-medium me-2 px-2.5 py-0.5 rounded" style="background-color:'.$record->recipient?->category?->color.';">'.$record->recipient?->category?->name.'</span>'))
                     ->verticallyAlignStart()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->sortable(
+                        query: fn (Builder $query, string $direction) => $query
+                            ->selectRaw('
+                            provision_elements.*,
+                            CASE
+                                WHEN clients.id IS NOT NULL then clients.category_id
+                                WHEN contacts.id IS NOT NULL then contacts.category_id
+                            ELSE NULL
+                            END AS recipient_category_id
+                        ')
+                            ->leftJoin('clients', function ($join) {
+                                $join->on('provision_elements.recipient_id', '=', 'clients.id')
+                                    ->where('recipient_type', '=', 'App\\Models\\Client');
+                            })
+                            ->leftJoin('contacts', function ($join) {
+                                $join->on('provision_elements.recipient_id', '=', 'contacts.id')
+                                    ->where('recipient_type', '=', 'App\\Models\\Contact');
+                            })
+                            ->orderBy('recipient_category_id', $direction)
+                    ),
                 TextColumn::make('recipient.name')
                     ->label('Client')
                     ->searchable()
@@ -88,14 +108,23 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->toggleable()
                     ->sortable(
                         query: fn (Builder $query, string $direction) => $query
-                            ->orderByRaw(<<<SQL
-                                (
-                                    SELECT name FROM clients
-                                    WHERE provision_elements.recipient_id = clients.id
-                                    ORDER BY name DESC
-                                    LIMIT 1
-                                ) {$direction}
-                            SQL)
+                            ->selectRaw('
+                            provision_elements.*,
+                            CASE
+                                WHEN clients.id IS NOT NULL then clients.name
+                                WHEN contacts.id IS NOT NULL then contacts.name
+                            ELSE NULL
+                            END AS recipient_name
+                        ')
+                            ->leftJoin('clients', function ($join) {
+                                $join->on('provision_elements.recipient_id', '=', 'clients.id')
+                                    ->where('recipient_type', '=', 'App\\Models\\Client');
+                            })
+                            ->leftJoin('contacts', function ($join) {
+                                $join->on('provision_elements.recipient_id', '=', 'contacts.id')
+                                    ->where('recipient_type', '=', 'App\\Models\\Contact');
+                            })
+                            ->orderBy('recipient_name', $direction)
                     ),
                 TextColumn::make('recipient.address')
                     ->label('Adresse')
