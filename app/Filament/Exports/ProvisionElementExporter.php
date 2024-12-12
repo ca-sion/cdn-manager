@@ -79,7 +79,7 @@ class ProvisionElementExporter extends Exporter
             ExportColumn::make('vip_category'),
             ExportColumn::make('vip_invitation_number'),
             ExportColumn::make('vip_response_status'),
-            ExportColumn::make('vip_response_status')->name('vip_response_status_cross')->formatStateUsing(fn (string $state): string => $state == true ? 'x' : null),
+            ExportColumn::make('vip_response_status')->name('vip_response_status_cross')->formatStateUsing(fn (?string $state): ?string => $state == true ? 'x' : null),
             ExportColumn::make('vip_guests'),
             ExportColumn::make('order_column'),
             ExportColumn::make('note'),
