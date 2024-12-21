@@ -12,6 +12,8 @@ use Filament\Forms\Components\Tabs;
 use Illuminate\Contracts\View\View;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
+use App\Filament\Exports\ClientExporter;
+use Filament\Tables\Actions\ExportAction;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
 use App\Filament\Resources\ClientResource\Pages;
@@ -241,6 +243,11 @@ class ClientResource extends Resource
                             return MediaStream::create('logos.zip')->addMedia($downloads);
                         }),
                 ]),
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->label('Exporter')
+                    ->exporter(ClientExporter::class),
             ]);
     }
 
