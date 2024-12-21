@@ -43,6 +43,7 @@ return new class extends Migration
             $table->integer('order_column')->nullable();
             $table->string('note')->nullable();
             $table->json('meta')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

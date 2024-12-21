@@ -9,6 +9,7 @@ use App\Notifications\ClientSendInvoice;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Notifications\RecipientSendVipInvitation;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -22,6 +23,7 @@ class Client extends Model implements HasMedia
     use HasFactory;
     use InteractsWithMedia;
     use Notifiable;
+    use SoftDeletes;
 
     /**
      * The attributes that aren't mass assignable.

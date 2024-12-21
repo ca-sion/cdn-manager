@@ -205,6 +205,7 @@ class ClientResource extends Resource
                     )),
             ])
             ->filters([
+                Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('category')
                     ->label('Catégorie')
                     ->multiple()
@@ -222,6 +223,7 @@ class ClientResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
                     BulkAction::make('export_logos')
                         ->label('Exporter les logos (.zip)')
                         ->icon('heroicon-o-arrow-down-on-square-stack')
