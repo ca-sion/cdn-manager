@@ -16,6 +16,8 @@ Route::get('/', function () {
 });
 
 Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('signed')->name('invoices.show');
+Route::get('/invoices/{invoice}/eml', [InvoiceController::class, 'eml'])->middleware('signed')->name('invoices.eml');
+Route::get('/invoices/{invoice}/emlRelaunch', [InvoiceController::class, 'emlRelaunch'])->middleware('signed')->name('invoices.emlRelaunch');
 
 Route::get('/pdf/provisions', [PdfController::class, 'provisions'])->middleware(SiteProtection::class)->name('pdf.provisions');
 Route::get('/pdf/clients', [PdfController::class, 'clients'])->middleware(SiteProtection::class)->name('pdf.clients');

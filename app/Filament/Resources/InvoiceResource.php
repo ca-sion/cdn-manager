@@ -14,7 +14,10 @@ use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
 use App\Services\PricingService;
 use Filament\Resources\Resource;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
+use App\Notifications\ClientSendInvoice;
+use Filament\Tables\Enums\ActionsPosition;
 use App\Filament\Resources\InvoiceResource\Pages;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
@@ -170,11 +173,6 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('client.name')
                     ->label('Client')
                     ->searchable(),
-                /*
-                Tables\Columns\TextColumn::make('title')
-                    ->label('Titre')
-                    ->searchable(),
-                */
                 Tables\Columns\TextColumn::make('number')
                     ->label('Numéro')
                     ->sortable(),
@@ -183,7 +181,8 @@ class InvoiceResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->formatStateUsing(fn (string $state) => '…'.substr($state, -9))
-                    ->size(TextColumnSize::ExtraSmall),
+                    ->size(TextColumnSize::ExtraSmall)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('total')
                     ->label('Montant')
                     ->money('CHF', 0, 'fr_CH'),
@@ -194,6 +193,9 @@ class InvoiceResource extends Resource
                     ->label('Payé le')
                     ->date('d M Y')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('client.invoicingContactEmail')
+                    ->label('Email')
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -202,12 +204,33 @@ class InvoiceResource extends Resource
                     ->options(InvoiceStatusEnum::class),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('ClientSendInvoice')
+                        ->label('Envoyer')
+                        ->icon('heroicon-o-envelope')
+                        ->action(function (Model $record) {
+                            $record->client?->notify(new ClientSendInvoice($record));
+                            $record->status = InvoiceStatusEnum::Sent;
+                            $record->save();
+                        })
+                        ->requiresConfirmation(),
+                    Tables\Actions\Action::make('ClientDownloadInvoice')
+                        ->label('Télécharger')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->url(fn (Invoice $record): string => URL::signedRoute('invoices.eml', ['invoice' => $record]))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('ClientDownloadInvoiceRelauch')
+                        ->label('Relancer')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->url(fn (Invoice $record): string => URL::signedRoute('invoices.emlRelaunch', ['invoice' => $record]))
+                        ->openUrlInNewTab(),
+                ]),
                 Tables\Actions\Action::make('pdf')
                     ->url(fn (Invoice $record): string => $record->link)
                     ->openUrlInNewTab()
                     ->icon('heroicon-o-document'),
-            ])
+            ], position: ActionsPosition::BeforeColumns)
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
