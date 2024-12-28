@@ -171,6 +171,7 @@ class InvoiceResource extends Resource
                     ->label('')
                     ->options(InvoiceStatusEnum::class),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Date')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
