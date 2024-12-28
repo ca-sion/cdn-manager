@@ -170,7 +170,7 @@ class InvoiceResource extends Resource
                 Tables\Columns\SelectColumn::make('status')
                     ->label('')
                     ->options(InvoiceStatusEnum::class),
-                Tables\Columns\TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('date')
                     ->label('Date')
                     ->date('d.m.Y')
                     ->sortable()
