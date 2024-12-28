@@ -96,7 +96,7 @@ class DocumentResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Statut'),
                 Tables\Columns\TextColumn::make('date')
-                    ->date()
+                    ->date('d.m.Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('validity_year_start')
                     ->toggleable(isToggledHiddenByDefault: true),

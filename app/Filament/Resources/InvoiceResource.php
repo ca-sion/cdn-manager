@@ -172,7 +172,7 @@ class InvoiceResource extends Resource
                     ->options(InvoiceStatusEnum::class),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Date')
-                    ->dateTime()
+                    ->date('d.m.Y')
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('client.name')
@@ -196,7 +196,7 @@ class InvoiceResource extends Resource
                     ->money('CHF', 0, 'fr_CH'),
                 Tables\Columns\TextColumn::make('paid_on')
                     ->label('Payé le')
-                    ->date('d M Y')
+                    ->date('d.m.Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('client.invoicingContactEmail')
                     ->label('Email')

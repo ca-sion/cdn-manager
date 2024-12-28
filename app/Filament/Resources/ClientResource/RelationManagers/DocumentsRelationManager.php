@@ -31,7 +31,7 @@ class DocumentsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('type')
                     ->label('Type'),
                 Tables\Columns\TextColumn::make('date')
-                    ->date()
+                    ->date('d.m.Y')
                     ->sortable(),
             ])
             ->filters([
