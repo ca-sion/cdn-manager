@@ -14,10 +14,13 @@ use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
 use App\Services\PricingService;
 use Filament\Resources\Resource;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
+use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
 use Filament\Tables\Enums\ActionsPosition;
+use App\Notifications\ClientSendInvoiceRelaunch;
 use App\Filament\Resources\InvoiceResource\Pages;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
@@ -235,6 +238,15 @@ class InvoiceResource extends Resource
                             $record->save();
                         })
                         ->requiresConfirmation(),
+                    Tables\Actions\Action::make('ClientSendInvoiceRelauch')
+                        ->label('Relancer')
+                        ->icon('heroicon-o-envelope')
+                        ->action(function (Model $record) {
+                            $record->client?->notify(new ClientSendInvoiceRelaunch($record));
+                            $record->status = InvoiceStatusEnum::Relaunched;
+                            $record->save();
+                        })
+                        ->requiresConfirmation(),
                     Tables\Actions\Action::make('ClientDownloadInvoice')
                         ->label('Télécharger')
                         ->icon('heroicon-o-document-arrow-down')
@@ -254,6 +266,28 @@ class InvoiceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    BulkAction::make('ClientsSendInvoice')
+                        ->label('Envoyer facture')
+                        ->icon('heroicon-o-envelope')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $record) {
+                                $record->client?->notify(new ClientSendInvoice($record));
+                                $record->status = InvoiceStatusEnum::Sent;
+                                $record->save();
+                            }
+                        })
+                        ->requiresConfirmation(),
+                    BulkAction::make('ClientsSendInvoiceRelaunch')
+                        ->label('Envoyer relance')
+                        ->icon('heroicon-o-envelope')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $record) {
+                                $record->client?->notify(new ClientSendInvoiceRelaunch($record));
+                                $record->status = InvoiceStatusEnum::Relaunched;
+                                $record->save();
+                            }
+                        })
+                        ->requiresConfirmation(),
                 ]),
             ]);
     }
