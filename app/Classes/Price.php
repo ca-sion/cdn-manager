@@ -46,7 +46,7 @@ class Price
 
     public static function of($cost)
     {
-        return (new self())->addCost($cost);
+        return (new self)->addCost($cost);
     }
 
     public function addCost($cost)

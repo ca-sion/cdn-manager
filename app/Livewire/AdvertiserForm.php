@@ -353,7 +353,7 @@ class AdvertiserForm extends Component implements HasForms
         }
 
         // Email
-        $client->notify(new ClientAdvertiserFormCreated());
+        $client->notify(new ClientAdvertiserFormCreated);
 
         // Redirect
         //dd('redirect');

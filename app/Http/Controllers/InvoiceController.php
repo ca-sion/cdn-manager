@@ -33,7 +33,7 @@ class InvoiceController extends Controller
         }
 
         // qr
-        $displayOptions = new DisplayOptions();
+        $displayOptions = new DisplayOptions;
         $displayOptions
             ->setPrintable(false)
             ->setDisplayTextDownArrows(false)
@@ -45,7 +45,6 @@ class InvoiceController extends Controller
             ->setDisplayOptions($displayOptions)
             ->setQrCodeImageFormat(QrCode::FILE_FORMAT_PNG)
             ->getPaymentPart();
-        //dd($qrBillOutput);
 
         // pdf
         $view = View::make('pdf.invoice', ['invoice' => $invoice, 'qrBillOutput' => $qrBillOutput]);

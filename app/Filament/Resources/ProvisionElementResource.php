@@ -531,7 +531,7 @@ class ProvisionElementResource extends Resource
                     Action::make('ClientAdvertiserMediaMissing')
                         ->label('Envoyer (média manquant)')
                         ->icon('heroicon-o-envelope')
-                        ->action(fn (Model $record) => $record->client?->notify(new ClientAdvertiserMediaMissing())),
+                        ->action(fn (Model $record) => $record->client?->notify(new ClientAdvertiserMediaMissing)),
                 ]),
             ], position: ActionsPosition::BeforeColumns)
             ->bulkActions([

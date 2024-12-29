@@ -65,7 +65,7 @@ class ContactImporter extends Importer
             'last_name'  => $this->data['last_name'],
         ]);
 
-        return new Contact();
+        return new Contact;
     }
 
     public static function getCompletedNotificationBody(Import $import): string

@@ -81,7 +81,7 @@ class ClientImporter extends Importer
             'name' => $this->data['name'],
         ]);
 
-        return new Client();
+        return new Client;
     }
 
     public static function getCompletedNotificationBody(Import $import): string

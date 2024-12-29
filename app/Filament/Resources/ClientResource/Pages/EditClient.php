@@ -26,7 +26,7 @@ class EditClient extends EditRecord
                 ->icon('heroicon-o-envelope')
                 ->color('gray')
                 ->requiresConfirmation()
-                ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated())),
+                ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated)),
             Actions\DeleteAction::make(),
             $this->getSaveFormAction()->formId('form'),
         ];
