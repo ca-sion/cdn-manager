@@ -257,6 +257,14 @@ class InvoiceResource extends Resource
                         ->icon('heroicon-o-document-arrow-down')
                         ->url(fn (Invoice $record): string => URL::signedRoute('invoices.emlRelaunch', ['invoice' => $record]))
                         ->openUrlInNewTab(),
+                    Tables\Actions\Action::make('ResetViewedAt')
+                        ->label('Réinitialiser « Vu à »')
+                        ->icon('heroicon-o-arrow-path')
+                        ->action(function (Model $record) {
+                            $record->viewed_at = null;
+                            $record->save();
+                        })
+                        ->requiresConfirmation(),
                 ]),
                 Tables\Actions\Action::make('pdf')
                     ->url(fn (Invoice $record): string => $record->link)
