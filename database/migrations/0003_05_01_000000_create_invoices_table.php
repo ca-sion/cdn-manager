@@ -22,6 +22,7 @@ return new class extends Migration
             $table->date('date')->nullable();
             $table->date('due_date')->nullable();
             $table->date('paid_on')->nullable();
+            $table->dateTime('viewed_at')->nullable();
             $table->string('reference')->nullable();
             $table->string('client_reference')->nullable();
             $table->boolean('is_pro_forma')->nullable();

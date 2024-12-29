@@ -175,6 +175,13 @@ class InvoiceResource extends Resource
                     ->date('d.m.Y')
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('viewed_at')
+                    ->label('Vu à')
+                    ->since()
+                    ->dateTimeTooltip('d.m.y H:i')
+                    ->timezone('Europe/Zurich')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('client.name')
                     ->label('Client')
                     ->searchable(),
@@ -187,6 +194,14 @@ class InvoiceResource extends Resource
                     ->sortable()
                     ->formatStateUsing(fn (string $state) => '…'.substr($state, -9))
                     ->size(TextColumnSize::ExtraSmall)
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_pro_forma')
+                    ->label('Pro forma')
+                    ->boolean()
+                    ->trueColor('info')
+                    ->falseColor('gray')
+                    ->falseIcon('')
+                    ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('total')
                     ->label('Montant')

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\View;
 use Sprain\SwissQrBill\QrCode\QrCode;
 use App\Notifications\ClientSendInvoice;
 use Sprain\SwissQrBill\DataGroup\Element\CombinedAddress;
+use Sprain\SwissQrBill\PaymentPart\Output\DisplayOptions;
 use Sprain\SwissQrBill\DataGroup\Element\PaymentReference;
 use Sprain\SwissQrBill\DataGroup\Element\StructuredAddress;
 use Sprain\SwissQrBill\DataGroup\Element\CreditorInformation;
@@ -23,13 +24,30 @@ class InvoiceController extends Controller
 {
     public function show(Invoice $invoice)
     {
+        // viewed_at logic
+        $referer = request()->headers->get('referer');
+        $host = request()->host();
+        if (! str($referer)->contains($host)) {
+            $invoice->viewed_at = now();
+            $invoice->save();
+        }
+
+        // qr
+        $displayOptions = new DisplayOptions();
+        $displayOptions
+            ->setPrintable(false)
+            ->setDisplayTextDownArrows(false)
+            ->setDisplayScissors(false)
+            ->setPositionScissorsAtBottom(false);
         $qrBill = $this->generateQrBill($invoice->client, $invoice);
         $qrBillHtmlOutput = new HtmlOutput($qrBill, 'fr');
         $qrBillOutput = $qrBillHtmlOutput
-            ->setPrintable(false)
+            ->setDisplayOptions($displayOptions)
             ->setQrCodeImageFormat(QrCode::FILE_FORMAT_PNG)
             ->getPaymentPart();
+        //dd($qrBillOutput);
 
+        // pdf
         $view = View::make('pdf.invoice', ['invoice' => $invoice, 'qrBillOutput' => $qrBillOutput]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
 

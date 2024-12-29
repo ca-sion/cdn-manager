@@ -57,15 +57,22 @@
         #qr-bill-amount { display: inline-block; }
         #qr-bill {
             position: absolute;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            height: 306px;
-            margin-left: -79px;
+            bottom: 338px;
+            left: -50px;
             z-index: 100;
-            /*background-color: blanchedalmond;*/
             background-color: white;
-            transform: scale(0.931);
+        }
+        #qr-bill-receipt {
+            width: 57mm !important;
+        }
+        #qr-white-fill {
+            position: absolute;
+            z-index: 102;
+            bottom: -75px;
+            left: -50px;
+            width: 210mm;
+            height: 6mm;
+            background-color: white;
         }
       </style>
 </head>
@@ -268,6 +275,7 @@
     @if (! $invoice->is_pro_forma)
     {!! $qrBillOutput !!}
     @endif
+    <div id="qr-white-fill"></div>
 
 </body>
 </html>
