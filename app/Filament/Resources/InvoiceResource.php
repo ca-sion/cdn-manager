@@ -25,6 +25,7 @@ use App\Filament\Resources\InvoiceResource\Pages;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
+use Filament\Tables\Columns\TextInputColumn;
 
 class InvoiceResource extends Resource
 {
@@ -190,9 +191,11 @@ class InvoiceResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('number')
                     ->label('Numéro')
+                    ->copyable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('qr_reference')
                     ->label('QR')
+                    ->copyable()
                     ->searchable()
                     ->sortable()
                     ->formatStateUsing(fn (string $state) => '…'.substr($state, -9))
@@ -212,10 +215,14 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('totalTax')
                     ->label('Taxes')
                     ->money('CHF', 0, 'fr_CH'),
-                Tables\Columns\TextColumn::make('paid_on')
+                Tables\Columns\TextColumn::make('paid_on_view')
                     ->label('Payé le')
                     ->date('d.m.Y')
-                    ->sortable(),
+                    ->sortable(['paid_on'])
+                    ->state(fn (Model $record) => $record->paid_on),
+                TextInputColumn::make('paid_on')
+                    ->label('Payé le')
+                    ->rules(['date', 'nullable']),
                 Tables\Columns\TextColumn::make('client.invoicingContactEmail')
                     ->label('Email')
                     ->toggleable(),
