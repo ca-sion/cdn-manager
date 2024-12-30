@@ -20,12 +20,12 @@ use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
 use Filament\Tables\Enums\ActionsPosition;
+use Filament\Tables\Columns\TextInputColumn;
 use App\Notifications\ClientSendInvoiceRelaunch;
 use App\Filament\Resources\InvoiceResource\Pages;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
-use Filament\Tables\Columns\TextInputColumn;
 
 class InvoiceResource extends Resource
 {

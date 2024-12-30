@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
 use Filament\Actions;
+use Filament\Actions\ExportAction;
+use App\Filament\Exports\InvoiceExporter;
 use Filament\Resources\Pages\ListRecords;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Imports\ReconcileInvoiceImporter;
@@ -19,6 +21,9 @@ class ListInvoices extends ListRecords
                 ->importer(ReconcileInvoiceImporter::class)
                 ->label('Rapprocher')
                 ->tooltip('UBS: Fortune et placement > Comptes > Transactions > CSV'),
+            ExportAction::make()
+                ->label('Exporter')
+                ->exporter(InvoiceExporter::class),
         ];
     }
 }
