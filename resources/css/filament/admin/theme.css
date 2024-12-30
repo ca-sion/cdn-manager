@@ -6,6 +6,7 @@
 .fi-ta-select,
 .fi-ta-image,
 .fi-ta-color,
+.fi-ta-text-input,
 .fi-ta-table > .whitespace-nowrap,
 .fi-ta-cell > div:has(.flex) {
     @apply py-1 text-red-600
