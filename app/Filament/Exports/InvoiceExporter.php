@@ -4,6 +4,7 @@ namespace App\Filament\Exports;
 
 use App\Models\Invoice;
 use Filament\Actions\Exports\Exporter;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Models\Export;
 
@@ -19,10 +20,14 @@ class InvoiceExporter extends Exporter
     public static function getColumns(): array
     {
         return [
-            ExportColumn::make('id')
-                ->label('ID'),
+            ExportColumn::make('id')->label('ID'),
             ExportColumn::make('edition_id'),
-            ExportColumn::make('client.name'),
+            ExportColumn::make('client.name')->label('client_name'),
+            ExportColumn::make('client.category.name')->label('client_category'),
+            ExportColumn::make('client.long_name')->label('client_long_name'),
+            ExportColumn::make('client.email')->label('client_email'),
+            ExportColumn::make('client.invoicing_email')->label('client_invoicing_email'),
+            ExportColumn::make('client.recipientContactEmail')->label('client_ContactEmail'),
             ExportColumn::make('status')->formatStateUsing(fn ($state): ?string => $state->value),
             ExportColumn::make('title'),
             ExportColumn::make('number'),
@@ -34,6 +39,9 @@ class InvoiceExporter extends Exporter
             ExportColumn::make('client_reference'),
             ExportColumn::make('is_pro_forma'),
             ExportColumn::make('include_vat'),
+            ExportColumn::make('total'),
+            ExportColumn::make('totalNet'),
+            ExportColumn::make('totalTax'),
             ExportColumn::make('total_include_vat'),
             ExportColumn::make('total_exclude_vat'),
             ExportColumn::make('currency'),
@@ -44,6 +52,7 @@ class InvoiceExporter extends Exporter
             ExportColumn::make('footer'),
             ExportColumn::make('order_column'),
             ExportColumn::make('note'),
+            ExportColumn::make('pdfLink')->state(fn (Model $record): ?string => $record->link),
             // ExportColumn::make('meta'),
             ExportColumn::make('created_at'),
             ExportColumn::make('updated_at'),

@@ -91,6 +91,14 @@ class ProvisionElementExporter extends Exporter
             ExportColumn::make('content'),
             ExportColumn::make('frontEditLink')->state(fn (Model $record): ?string => $record->client?->frontEditLink),
             ExportColumn::make('pdfLink')->state(fn (Model $record): ?string => $record->client?->pdfLink),
+
+            ExportColumn::make('invoice_number')->state(fn (Model $record): ?string => $record->recipient?->invoices?->last()?->number),
+            ExportColumn::make('invoice_qr_reference')->state(fn (Model $record): ?string => $record->recipient?->invoices?->last()?->qr_reference),
+            ExportColumn::make('invoice_status')->state(fn (Model $record): ?string => $record->recipient?->invoices?->last()?->status?->value),
+            ExportColumn::make('invoice_total')->state(fn (Model $record): ?string => $record->recipient?->invoices?->last()?->total),
+            ExportColumn::make('invoice_total_net')->state(fn (Model $record): ?string => $record->recipient?->invoices?->last()?->totalNet),
+            ExportColumn::make('invoice_total_tax')->state(fn (Model $record): ?string => $record->recipient?->invoices?->last()?->totalTax),
+
             ExportColumn::make('meta'),
             ExportColumn::make('deleted_at'),
             ExportColumn::make('created_at'),
