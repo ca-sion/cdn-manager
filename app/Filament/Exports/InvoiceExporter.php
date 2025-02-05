@@ -52,7 +52,7 @@ class InvoiceExporter extends Exporter
             ExportColumn::make('order_column'),
             ExportColumn::make('note'),
             ExportColumn::make('positions')->label('Libellés des positions')->formatStateUsing(fn ($state): string => data_get($state, 'name') ?? collect($state)->pluck('name')),
-            ExportColumn::make('positions')->listAsJson(),
+            ExportColumn::make('positions')->listAsJson()->label('Positions'),
             ExportColumn::make('pdfLink')->state(fn (Model $record): ?string => $record->link),
             // ExportColumn::make('meta'),
             ExportColumn::make('created_at'),
