@@ -9,6 +9,7 @@ use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
+use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\InvoiceResource;
 use Filament\Resources\RelationManagers\RelationManager;
 
@@ -87,6 +88,7 @@ class InvoicesRelationManager extends RelationManager
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition());
     }
 }

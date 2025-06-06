@@ -86,7 +86,7 @@ class ProvisionElementsRelationManager extends RelationManager
                     ExportMediaBulkAction::make(),
                 ]),
             ])
-            ->modifyQueryUsing(fn (Builder $query) => $query->withoutGlobalScopes([
+            ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition()->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]));
     }

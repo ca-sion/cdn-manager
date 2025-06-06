@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\URL;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Columns\TextInputColumn;
 use App\Notifications\ClientSendInvoiceRelaunch;
@@ -304,7 +305,8 @@ class InvoiceResource extends Resource
                         })
                         ->requiresConfirmation(),
                 ]),
-            ]);
+            ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition());
     }
 
     public static function getRelations(): array

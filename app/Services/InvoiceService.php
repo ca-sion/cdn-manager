@@ -17,9 +17,6 @@ class InvoiceService
             abort(404);
         }
 
-        $lastInvoice = Invoice::latest()->first();
-        $lastInvoiceId = $lastInvoice ? $lastInvoice->id : 0;
-
         $invoiceNumber = self::generateInvoiceNumber();
 
         $provisionElementsWithProduct = $client->provisionElements->where('has_product', true);
@@ -63,7 +60,7 @@ class InvoiceService
     {
         $lastInvoice = Invoice::latest()->first();
         $lastInvoiceId = $lastInvoice ? $lastInvoice->id : 0;
-        $edition = Edition::find(config('cdn.default_edition_id'));
+        $edition = Edition::find(session()->get('edition_id') ?? setting('edition_id', config('cdn.default_edition_id')));
         $editionYear = $edition->year;
 
         $invoiceNumber = str_pad($lastInvoiceId + 1, 3, '0', STR_PAD_LEFT);

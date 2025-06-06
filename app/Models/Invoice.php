@@ -7,6 +7,7 @@ use App\Traits\Editionable;
 use App\Enums\InvoiceStatusEnum;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -110,5 +111,13 @@ class Invoice extends Model
         return Attribute::make(
             get: fn () => $this->items->pluck('price.tax_amount')->sum(),
         );
+    }
+
+    /**
+     * Scope a query to only include current edition.
+     */
+    public function scopeCurrentEdition(Builder $query): void
+    {
+        $query->where('edition_id', session()->get('edition_id') ?? setting('edition_id', config('cdn.default_edition_id')));
     }
 }

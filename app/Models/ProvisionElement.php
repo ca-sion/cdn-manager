@@ -9,6 +9,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\EloquentSortable\Sortable;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\ProvisionElementStatusEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Spatie\EloquentSortable\SortableTrait;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -145,5 +146,13 @@ class ProvisionElement extends Model implements HasMedia, Sortable
         return Attribute::make(
             get: fn () => $this->provision?->name,
         );
+    }
+
+    /**
+     * Scope a query to only include current edition.
+     */
+    public function scopeCurrentEdition(Builder $query): void
+    {
+        $query->where('edition_id', session()->get('edition_id') ?? setting('edition_id', config('cdn.default_edition_id')));
     }
 }
