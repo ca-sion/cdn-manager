@@ -389,7 +389,7 @@ class ProvisionElementResource extends Resource
                     ->toggleable(),
                 TextColumn::make('contact_date')
                     ->label('Date')
-                    ->date('d.m.Y')
+                    ->dateTime('d.m.Y')
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('contact_time')

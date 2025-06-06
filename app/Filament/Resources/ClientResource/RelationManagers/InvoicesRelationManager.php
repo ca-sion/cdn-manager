@@ -33,6 +33,10 @@ class InvoicesRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('edition.year')
                     ->label('Édition')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('date')
+                    ->label('Date')
+                    ->dateTime('d.m.Y')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('number')
                     ->label('Numéro')
                     ->sortable(),
@@ -49,6 +53,7 @@ class InvoicesRelationManager extends RelationManager
                     ->options(InvoiceStatusEnum::class),
                 Tables\Columns\TextColumn::make('paid_on')
                     ->label('Payé le')
+                    ->dateTime('d.m.Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('client_reference')
                     ->label('Référence client'),
