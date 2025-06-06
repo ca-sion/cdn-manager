@@ -10,6 +10,7 @@ use App\Services\InvoiceService;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Enums\ActionsPosition;
 use App\Filament\Resources\InvoiceResource;
 use Filament\Resources\RelationManagers\RelationManager;
 
@@ -55,6 +56,9 @@ class InvoicesRelationManager extends RelationManager
                     ->label('Payé le')
                     ->dateTime('d.m.Y')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('total')
+                    ->label('Montant')
+                    ->money('CHF', 0, 'fr_CH'),
                 Tables\Columns\TextColumn::make('client_reference')
                     ->label('Référence client'),
                 Tables\Columns\TextColumn::make('client.invoicingContactEmail')
@@ -88,7 +92,7 @@ class InvoicesRelationManager extends RelationManager
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ]),
-            ])
+            ], position: ActionsPosition::BeforeColumns)
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
