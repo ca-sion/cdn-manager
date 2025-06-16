@@ -157,7 +157,7 @@ class InvoiceResource extends Resource
                     ->readOnly()
                     ->prefix('CHF')
                     ->dehydrated(false)
-                    ->formatStateUsing(fn (Model $record): string => $record->total),
+                    ->formatStateUsing(fn (?Model $record): string => $record ? $record->total : 0),
                 Forms\Components\RichEditor::make('content')->label('Contenu'),
                 Forms\Components\Textarea::make('footer')->label('Pied de page'),
                 Forms\Components\Textarea::make('note')->label('Note'),
