@@ -46,7 +46,7 @@ class AdvertiserForm extends Component implements HasForms
                                 ->label('')
                                 ->content(new HtmlString('Sélectionner les prestations qui vous conviennent dans les listes ci-après.')),
                             Section::make('Anonce journalistique')
-                                ->description(new HtmlString('Annonce dans le Journal de la Course de Noël et du Trail des Châteaux, édité à plus de 40 000 exemplaires, à paraître dans le Nouvelliste du NN novembre et distribué dans les districts de Sion, d’Hérens et de Conthey.<br><br>Consulter <a href="/docs/Dimensions_encarté_NF.pdf" class="underline text-primary-600 hover:text-primary-500">mise en page des emplacements</a> pour choisir votre emplacement et les dimensions de votre annonce.'))
+                                ->description(new HtmlString('Annonce dans le Journal de la Course de Noël et du Trail des Châteaux, édité à plus de 40 000 exemplaires, à paraître dans un Nouvelliste de novembre et distribué dans les districts de Sion, d’Hérens et de Conthey.<br><br>Consulter <a href="/docs/Dimensions_encarté_NF.pdf" class="underline text-primary-600 hover:text-primary-500">mise en page des emplacements</a> pour choisir votre emplacement et les dimensions de votre annonce.'))
                                 ->schema([
                                     CheckboxList::make('journal_provisions')
                                         ->label('')

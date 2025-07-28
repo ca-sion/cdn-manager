@@ -38,6 +38,8 @@ class ClientSendInvoiceRelaunch extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $editionYear = $this->invoice->edition?->year;
+
         $provisionElements = '';
         foreach ($notifiable->currentProvisionElements->where('provision.format_indicator', '!=', null) as $pe) {
             $provisionElements .= ($pe->provision->description ? '## '.$pe->provision->description : '## '.$pe->provision->name)."\n";
@@ -47,13 +49,15 @@ class ClientSendInvoiceRelaunch extends Notification
             $provisionElements .= $pe->provision->due_date_indicator ? '- Délai : '.$pe->provision->due_date_indicator."\n" : null;
             $provisionElements .= $pe->textual_indicator ? '- Mention  : '.$pe->textual_indicator."\n" : null;
             $provisionElements .= "\n";
+
+            $currentEditionYear = $pe->edition?->year;
         }
 
         $invoiceDate = Carbon::parse($this->invoice->date)->locale('fr_CH')->isoFormat('L');
         $invoiceNumber = $this->invoice->number;
 
         return (new MailMessage)
-            ->subject('Course de Noël 2024 - Facture (F'.$invoiceNumber.') : rappel')
+            ->subject('Course de Noël '.$editionYear.' - Facture (F'.$invoiceNumber.') : rappel')
             ->replyTo('info@coursedenoel.ch')
             ->bcc('info@coursedenoel.ch')
             ->greeting('Bonjour,')

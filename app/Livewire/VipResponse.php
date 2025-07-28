@@ -43,7 +43,7 @@ class VipResponse extends Component implements HasForms
                             ->label(new HtmlString('<div class="format"><h2>Votre invitation VIP</h2></div>'))
                             ->content(function (Get $get) {
                                 return new HtmlString('<div class="format">
-                                Pour confirmer votre invitation VIP à la Course de Noël et au Trail des Châteaux 2023, veuillez renseigner les informations ci-après. Vous pouvez également indiquer le nom des personnes invitées selon le nombre d\'invitations autorisées.
+                                Pour confirmer votre invitation VIP à la Course de Noël et au Trail des Châteaux 2025, veuillez renseigner les informations ci-après. Vous pouvez également indiquer le nom des personnes invitées selon le nombre d\'invitations autorisées.
                                 </div>');
                             })
                             ->columnSpanFull(),

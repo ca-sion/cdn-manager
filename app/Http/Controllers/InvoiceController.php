@@ -63,8 +63,8 @@ class InvoiceController extends Controller
         $dueDate = Carbon::parse($invoice->due_date)->locale('fr_CH')->isoFormat('L');
         $invoiceLink = quoted_printable_encode($invoice->link);
         $recipient = $invoice->client?->invoicingContactEmail;
-        $notification = (new ClientSendInvoice($invoice))->toMail($invoice->client);
-        $notificationHtmlString = $notification->render()->__toString();
+        $nowDate = date('D, d M Y H:i:s O');
+        $editionYear = $invoice->edition?->year;
 
         $invoice->status = InvoiceStatusEnum::Sent;
         $invoice->save();
@@ -72,9 +72,9 @@ class InvoiceController extends Controller
         $body = <<<MAIL
 From: Course de =?utf-8?Q?No=C3=ABl?= <info@coursedenoel.ch>
 To: $recipient
-Subject: Course de Noël 2024 - Facture (F$invoice->number)
+Subject: Course de Noël $editionYear - Facture (F$invoice->number)
 MIME-Version: 1.0
-Date: Sat, 28 Dec 2024 20:17:47 +0000
+Date: $nowDate
 Message-ID: <23307f2fd117e41de1a18a7a135e95f1@coursedenoel.ch>
 Content-Type: text/html; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
@@ -106,6 +106,8 @@ MAIL;
         $date = Carbon::parse($invoice->date)->locale('fr_CH')->isoFormat('L');
         $invoiceLink = quoted_printable_encode($invoice->link);
         $recipient = $invoice->client?->invoicingContactEmail;
+        $nowDate = date('D, d M Y H:i:s O');
+        $editionYear = $invoice->edition?->year;
 
         $invoice->status = InvoiceStatusEnum::Relaunched;
         $invoice->save();
@@ -113,9 +115,9 @@ MAIL;
         $body = <<<MAIL
 From: Course de =?utf-8?Q?No=C3=ABl?= <info@coursedenoel.ch>
 To: $recipient
-Subject: Course de Noël 2024 - Facture (F$invoice->number) : rappel
+Subject: Course de Noël $editionYear - Facture (F$invoice->number) : rappel
 MIME-Version: 1.0
-Date: Sat, 28 Dec 2024 20:17:47 +0000
+Date: $nowDate
 Message-ID: <23307f2fd117e41de1a18a7a135e95f1@coursedenoel.ch>
 Content-Type: text/html; charset=utf-8
 Content-Transfer-Encoding: quoted-printable

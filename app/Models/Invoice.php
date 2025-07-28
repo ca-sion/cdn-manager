@@ -25,6 +25,13 @@ class Invoice extends Model
     protected $guarded = [];
 
     /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = ['edition'];
+
+    /**
      * Get the attributes that should be cast.
      */
     protected function casts(): array
@@ -41,6 +48,14 @@ class Invoice extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * The edition that belong to the invoice.
+     */
+    public function edition(): BelongsTo
+    {
+        return $this->belongsTo(Edition::class);
     }
 
     /**

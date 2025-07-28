@@ -39,7 +39,7 @@ class ProvisionElement extends Model implements HasMedia, Sortable
      *
      * @var array
      */
-    protected $with = ['provision'];
+    protected $with = ['provision', 'edition'];
 
     /**
      * Get the attributes that should be cast.
@@ -126,6 +126,14 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     public function dicastry(): BelongsTo
     {
         return $this->belongsTo(Dicastry::class);
+    }
+
+    /**
+     * The edition that belong to the provision.
+     */
+    public function edition(): BelongsTo
+    {
+        return $this->belongsTo(Edition::class);
     }
 
     /**

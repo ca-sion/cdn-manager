@@ -38,6 +38,8 @@ class ClientSendInvoice extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $editionYear = $this->invoice->edition?->year;
+
         $provisionElements = '';
         foreach ($notifiable->currentProvisionElements->where('provision.format_indicator', '!=', null) as $pe) {
             $provisionElements .= ($pe->provision->description ? '## '.$pe->provision->description : '## '.$pe->provision->name)."\n";
@@ -50,7 +52,7 @@ class ClientSendInvoice extends Notification
         }
 
         return (new MailMessage)
-            ->subject('Course de Noël 2024 - Facture (F'.$this->invoice->number.')')
+            ->subject('Course de Noël '.$editionYear.' - Facture (F'.$this->invoice->number.')')
             ->replyTo('info@coursedenoel.ch')
             ->bcc('info@coursedenoel.ch')
             ->greeting('Bonjour,')

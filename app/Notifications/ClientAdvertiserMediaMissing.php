@@ -33,6 +33,7 @@ class ClientAdvertiserMediaMissing extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $currentEditionYear = now()->format('Y');
         $provisionElements = '';
         foreach ($notifiable->currentProvisionElements->where('provision.format_indicator', '!=', null) as $pe) {
             $provisionElements .= ($pe->provision->description ? '## '.$pe->provision->description : '## '.$pe->provision->name)."\n";
@@ -42,10 +43,12 @@ class ClientAdvertiserMediaMissing extends Notification
             $provisionElements .= $pe->provision->due_date_indicator ? '- Délai : '.$pe->provision->due_date_indicator."\n" : null;
             $provisionElements .= $pe->textual_indicator ? '- Mention  : '.$pe->textual_indicator."\n" : null;
             $provisionElements .= "\n";
+
+            $currentEditionYear = $pe->edition?->year;
         }
 
         return (new MailMessage)
-            ->subject('🏃‍♂️ Course de Noël et Trail des Châteaux 2024 - Visuel manquant ('.$notifiable->name.')')
+            ->subject('🏃‍♂️ Course de Noël et Trail des Châteaux '.$currentEditionYear.' - Visuel manquant ('.$notifiable->name.')')
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
             ->greeting('Bonjour,')
