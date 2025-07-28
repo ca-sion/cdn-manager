@@ -28,6 +28,7 @@ Route::get('clients', FrontListClients::class)->middleware(SiteProtection::class
 Route::get('clients/{record}', FrontEditClient::class)->name('front.client');
 
 Route::get('advertisers/form', AdvertiserForm::class)->name('advertisers.form');
+Route::get('advertisers/form/{client}', AdvertiserForm::class)->middleware('signed')->name('advertisers.form.client');
 Route::get('advertisers/success', [MessageController::class, 'adertiserSuccess'])->middleware('signed')->name('advertisers.success');
 
 Route::get('vip/response/{provisionElement}', VipResponse::class)->name('vip.response')->middleware('signed');

@@ -23,6 +23,7 @@ use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManag
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
+use App\Notifications\ClientAdvertiserFormLink;
 
 class ClientResource extends Resource
 {
@@ -243,6 +244,19 @@ class ClientResource extends Resource
                             $downloads = $downloads->filter();
 
                             return MediaStream::create('logos.zip')->addMedia($downloads);
+                        }),
+                    BulkAction::make('send_advertiser_form')
+                        ->label('Envoyer formulaire annonceur')
+                        ->icon('heroicon-o-envelope')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $client) {
+                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
+                                $client->notify(new ClientAdvertiserFormLink($client, $previousOrderDetails));
+                            }
+                            \Filament\Notifications\Notification::make()
+                                ->title('Formulaires annonceurs envoyés')
+                                ->success()
+                                ->send();
                         }),
                 ]),
             ])

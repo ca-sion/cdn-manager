@@ -30,9 +30,38 @@ class AdvertiserForm extends Component implements HasForms
 
     public ?array $data = [];
 
+    public ?Client $client = null;
+
     public function mount(): void
     {
-        $this->form->fill();
+        $client = request()->route()->parameter('client');
+
+        if ($client && request()->hasValidSignature()) {
+            $this->client = $client;
+            if ($this->client) {
+                $this->form->fill([
+                    'name'                        => $this->client->name,
+                    'address'                     => $this->client->address,
+                    'postal_code'                 => $this->client->postal_code,
+                    'locality'                    => $this->client->locality,
+                    'invoicing_email'             => $this->client->invoicing_email,
+                    'invoicing_address'           => $this->client->invoicing_address,
+                    'invoicing_address_extension' => $this->client->invoicing_address_extension,
+                    'invoicing_postal_code'       => $this->client->invoicing_postal_code,
+                    'invoicing_locality'          => $this->client->invoicing_locality,
+                    'note'                        => $this->client->note,
+                    'contact' => [
+                        'first_name' => $this->client->contacts->first()->first_name ?? null,
+                        'last_name'  => $this->client->contacts->first()->last_name ?? null,
+                        'email'      => $this->client->contacts->first()->email ?? null,
+                    ],
+                ]);
+            } else {
+                $this->form->fill();
+            }
+        } else {
+            $this->form->fill();
+        }
     }
 
     public function form(Form $form): Form
@@ -40,6 +69,21 @@ class AdvertiserForm extends Component implements HasForms
         return $form
             ->schema([
                 Wizard::make([
+                    Wizard\Step::make('Informations')
+                        ->visible(fn (AdvertiserForm $livewire) => $livewire->client !== null)
+                        ->schema([
+                            Placeholder::make('client_name')
+                                ->label('Nom')
+                                ->content(fn (AdvertiserForm $livewire) => $livewire->client?->name),
+                            Placeholder::make('previous_order_details')
+                                ->label('Commande de l\'édition précédente')
+                                ->content(function (AdvertiserForm $livewire) {
+                                    if (!$livewire->client) {
+                                        return 'Aucune information disponible.';
+                                    }
+                                    return new HtmlString(implode(', ', $livewire->client->getPreviousEditionProvisionElementsDetails()));
+                                }),
+                        ]),
                     Wizard\Step::make('Prestations')
                         ->schema([
                             Placeholder::make('Annonce journalistique')
@@ -228,29 +272,64 @@ class AdvertiserForm extends Component implements HasForms
         $dataObject = json_decode(json_encode($data));
 
         // Client
-        $client = Client::create([
-            'name'                        => $dataObject->name,
-            'email'                       => $dataObject->contact->email,
-            'address'                     => $dataObject->address,
-            'postal_code'                 => $dataObject->postal_code,
-            'locality'                    => $dataObject->locality,
-            'category_id'                 => setting('advertiser_form_client_category'),
-            'invoicing_email'             => $dataObject->invoicing_email,
-            'invoicing_address'           => $dataObject->invoicing_address,
-            'invoicing_address_extension' => $dataObject->invoicing_address_extension,
-            'invoicing_postal_code'       => $dataObject->invoicing_postal_code,
-            'invoicing_locality'          => $dataObject->invoicing_locality,
-            'note'                        => $dataObject->note,
-        ]);
-
-        // Contact
-        if ($dataObject->contact->email) {
-            $contact = Contact::create([
-                'first_name' => $dataObject->contact->first_name,
-                'last_name'  => $dataObject->contact->last_name,
-                'email'      => $dataObject->contact->email,
+        if ($this->client) {
+            $client = $this->client;
+            $client->update([
+                'name'                        => $dataObject->name,
+                'email'                       => $dataObject->contact->email,
+                'address'                     => $dataObject->address,
+                'postal_code'                 => $dataObject->postal_code,
+                'locality'                    => $dataObject->locality,
+                'invoicing_email'             => $dataObject->invoicing_email,
+                'invoicing_address'           => $dataObject->invoicing_address,
+                'invoicing_address_extension' => $dataObject->invoicing_address_extension,
+                'invoicing_postal_code'       => $dataObject->invoicing_postal_code,
+                'invoicing_locality'          => $dataObject->invoicing_locality,
+                'note'                        => $dataObject->note,
             ]);
-            $client->contacts()->attach($contact->id);
+
+            // Update existing contact or create new one if email changed
+            if ($dataObject->contact->email) {
+                $contact = $client->contacts()->where('email', $dataObject->contact->email)->first();
+                if ($contact) {
+                    $contact->update([
+                        'first_name' => $dataObject->contact->first_name,
+                        'last_name'  => $dataObject->contact->last_name,
+                    ]);
+                } else {
+                    $contact = Contact::create([
+                        'first_name' => $dataObject->contact->first_name,
+                        'last_name'  => $dataObject->contact->last_name,
+                        'email'      => $dataObject->contact->email,
+                    ]);
+                    $client->contacts()->attach($contact->id);
+                }
+            }
+        } else {
+            $client = Client::create([
+                'name'                        => $dataObject->name,
+                'email'                       => $dataObject->contact->email,
+                'address'                     => $dataObject->address,
+                'postal_code'                 => $dataObject->postal_code,
+                'locality'                    => $dataObject->locality,
+                'category_id'                 => setting('advertiser_form_client_category'),
+                'invoicing_email'             => $dataObject->invoicing_email,
+                'invoicing_address'           => $dataObject->invoicing_address,
+                'invoicing_address_extension' => $dataObject->invoicing_address_extension,
+                'invoicing_postal_code'       => $dataObject->invoicing_postal_code,
+                'invoicing_locality'          => $dataObject->invoicing_locality,
+                'note'                        => $dataObject->note,
+            ]);
+
+            // Contact
+            if ($dataObject->contact->email) {
+                $contact = Contact::create([
+                    'first_name' => $dataObject->contact->first_name,
+                    'last_name'  => $dataObject->contact->last_name,
+                    'email'      => $dataObject->contact->email,
+                ]);
+                $client->contacts()->attach($contact->id);
+            }
         }
 
         // Journal
@@ -356,7 +435,6 @@ class AdvertiserForm extends Component implements HasForms
         $client->notify(new ClientAdvertiserFormCreated);
 
         // Redirect
-        //dd('redirect');
         return redirect()->to(URL::signedRoute('advertisers.success', ['client' => $client]));
     }
 
