@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
+use App\Livewire\DonorForm;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
 
 Route::get('/', function () {
@@ -29,6 +30,10 @@ Route::get('clients/{record}', FrontEditClient::class)->name('front.client');
 
 Route::get('advertisers/form', AdvertiserForm::class)->name('advertisers.form');
 Route::get('advertisers/form/{client}', AdvertiserForm::class)->middleware('signed')->name('advertisers.form.client');
-Route::get('advertisers/success', [MessageController::class, 'adertiserSuccess'])->middleware('signed')->name('advertisers.success');
+Route::get('advertisers/success', [MessageController::class, 'advertiserSuccess'])->middleware('signed')->name('advertisers.success');
+
+Route::get('donors/form', DonorForm::class)->name('donors.form');
+Route::get('donors/form/{contact}', DonorForm::class)->middleware('signed')->name('donors.form.contact');
+Route::get('donors/success', [MessageController::class, 'donorSuccess'])->middleware('signed')->name('donors.success');
 
 Route::get('vip/response/{provisionElement}', VipResponse::class)->name('vip.response')->middleware('signed');

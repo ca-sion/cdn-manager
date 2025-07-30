@@ -56,50 +56,74 @@
     <div class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Coordonnées</h2>
         <table class="w-full text-left">
+
+            @if (data_get($data, 'name'))
             <tr class="border-b border-gray-200 dark:border-gray-700">
                 <td class="text-base font-normal text-gray-500 dark:text-gray-400 md:w-[150px]">Annonceur</td>
                 <td class="text-base font-medium text-gray-900 dark:text-white">
-                    @if ($data?->name)
+                    @if (data_get($data, 'name'))
                         {{ $data?->long_name ?? $data?->name }}<br>
                     @endif
-                    @if ($data?->address)
+                    @if (data_get($data, 'address'))
                         {{ $data?->address }}<br>
                     @endif
-                    @if ($data?->postal_code)
+                    @if (data_get($data, 'postal_code'))
                         {{ $data?->postal_code }} {{ $data?->locality }}
                     @endif
                 </td>
             </tr>
+            @endif
+
+            @if (data_get($data, 'contact.first_name'))
             <tr class="border-b border-gray-200 dark:border-gray-700">
                 <td class="text-base font-normal text-gray-500 dark:text-gray-400 md:w-[150px]">Contact</td>
                 <td class="text-base font-medium text-gray-900 dark:text-white">
-                    {{ $data?->contact?->first_name }}
-                    {{ $data?->contact?->last_name }}
-                    @if ($data?->contact?->email)
+                    {{ data_get($data, 'contact.first_name') }}
+                    {{ data_get($data, 'contact.last_name') }}
+                    @if (data_get($data, 'contact.email'))
                         ({{ $data?->contact?->email }})
                     @endif
                 </td>
             </tr>
+            @endif
+
+            @if (data_get($data, 'invoicing_address'))
             <tr class="border-b border-gray-200 dark:border-gray-700">
                 <td class="text-base font-normal text-gray-500 dark:text-gray-400 md:w-[150px]">Adresse de facturation</td>
                 <td class="text-base font-medium text-gray-900 dark:text-white">
-                    @if ($data?->name)
+                    @if (data_get($data, 'name'))
                         {{ $data?->name }}<br>
                     @endif
-                    @if ($data?->invoicing_address || $data?->address)
+                    @if (data_get($data, 'invoicing_address') || data_get($data, 'address'))
                         {{ $data?->invoicing_address ?? $data?->address }}<br>
                     @endif
-                    @if ($data?->invoicing_address_extension)
+                    @if (data_get($data, 'invoicing_address_extension'))
                         {{ $data?->invoicing_address_extension }}<br>
                     @endif
-                    @if ($data?->invoicing_postal_code || $data?->postal_code)
+                    @if (data_get($data, 'invoicing_postal_code') || data_get($data, 'postal_code'))
                         {{ $data?->invoicing_postal_code ?? $data?->postal_code }} {{ $data?->invoicing_locality ?? $data?->locality }}<br>
                     @endif
-                    @if ($data?->invoicing_email)
+                    @if (data_get($data, 'invoicing_email'))
                         {{ $data?->invoicing_email }}<br>
                     @endif
                 </td>
             </tr>
+            @endif
+
+            @if (data_get($data, 'first_name') && data_get($data, 'last_name'))
+            <tr class="">
+                <td class="text-base font-normal text-gray-500 dark:text-gray-400 md:w-[150px]">Donateur</td>
+                <td class="text-base font-medium text-gray-900 dark:text-white">
+                    @if (data_get($data, 'first_name') && data_get($data, 'last_name'))
+                        {{ data_get($data, 'first_name') }} {{ data_get($data, 'last_name') }}<br>
+                    @endif
+                    @if (data_get($data, 'email'))
+                        {{ $data?->email }}<br>
+                    @endif
+                </td>
+            </tr>
+            @endif
+
         </table>
     </div>
 </div>

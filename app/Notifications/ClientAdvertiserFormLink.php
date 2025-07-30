@@ -48,7 +48,7 @@ class ClientAdvertiserFormLink extends Notification
                     ->replyTo('pub@coursedenoel.ch')
                     ->bcc('pub@coursedenoel.ch')
                     ->greeting('Cher Partenaire,')
-                    ->line('Comme vous le savez, la Course de Noël est devenue un événement incontournable du 2ᵉ samedi de décembre à Sion. Cette année, nous organisons la 56ᵉ édition et nous sommes impatients d’accueillir plus de 6000 participant·e·s le 13 décembre 2025.')
+                    ->line('Comme vous le savez, la Course de Noël est devenue un événement incontournable du 2ᵉ samedi de décembre à Sion. Cette année, nous organisons la 56ᵉ édition et nous sommes impatients d’accueillir plus de 6000 participant·e·s le 13 décembre 2025. Le 7ᵉ Trail des Châteaux se tiendra le même jour entre les châteaux de notre belle région.')
                     ->line('C\'est une opportunité d\'améliorer votre visibilité auprès d\'un large public. Comme les autres années, nous vous proposons :')
                     ->line('- Annonces dans l\'encarté du Nouvelliste (tiré à 40\'000 exemplaires) - Banderoles - Visuels sur écran - Packs entreprise - Dons')
                     ->line('Si vous souhaitez **soutenir** la Course de Noël et le Trail des Châteaux, nous vous invitons à **remplir le formulaire en ligne** suivant :')

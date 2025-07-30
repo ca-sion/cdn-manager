@@ -16,6 +16,7 @@ use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
+use App\Notifications\ContactDonorFormLink;
 use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Resources\ContactResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -255,6 +256,18 @@ class ContactResource extends Resource
                                 }
                                 $record->save();
                             }
+                        }),
+                    BulkAction::make('send_donor_form')
+                        ->label('Envoyer formulaire donateur')
+                        ->icon('heroicon-o-envelope')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $contact) {
+                                $contact->notify(new ContactDonorFormLink($contact));
+                            }
+                            \Filament\Notifications\Notification::make()
+                                ->title('Formulaires donateurs envoyés')
+                                ->success()
+                                ->send();
                         }),
                 ]),
             ]);

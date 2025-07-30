@@ -33,6 +33,7 @@ class ClientAdvertiserFormCreated extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $currentEditionYear = now()->format('Y');
         $provisionElements = '';
         foreach ($notifiable->currentProvisionElements as $pe) {
             $provisionElements .= ($pe->provision->description ? '## '.$pe->provision->description : '## '.$pe->provision->name).' - '.$pe->price->amount('c')."\n";
@@ -42,10 +43,12 @@ class ClientAdvertiserFormCreated extends Notification
             $provisionElements .= $pe->provision->due_date_indicator ? '- Délai : '.$pe->provision->due_date_indicator."\n" : null;
             $provisionElements .= $pe->textual_indicator ? '- Mention  : '.$pe->textual_indicator."\n" : null;
             $provisionElements .= "\n";
+
+            $currentEditionYear = $pe->edition?->year;
         }
 
         return (new MailMessage)
-            ->subject('CDN - Commande annonceur effectuée ('.$notifiable->name.')')
+            ->subject('CDN '.$currentEditionYear.' - Commande annonceur effectuée ('.$notifiable->name.')')
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
             ->greeting($notifiable->name.',')
