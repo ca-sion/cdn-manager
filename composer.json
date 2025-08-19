@@ -10,6 +10,7 @@
         "elic-dev/laravel-site-protection": "^1.2",
         "filament/filament": "^3.2",
         "filament/spatie-laravel-media-library-plugin": "^3.2",
+        "genkgo/camt": "^2.10",
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
         "outerweb/filament-settings": "^1.2",

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
 use Filament\Actions;
+use App\Filament\Pages\CamtImport;
 use Filament\Actions\ExportAction;
 use App\Filament\Exports\InvoiceExporter;
 use Filament\Resources\Pages\ListRecords;
@@ -24,6 +25,9 @@ class ListInvoices extends ListRecords
             ExportAction::make()
                 ->label('Exporter')
                 ->exporter(InvoiceExporter::class),
+            Actions\Action::make('camtImport')
+                ->label('Rapprocher CAMT 054')
+                ->url(CamtImport::getUrl()),
         ];
     }
 }
