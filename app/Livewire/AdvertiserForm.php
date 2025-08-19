@@ -50,7 +50,7 @@ class AdvertiserForm extends Component implements HasForms
                     'invoicing_postal_code'       => $this->client->invoicing_postal_code,
                     'invoicing_locality'          => $this->client->invoicing_locality,
                     'note'                        => $this->client->note,
-                    'contact' => [
+                    'contact'                     => [
                         'first_name' => $this->client->contacts->first()->first_name ?? null,
                         'last_name'  => $this->client->contacts->first()->last_name ?? null,
                         'email'      => $this->client->contacts->first()->email ?? null,
@@ -78,9 +78,10 @@ class AdvertiserForm extends Component implements HasForms
                             Placeholder::make('previous_order_details')
                                 ->label('Commande de l\'édition précédente')
                                 ->content(function (AdvertiserForm $livewire) {
-                                    if (!$livewire->client) {
+                                    if (! $livewire->client) {
                                         return 'Aucune information disponible.';
                                     }
+
                                     return new HtmlString(implode(', ', $livewire->client->getPreviousEditionProvisionElementsDetails()));
                                 }),
                         ]),

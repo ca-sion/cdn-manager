@@ -36,7 +36,7 @@ class MessageController extends Controller
             'actionLabel' => null,
             'contact'     => $contact,
             'cost'        => $donationprovisionElement->cost,
-            'mention'        => $donationprovisionElement->textual_indicator,
+            'mention'     => $donationprovisionElement->textual_indicator,
             'qrReference' => QrPaymentReferenceGenerator::generate(null, $donationprovisionElement->edition?->year.'4444'.$contact->id),
             'twintLink'   => url()->query('https://donate.raisenow.io/tfbdk', [
                 'supporter.first_name.value' => $contact->first_name,

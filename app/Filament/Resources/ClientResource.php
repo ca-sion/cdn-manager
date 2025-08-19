@@ -16,6 +16,7 @@ use App\Filament\Exports\ClientExporter;
 use Filament\Tables\Actions\ExportAction;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
+use App\Notifications\ClientAdvertiserFormLink;
 use App\Filament\Resources\ClientResource\Pages;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -23,7 +24,6 @@ use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManag
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
-use App\Notifications\ClientAdvertiserFormLink;
 
 class ClientResource extends Resource
 {

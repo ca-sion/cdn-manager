@@ -176,6 +176,7 @@ class Client extends Model implements HasMedia
     {
         // Assuming 'edition_id' for previous year is current 'edition_id' - 1
         $previousEditionId = setting('edition_id', config('cdn.default_edition_id')) - 1;
+
         return $this->morphMany(ProvisionElement::class, 'recipient')->where('edition_id', $previousEditionId);
     }
 
@@ -186,7 +187,7 @@ class Client extends Model implements HasMedia
     {
         $details = [];
         foreach ($this->previousEditionProvisionElements as $provisionElement) {
-            $details[] = $provisionElement->provision->name . ' (' . $provisionElement->price->amount('c') . ')';
+            $details[] = $provisionElement->provision->name.' ('.$provisionElement->price->amount('c').')';
         }
 
         return $details;
