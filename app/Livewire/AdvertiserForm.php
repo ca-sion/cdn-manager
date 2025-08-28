@@ -73,16 +73,20 @@ class AdvertiserForm extends Component implements HasForms
                         ->visible(fn (AdvertiserForm $livewire) => $livewire->client !== null)
                         ->schema([
                             Placeholder::make('client_name')
-                                ->label('Nom')
+                                ->label(new HtmlString('<strong>Nom</strong>'))
                                 ->content(fn (AdvertiserForm $livewire) => $livewire->client?->name),
                             Placeholder::make('previous_order_details')
-                                ->label('Commande de l\'édition précédente')
+                                ->label(new HtmlString('<strong>Commande de l\'édition précédente</strong>'))
                                 ->content(function (AdvertiserForm $livewire) {
                                     if (! $livewire->client) {
                                         return 'Aucune information disponible.';
                                     }
 
-                                    return new HtmlString(implode(', ', $livewire->client->getPreviousEditionProvisionElementsDetails()));
+                                    if (empty($livewire->client->getPreviousEditionProvisionElementsDetails())) {
+                                        return 'Aucune commande passée l\'année dernière.';
+                                    }
+
+                                    return new HtmlString('<ul style="list-style: disc;margin-left: 2rem;}"><li>'.implode('</li><li>', $livewire->client->getPreviousEditionProvisionElementsDetails()).'</li></ul>');
                                 }),
                         ]),
                     Wizard\Step::make('Prestations')
