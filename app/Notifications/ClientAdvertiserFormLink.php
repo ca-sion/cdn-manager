@@ -54,7 +54,7 @@ class ClientAdvertiserFormLink extends Notification
             ->line('Si vous souhaitez **soutenir** la Course de Noël et le Trail des Châteaux, nous vous invitons à **remplir le formulaire en ligne** suivant :')
             ->action('Formulaire de commande', $signedUrl)
             ->lineIf($this->previousOrderDetails, 'Détails de votre commande de l\'édition précédente :')
-            ->lineIf($this->previousOrderDetails, $this->previousOrderDetails ? implode(', ', $this->previousOrderDetails) : 'Aucune commande trouvée pour l\'édition précédente.')
+            ->lineIf($this->previousOrderDetails, $this->previousOrderDetails ? '- '.implode(', ', $this->previousOrderDetails) : '- Aucune commande trouvée pour l\'édition précédente.')
             ->line('Vous pouvez aussi nous retourner le formulaire papier au format PDF après l\'avoir rempli à l\'adresse pub@coursedenoel.ch. Vous pouvez le télécharger sous : https://coursedenoel.ch/assets/documents/fo-annonceurs.pdf')
             ->line('Nous restons à disposition en cas de questions ou pour tout complément d\'information.')
             ->salutation('Le Comité de la Course de Noël');

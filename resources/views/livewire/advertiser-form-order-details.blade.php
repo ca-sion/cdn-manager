@@ -3,7 +3,7 @@
     <div class="flex flex-col gap-4">
         @foreach ($provisions as $provision)
         <div class="">
-            <p class="text-base font-bold text-gray-900 dark:text-white">{{ $provision->description }}</p>
+            <p class="text-base font-bold text-gray-900 dark:text-white">{{ $provision->description ?? $provision->name }}</p>
             <ul class="ms-2">
                     @if ($provision->dimensions_indicator)
                     <li>Dimensions : {{ $provision->dimensions_indicator }}</li>
