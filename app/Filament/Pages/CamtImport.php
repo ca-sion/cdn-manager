@@ -58,7 +58,7 @@ class CamtImport extends Page implements HasForms
 
         try {
             $message = $reader->readFile($file->getRealPath());
-            $statements = $message->getRecords();
+            $notifications = $message->getRecords();
 
             $this->transactions = collect();
 
@@ -67,22 +67,21 @@ class CamtImport extends Page implements HasForms
 
             DB::beginTransaction();
 
-            foreach ($statements as $statement) {
-                foreach ($statement->getEntries() as $entry) {
+            foreach ($notifications as $notification) {
+                foreach ($notification->getEntries() as $entry) {
                     if ($entry->getCreditDebitIndicator() == 'CRDT') {
 
                         $transaction = $entry->getTransactionDetail();
-                        $qrReference = $transaction->getRemittanceInformation()->getCreditorReferenceInformation()->getRef();
+                        $qrReference = $transaction?->getRemittanceInformation()?->getCreditorReferenceInformation()?->getRef();
                         $bookingDate = Carbon::parse($entry->getBookingDate());
-                        $transactionReference = $transaction->getReference()->getAccountServicerReference();
-                        $transactionAmount = $transaction->getAmount()->getAmount() / 100;
-                        $debtor = $transaction->getRelatedParty()->getRelatedPartyType()->getName();
+                        $transactionReference = $transaction?->getReference()?->getAccountServicerReference();
+                        $transactionAmount = $transaction?->getAmount()?->getAmount() / 100;
+                        $debtor = $transaction?->getRelatedParty()?->getRelatedPartyType()?->getName();
 
                         if ($qrReference) {
                             $invoice = Invoice::where('qr_reference', $qrReference)->first();
 
                             if ($invoice) {
-
                                 if ($invoice->total != $transactionAmount) {
                                     $invoiceStatus = InvoiceStatusEnum::ActionRequired->value;
 
@@ -106,18 +105,17 @@ class CamtImport extends Page implements HasForms
                                 $notFoundCount++;
                             }
                         }
+
+                        // For table
+                        $this->transactions->add((object) [
+                            'debtor'       => $debtor,
+                            'qr_reference' => $qrReference,
+                            'invoice'      => $invoice ?? null,
+                            'date'         => $bookingDate,
+                            'amount'       => $transactionAmount,
+                            'reference'    => $transactionReference,
+                        ]);
                     }
-
-                    // For table
-                    $this->transactions->add((object) [
-                        'debtor'       => $debtor,
-                        'qr_reference' => $qrReference,
-                        'invoice'      => $invoice,
-                        'date'         => $bookingDate,
-                        'amount'       => $transactionAmount,
-                        'reference'    => $transactionReference,
-                    ]);
-
                 }
             }
 

@@ -29,6 +29,9 @@
                             Facture liée
                         </th>
                         <th class="px-6 py-3" scope="col">
+                            Statut
+                        </th>
+                        <th class="px-6 py-3" scope="col">
                             Référence QR
                         </th>
                     </tr>
@@ -49,8 +52,13 @@
                                 @if ($transaction->invoice)
                                     <a href="{{ route('filament.admin.resources.invoices.edit', ['record' => $transaction->invoice?->id]) }}">{{ $transaction->invoice?->number }}</a>
                                     <a class="text-xs" href="{{ $transaction->invoice?->link }}">📄</a>
-                                    ({{ $transaction->invoice?->status }})
+                                    <a class="text-xs" href="{{ route('filament.admin.resources.clients.edit', ['record' => $transaction->invoice?->client?->id, 'activeRelationManager' => 3]) }}">👤</a>
                                 @endif
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4">
+                                <span class="fi-badge fi-color-custom me-1 flex min-w-[theme(spacing.6)] items-center justify-center gap-x-1 rounded-md bg-custom-50 px-2 py-1 text-xs font-medium text-custom-600 ring-1 ring-inset ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30" style="--c-50:var(--{{ $transaction->invoice?->status?->getColor() }}-50);--c-400:var(--{{ $transaction->invoice?->status?->getColor() }}-400);--c-600:var(--{{ $transaction->invoice?->status?->getColor() }}-600);">
+                                    {{ $transaction->invoice?->status?->getLabel() }}
+                                </span>
                             </td>
                             <td class="px-6 py-4">
                                 {{ $transaction->qr_reference }}
