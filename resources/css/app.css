@@ -1,3 +1,111 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media print {
+    /* ----- Réinitialisation de la mise en page de l'application ----- */
+    
+    /* Cache les éléments superflus pour l'impression */
+    header,
+    nav,
+    aside,
+    footer,
+    .fi-topbar,
+    .fi-sidebar,
+    .fi-main > .mx-auto,
+    .filament-hidden-print {
+        display: none !important;
+    }
+
+    /* Règle les marges et le padding du corps du document */
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+    
+    /* Optimise l'affichage du conteneur principal */
+    .fi-ta {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+
+    /* ----- Optimisation de la table Filament ----- */
+
+    /* Masque les outils et actions de la table */
+    .fi-ta-header,
+    .fi-ta-toolbar-actions,
+    .fi-ta-bulk-actions-toolbar,
+    .fi-pagination,
+    .fi-ta-header-toolbar,
+    .fi-ta-search-field,
+
+    .fi-sidebar,
+    .fi-topbar,
+    .fi-header,
+    .fi-ta-header-actions,
+    .fi-ta-toolbar-actions,
+    .fi-ta-bulk-actions-toolbar,
+    .fi-ta-pagination {
+        display: none !important;
+    }
+
+    /* Mise en page de la table */
+    .fi-ta-table {
+        overflow: visible !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
+        font-size: 8px;
+    }
+
+    /* Retire les couleurs de fond et les ombres */
+    .fi-ta-row,
+    .fi-ta-cell {
+        background-color: transparent !important;
+        box-shadow: none !important;
+    }
+
+    /* Mise en forme des lignes et cellules */
+    .fi-ta-header-cell,
+    .fi-ta-cell {
+        padding: 4px 8px !important;
+        border: 1px solid #eee !important;
+    }
+
+    .fi-ta-text,
+    .fi-ta-summary-row-heading,
+    .fi-ta-text-summary {
+        padding: 0 0 0 0;
+    }
+    
+    /* Gère les ruptures de page entre les lignes */
+    .fi-ta-row {
+        page-break-inside: avoid;
+    }
+    
+    /* Affiche les résumés sous la table (si nécessaire) */
+    .fi-ta-summary {
+        display: block !important;
+        margin-top: 1rem;
+    }
+
+    /* Correction des liens et autres éléments */
+    a,
+    a:visited {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+    /* Cache les boutons, icônes, badges et autres éléments dynamiques */
+    .fi-ta-actions,
+    .fi-ta-list-column-actions,
+    .fi-badge,
+    .fi-icon,
+    a:not([href]) { /* Cache les liens qui n'ont pas de destination */
+        text-decoration: none !important;
+        color: inherit !important;
+        pointer-events: none;
+    }
+}
