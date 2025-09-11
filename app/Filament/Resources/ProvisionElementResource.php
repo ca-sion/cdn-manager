@@ -464,11 +464,18 @@ class ProvisionElementResource extends Resource
                     ->summarize(Sum::make()->label('Total')->formatStateUsing(fn (float $state) => Price::of($state)->amount('c')))
                     ->sortable()
                     ->toggleable(),
-                TextColumn::make('net_cost')
+                TextColumn::make('net_amount')
                     ->state(function (Model $record): ?float {
                         return $record->price->net_amount;
                     })
-                    ->label('Montant net')
+                    ->label('Prix net')
+                    ->formatStateUsing(fn (float $state) => $state > 0 ? Price::of($state)->amount('c') : null)
+                    ->toggleable(),
+                TextColumn::make('amount')
+                    ->state(function (Model $record): ?float {
+                        return $record->price->amount;
+                    })
+                    ->label('Prix')
                     ->formatStateUsing(fn (float $state) => $state > 0 ? Price::of($state)->amount('c') : null)
                     ->toggleable(),
 
