@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Models\Invoice;
+use App\Enums\InvoiceStatusEnum;
 use App\Models\ClientEngagement;
+use App\Models\ProvisionElement;
 use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
 
@@ -14,13 +16,20 @@ class InvoiceObserver
      */
     public function created(Invoice $invoice): void
     {
-        $engagement = ClientEngagement::where('client_id', $invoice->client_id)
-                                      ->where('edition_id', $invoice->edition_id)
-                                      ->first();
+        $engagement = ClientEngagement::firstOrCreate([
+            'client_id'  => $invoice->client_id,
+            'edition_id' => $invoice->edition_id,
+        ]);
 
         if ($engagement) {
-            $engagement->stage = EngagementStageEnum::Billed;
-            $engagement->status = EngagementStatusEnum::Idle;
+            if ($invoice->status === InvoiceStatusEnum::Draft) {
+                $engagement->stage = EngagementStageEnum::Billed;
+                $engagement->status = EngagementStatusEnum::ToModify;
+            } elseif ($invoice->status === InvoiceStatusEnum::Ready) {
+                $engagement->stage = EngagementStageEnum::Billed;
+                $engagement->status = EngagementStatusEnum::ToModify;
+            }
+
             $engagement->save();
         }
     }
@@ -30,57 +39,91 @@ class InvoiceObserver
      */
     public function updated(Invoice $invoice): void
     {
-        $engagement = ClientEngagement::where('client_id', $invoice->client_id)
-                                      ->where('edition_id', $invoice->edition_id)
-                                      ->first();
+        $engagement = ClientEngagement::firstOrCreate([
+            'client_id'  => $invoice->client_id,
+            'edition_id' => $invoice->edition_id,
+        ]);
 
-        if (!$engagement || !$invoice->isDirty('status')) {
+        if (! $engagement || ! $invoice->isDirty('status')) {
             return;
         }
 
         // Cas : Facture payée
-        if ($invoice->status === 'paid') {
-            $allInvoicesPaid = $engagement->invoices()->where('status', '<>', 'paid')->doesntExist();
+        if ($invoice->status === InvoiceStatusEnum::Paid) {
+            $allInvoicesPaid = Invoice::where('client_id', $engagement->client_id)
+                ->where('edition_id', $engagement->edition_id)
+                ->where('status', '!=', 'paid')
+                ->doesntExist();
 
             if ($allInvoicesPaid) {
                 $engagement->stage = EngagementStageEnum::Paid;
-                
-                // Si toutes les factures sont payées, on vérifie si des provisions sont encore à faire
-                $pendingProvisions = $engagement->provisionElements()->whereIn('status', [
-                    'to_prepare', 'confirmed', 'ready', 'to_confirm', 'to_modify', 'action_required', 'to_relaunch'
-                ])->exists();
-                
+
+                $pendingProvisions = ProvisionElement::where('recipient_id', $engagement->client_id)
+                    ->where('recipient_type', 'App\\Models\\Client')
+                    ->where('edition_id', $engagement->edition_id)
+                    ->whereIn('status', [
+                        'to_prepare', 'confirmed', 'ready', 'to_confirm', 'to_modify', 'action_required', 'to_relaunch',
+                    ])
+                    ->exists();
+
                 if ($pendingProvisions) {
                     $engagement->status = EngagementStatusEnum::ActionRequired;
                 } else {
-                    $engagement->status = null; // C'est terminé
+                    $engagement->status = null;
                 }
             }
-        } 
-        
+        }
+
+        // Cas : Facture en brouillon ou prête
+        elseif ($invoice->status === InvoiceStatusEnum::Draft || $invoice->status === InvoiceStatusEnum::Ready) {
+            $pendingProvisions = ProvisionElement::where('recipient_id', $engagement->client_id)
+                ->where('recipient_type', 'App\\Models\\Client')
+                ->where('edition_id', $engagement->edition_id)
+                ->whereIn('status', [
+                    'to_prepare', 'confirmed', 'ready', 'to_confirm', 'to_modify', 'action_required', 'to_relaunch',
+                ])
+                ->exists();
+            if (! $pendingProvisions) {
+                $engagement->stage = EngagementStageEnum::Billed;
+                $engagement->status = EngagementStatusEnum::Idle;
+            }
+        }
+
         // Cas : Facture envoyée
-        elseif ($invoice->status === 'sent') {
-            if ($engagement->stage->isNot(EngagementStageEnum::Billed)) {
+        elseif ($invoice->status === InvoiceStatusEnum::Sent) {
+            if (! $engagement->stage === EngagementStageEnum::Billed) {
                 $engagement->stage = EngagementStageEnum::Billed;
             }
             $engagement->status = EngagementStatusEnum::Idle;
         }
 
+        // Cas : Facture relancée
+        elseif ($invoice->status === InvoiceStatusEnum::Relaunched) {
+            $engagement->stage = EngagementStageEnum::Billed;
+            $engagement->status = EngagementStatusEnum::Relaunched;
+        }
+
         // Cas : Facture en retard (overdue)
-        elseif ($invoice->status === 'overdue') {
+        elseif ($invoice->status === InvoiceStatusEnum::Overdue) {
+            $engagement->status = EngagementStatusEnum::ActionRequired;
+        }
+
+        // Cas : Facture avec action requise
+        elseif ($invoice->status === InvoiceStatusEnum::ActionRequired) {
+            $engagement->stage = EngagementStageEnum::Billed;
             $engagement->status = EngagementStatusEnum::ActionRequired;
         }
 
         // Cas : Facture suspendue
-        elseif ($invoice->status === 'suspended') {
-            $engagement->stage = EngagementStageEnum::Suspended;
+        elseif ($invoice->status === InvoiceStatusEnum::Suspended) {
+            $engagement->stage = EngagementStageEnum::Billed;
             $engagement->status = null;
         }
 
         // Cas : Facture annulée
-        elseif ($invoice->status === 'cancelled') {
-            $engagement->stage = EngagementStageEnum::Lost;
-            $engagement->status = null;
+        elseif ($invoice->status === InvoiceStatusEnum::Cancelled) {
+            $engagement->stage = EngagementStageEnum::Billed;
+            $engagement->status = EngagementStatusEnum::Cancelled;
         }
 
         $engagement->save();

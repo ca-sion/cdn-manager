@@ -7,7 +7,6 @@ use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -63,24 +62,6 @@ class ClientEngagement extends Model
     public function edition(): BelongsTo
     {
         return $this->belongsTo(Edition::class);
-    }
-
-    /**
-     * Get the invoices for the client engagement.
-     */
-    public function invoices(): HasMany
-    {
-        return $this->hasMany(Invoice::class, 'client_id', 'client_id')
-                    ->where('edition_id', $this->edition_id);
-    }
-
-    /**
-     * Get the provision elements for the client engagement.
-     */
-    public function provisionElements(): HasMany
-    {
-        return $this->hasMany(ProvisionElement::class, 'client_id', 'client_id')
-                    ->where('edition_id', $this->edition_id);
     }
 
     /**

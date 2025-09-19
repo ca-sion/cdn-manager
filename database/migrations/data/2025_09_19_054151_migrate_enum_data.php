@@ -15,9 +15,36 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Créer les engagements pour chaque client et chaque édition où une prestation ou une facture existe
+        // 1. Convertir les anciennes valeurs des ENUM vers les nouvelles.
+
+        // Conversion des statuts des factures
+        Invoice::where('status', 'payed')->update(['status' => 'paid']);
+        Invoice::where('status', 'sent_by_post')->update(['status' => 'sent', 'delivery_method' => 'post']);
+        Invoice::where('status', 'to_relaunch')->update(['status' => 'relaunched']);
+
+        // Conversion des statuts des prestations
+        ProvisionElement::where('status', 'to_contact')->update(['status' => 'to_prepare']);
+        ProvisionElement::where('status', 'contacted')->update(['status' => 'to_prepare']);
+        ProvisionElement::where('status', 'sent')->update(['status' => 'confirmed']);
+        ProvisionElement::where('status', 'sent_by_post')->update(['status' => 'confirmed', 'delivery_method' => 'post']);
+        // ProvisionElement::where('status', 'received')->update(['status' => 'done']);
+        ProvisionElement::where('status', 'approved')->update(['status' => 'confirmed']);
+        ProvisionElement::where('status', 'relaunched')->update(['status' => 'to_relaunch']);
+
+        // Logique spécifique pour MadeBy
+        $madeByProvisions = ProvisionElement::where('status', 'made_by')->get();
+        foreach ($madeByProvisions as $provision) {
+            $note = $provision->notes ?? '';
+            $newNote = $note.' | Ancien statut: MadeBy. A besoin d\'être vérifié pour le responsable.';
+            $provision->update([
+                'status' => 'done',
+                'notes'  => $newNote,
+            ]);
+        }
+
+        // 2. Créer les engagements pour chaque client et chaque édition où une prestation ou une facture existe
         $clientEditions = collect();
-        $provisions = ProvisionElement::distinct()->select('client_id', 'edition_id')->get();
+        $provisions = ProvisionElement::distinct()->select('recipient_id as client_id', 'edition_id')->where('recipient_type', 'App\\Models\\Client')->get();
         $invoices = Invoice::distinct()->select('client_id', 'edition_id')->get();
 
         $clientEditions = $provisions->merge($invoices)->unique(function ($item) {
@@ -31,77 +58,84 @@ return new class extends Migration
             ]);
         }
 
-        // 2. Parcourir tous les engagements pour déduire le stage et les autres valeurs
+        // 3. Parcourir tous les engagements pour déduire le stage et le statut
         $engagements = ClientEngagement::all();
         foreach ($engagements as $engagement) {
-            $invoices = Invoice::where('client_id', $engagement->client_id)->where('edition_id', $engagement->edition_id)->get();
-            $provisions = ProvisionElement::where('client_id', $engagement->client_id)->where('edition_id', $engagement->edition_id)->get();
+            // Trouver les factures et prestations associées à cet engagement en interrogeant les tables directement
+            $invoices = Invoice::where('client_id', $engagement->client_id)
+                ->where('edition_id', $engagement->edition_id)
+                ->get();
 
-            // DEDUIRE le stage de l'engagement (le plus avancé en premier)
-            if ($invoices->contains('status', 'payed')) {
+            $provisions = ProvisionElement::where('recipient_id', $engagement->client_id)
+                ->where('recipient_type', 'App\\Models\\Client')
+                ->where('edition_id', $engagement->edition_id)
+                ->get();
+
+            // DÉDUCTION du STAGE de l'engagement (le plus avancé en premier)
+            if ($invoices->contains('status', 'paid')) {
                 $engagement->stage = EngagementStageEnum::Paid;
             } elseif ($invoices->contains('status', 'sent')) {
                 $engagement->stage = EngagementStageEnum::Billed;
-            } elseif ($provisions->contains('status', 'approved') || $provisions->contains('status', 'confirmed')) {
+            } elseif ($provisions->contains('status', 'confirmed')) {
                 $engagement->stage = EngagementStageEnum::Confirmed;
-            } elseif ($provisions->contains('status', 'sent') || $provisions->contains('status', 'sent_by_post')) {
-                $engagement->stage = EngagementStageEnum::ProposalSent;
             } elseif ($provisions->contains('status', 'to_prepare')) {
-                $engagement->stage = EngagementStageEnum::Prospect;
+                $engagement->stage = EngagementStageEnum::ProposalSent; // Le premier stade après prospect, car une proposition est préparée
             }
 
-            // DEDUIRE le status temporaire de l'engagement (le plus urgent en premier)
-            if ($provisions->contains('status', 'action_required') || $invoices->contains('status', 'action_required')) {
+            // DÉDUCTION du STATUT de l'engagement (le plus urgent en premier)
+            $engagement->status = EngagementStatusEnum::Idle; // Valeur par défaut
+
+            if ($invoices->contains('status', 'overdue') || $provisions->contains('status', 'action_required') || $invoices->contains('status', 'action_required')) {
                 $engagement->status = EngagementStatusEnum::ActionRequired;
-            } elseif ($provisions->contains('status', 'to_relaunch') || $provisions->contains('status', 'relaunched') || $invoices->contains('status', 'to_relaunch') || $invoices->contains('status', 'relaunched')) {
+            } elseif ($provisions->contains('status', 'to_relaunch')) {
                 $engagement->status = EngagementStatusEnum::ToRelaunch;
-            } elseif ($provisions->contains('status', 'to_modify') || $invoices->contains('status', 'to_modify')) {
+            } elseif ($provisions->contains('status', 'to_modify')) {
                 $engagement->status = EngagementStatusEnum::ToModify;
-            } elseif ($invoices->contains('status', 'overdue')) {
-                $engagement->status = EngagementStatusEnum::ActionRequired;
-            } elseif ($provisions->contains('status', 'suspended') || $invoices->contains('status', 'suspended')) {
+            } elseif ($invoices->contains('status', 'suspended') || $provisions->contains('status', 'suspended')) {
                 $engagement->stage = EngagementStageEnum::Suspended;
-            } elseif ($provisions->contains('status', 'cancelled') || $invoices->contains('status', 'cancelled')) {
+                $engagement->status = null;
+            } elseif ($invoices->contains('status', 'cancelled') || $provisions->contains('status', 'cancelled')) {
                 $engagement->stage = EngagementStageEnum::Lost;
-            } else {
-                $engagement->status = EngagementStatusEnum::Idle;
+                $engagement->status = null;
             }
 
-            // Si l'engagement est payé, toutes les prestations sont payées
-            if ($engagement->stage === EngagementStageEnum::Paid && $invoices->isEmpty()) {
-                $provisions->each(function ($provision) {
-                    $provision->is_paid = true;
-                    $provision->save();
-                });
+            // Si l'engagement est payé, toutes les prestations non facturées sont payées
+            if ($engagement->stage === EngagementStageEnum::Paid) {
+                ProvisionElement::where('recipient_id', $engagement->client_id)
+                    ->where('recipient_type', 'App\\Models\\Client')
+                    ->where('edition_id', $engagement->edition_id)
+                    ->where('is_paid', false)
+                    ->each(function ($provision) {
+                        $invoicesExist = Invoice::where('client_id', $provision->recipient_id)
+                            ->where('edition_id', $provision->edition_id)
+                            ->exists();
+                        if (! $invoicesExist) {
+                            $provision->is_paid = true;
+                            $provision->save();
+                        }
+                    });
+
+                // Si le stage est payé, le statut est nul sauf si des provisions sont en attente
+                $pendingProvisions = ProvisionElement::where('recipient_id', $engagement->client_id)
+                    ->where('recipient_type', 'App\\Models\\Client')
+                    ->where('edition_id', $engagement->edition_id)
+                    ->whereIn('status', [
+                        'to_prepare', 'confirmed', 'ready', 'to_confirm', 'to_modify', 'action_required', 'to_relaunch',
+                    ])->exists();
+
+                if (! $pendingProvisions) {
+                    $engagement->status = null;
+                }
             }
 
             $engagement->save();
 
-            // 3. Mettre à jour les nouvelles colonnes sur les tables existantes
-            foreach ($invoices as $invoice) {
-                if ($invoice->status === 'sent_by_post') {
-                    $invoice->delivery_method = 'post';
-                }
-                $invoice->save();
-            }
+            // 4. Convertir les anciennes valeurs restantes des ENUM vers les nouvelles.
+            Invoice::where('status', 'to_modify')->update(['status' => 'action_required']);
 
-            foreach ($provisions as $provision) {
-                if ($provision->status === 'sent_by_post') {
-                    $provision->delivery_method = 'post';
-                }
-                if ($provision->status === 'made_by') {
-                    // Si un responsable texte est déjà défini, on ajoute une note.
-                    if (! empty($provision->responsible)) {
-                        $provision->note = $provision->note.' | Ancien statut: MadeBy.';
-                    } else {
-                        // On met à jour le champ responsible avec la valeur de dicastry_id si possible
-                        // (nécessite une logique pour retrouver le nom du dicastry)
-                        $provision->note = $provision->note.' | A été marqué comme "MadeBy". A besoin d\'être vérifié pour le responsable. Ancien statut: MadeBy.';
-                    }
-                    $provision->status = 'done';
-                }
-                $provision->save();
-            }
+            ProvisionElement::where('status', 'to_confirm')->update(['status' => 'to_prepare']);
+            ProvisionElement::where('status', 'to_modify')->update(['status' => 'to_prepare']);
+            ProvisionElement::where('status', 'to_relaunch')->update(['status' => 'to_prepare']);
         }
     }
 

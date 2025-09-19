@@ -11,6 +11,7 @@ enum EngagementStatusEnum: string implements HasColor, HasLabel
     case ActionRequired = 'action_required';
     case ToRelaunch = 'to_relaunch';
     case ToModify = 'to_modify';
+    case Relaunched = 'relaunched';
     case Cancelled = 'cancelled';
 
     public function getLabel(): ?string
@@ -20,6 +21,7 @@ enum EngagementStatusEnum: string implements HasColor, HasLabel
             self::ActionRequired => 'Action requise',
             self::ToRelaunch     => 'À relancer',
             self::ToModify       => 'À modifier',
+            self::Relaunched     => 'Relancé',
             self::Cancelled      => 'Annulé',
         };
     }
@@ -29,8 +31,9 @@ enum EngagementStatusEnum: string implements HasColor, HasLabel
         return match ($this) {
             self::Idle           => 'warning',
             self::ActionRequired => 'danger',
-            self::ToRelaunch     => 'info',
+            self::ToRelaunch     => 'warning',
             self::ToModify       => 'warning',
+            self::Relaunched     => 'info',
             self::Cancelled      => 'gray',
         };
     }
