@@ -5,13 +5,16 @@ namespace App\Models;
 use App\Classes\Price;
 use App\Traits\Editionable;
 use App\Enums\InvoiceStatusEnum;
+use App\Observers\InvoiceObserver;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
+#[ObservedBy([InvoiceObserver::class])]
 class Invoice extends Model
 {
     use Editionable;

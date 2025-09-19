@@ -7,7 +7,9 @@ use Filament\Tables;
 use App\Models\Client;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Models\ClientEngagement;
 use Filament\Resources\Resource;
+use App\Enums\EngagementStageEnum;
 use Filament\Forms\Components\Tabs;
 use Illuminate\Contracts\View\View;
 use Filament\Tables\Actions\BulkAction;
@@ -161,6 +163,14 @@ class ClientResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')
                     ->badge()
                     ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('latestEngagement.stage')
+                    ->label('Progression')
+                    ->badge()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('latestEngagement.status')
+                    ->label('Statut')
+                    ->badge()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('name')
                     ->sortable()

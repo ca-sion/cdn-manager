@@ -12,6 +12,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Notifications\RecipientSendVipInvitation;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -37,7 +38,7 @@ class Client extends Model implements HasMedia
      *
      * @var array
      */
-    protected $with = ['provisionElements'];
+    protected $with = ['provisionElements', 'latestEngagement'];
 
     /**
      * The provisions that belong to the client.
@@ -107,6 +108,14 @@ class Client extends Model implements HasMedia
     public function category(): BelongsTo
     {
         return $this->belongsTo(ClientCategory::class, 'category_id');
+    }
+
+    /**
+     * The latest engagement that belong to the client.
+     */
+    public function latestEngagement(): HasOne
+    {
+        return $this->hasOne(ClientEngagement::class)->latestOfMany();
     }
 
     /**
