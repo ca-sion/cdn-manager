@@ -31,6 +31,7 @@ use Filament\Tables\Columns\ColumnGroup;
 use App\Enums\ProvisionElementStatusEnum;
 use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Columns\SelectColumn;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
@@ -590,7 +591,8 @@ class ProvisionElementResource extends Resource
                     ->label('Exporter')
                     ->exporter(ProvisionElementExporter::class)
                     ->columnMapping(false),
-            ]);
+            ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition());
     }
 
     public static function getRelations(): array

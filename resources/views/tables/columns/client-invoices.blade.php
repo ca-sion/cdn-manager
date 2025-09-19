@@ -3,7 +3,7 @@
 @endphp
 <div>
     <table class="my-2">
-        @foreach ($record->invoices as $invoice)
+        @foreach ($record->currentInvoices as $invoice)
         <div>
             <a href="{{ $invoice->link }}" target="_blank">
                 <x-heroicon-o-document class="inline h-3" />
