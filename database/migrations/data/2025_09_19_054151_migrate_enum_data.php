@@ -38,23 +38,22 @@ return new class extends Migration
             $newNote = $note.' | Ancien statut: MadeBy. A besoin d\'être vérifié pour le responsable.';
             $provision->update([
                 'status' => 'done',
-                'note'  => $newNote,
+                'note'   => $newNote,
             ]);
         }
 
         // 2. Créer les engagements pour chaque client et chaque édition où une prestation ou une facture existe
-        $clientEditions = collect();
-        $provisions = ProvisionElement::distinct()->select('recipient_id as client_id', 'edition_id', 'recipient_type')->where('recipient_type', 'App\\Models\\Client')->get();
-        $invoices = Invoice::distinct()->select('client_id', 'edition_id')->get();
+        $provisions = ProvisionElement::distinct()->select('recipient_id as client_id', 'edition_id')->where('recipient_type', 'App\\Models\\Client')->get()->toArray();
+        $invoices = Invoice::distinct()->select('client_id', 'edition_id')->get()->toArray();
 
-        $clientEditions = $provisions->merge($invoices)->unique(function ($item) {
+        $clientEditions = collect($provisions)->merge($invoices)->unique(function ($item) {
             return $item['client_id'].'-'.$item['edition_id'];
-        });
+        })->values();
 
         foreach ($clientEditions as $pair) {
             ClientEngagement::firstOrCreate([
-                'client_id'  => $pair->client_id,
-                'edition_id' => $pair->edition_id,
+                'client_id'  => $pair['client_id'],
+                'edition_id' => $pair['edition_id'],
             ]);
         }
 
