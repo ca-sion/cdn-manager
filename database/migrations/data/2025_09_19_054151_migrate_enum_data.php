@@ -34,11 +34,11 @@ return new class extends Migration
         // Logique spécifique pour MadeBy
         $madeByProvisions = ProvisionElement::where('status', 'made_by')->get();
         foreach ($madeByProvisions as $provision) {
-            $note = $provision->notes ?? '';
+            $note = $provision->note ?? '';
             $newNote = $note.' | Ancien statut: MadeBy. A besoin d\'être vérifié pour le responsable.';
             $provision->update([
                 'status' => 'done',
-                'notes'  => $newNote,
+                'note'  => $newNote,
             ]);
         }
 
