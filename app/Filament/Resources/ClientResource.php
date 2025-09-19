@@ -8,11 +8,15 @@ use App\Models\Client;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use App\Enums\EngagementStageEnum;
+use App\Enums\EngagementStatusEnum;
 use Filament\Forms\Components\Tabs;
 use Illuminate\Contracts\View\View;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
 use App\Filament\Exports\ClientExporter;
+use Filament\Notifications\Notification;
 use Filament\Tables\Actions\ExportAction;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
@@ -260,9 +264,49 @@ class ClientResource extends Resource
                             foreach ($records as $client) {
                                 $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
                                 $client->notify(new ClientAdvertiserFormLink($client, $previousOrderDetails));
+
+                                // ClientEngagement
+                                $engagement = $client->currentEngagement()->firstOrCreate([
+                                    'edition_id' => session()->get('edition_id') ?? setting('edition_id'),
+                                ]);
+                                $engagement->stage = EngagementStageEnum::ProposalSent;
+                                $engagement->status = EngagementStatusEnum::Idle;
+                                $engagement->save();
                             }
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Formulaires annonceurs envoyés')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('update_engagement')
+                        ->label('Modifier le statut')
+                        ->icon('heroicon-o-briefcase')
+                        ->form([
+                            Select::make('stage')
+                                ->label('Progression')
+                                ->required()
+                                ->options(EngagementStageEnum::class)
+                                ->default(EngagementStageEnum::Prospect),
+                            Select::make('status')
+                                ->label('Statut')
+                                ->required()
+                                ->options(EngagementStatusEnum::class)
+                                ->default(EngagementStatusEnum::Idle),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            foreach ($records as $client) {
+                                $engagement = $client->currentEngagement()->firstOrCreate([
+                                    'edition_id' => session()->get('edition_id') ?? setting('edition_id'),
+                                ]);
+
+                                $engagement->stage = $data['stage'];
+                                $engagement->status = $data['status'];
+                                $engagement->save();
+                            }
+
+                            Notification::make()
+                                ->title('Engagements mis à jour')
+                                ->body(count($records).' engagements ont été mis à jour.')
                                 ->success()
                                 ->send();
                         }),

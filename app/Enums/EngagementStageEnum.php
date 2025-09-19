@@ -18,7 +18,7 @@ enum EngagementStageEnum: string implements HasColor, HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::Prospect     => '1. À contacter',
+            self::Prospect     => '1. Prospect',
             self::ProposalSent => '2. Envoyé/Contacté',
             self::Confirmed    => '3. Confirmé',
             self::Billed       => '4. Facturé',

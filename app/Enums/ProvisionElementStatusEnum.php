@@ -42,16 +42,16 @@ enum ProvisionElementStatusEnum: string implements HasColor, HasLabel
             self::ActionRequired => 'Action requise',
             self::Suspended      => 'Suspendu',
 
-            self::ToContact      => 'X. À contacter',
-            self::Contacted      => 'X. Contacté',
-            self::Sent           => 'X. Envoyé',
-            self::SentByPost     => 'X. Envoyé par poste',
-            self::ToConfirm      => 'X. À confirmer',
-            self::ToModify       => 'X. À modifier',
-            self::ToRelaunch     => 'X. À relancer',
-            self::Relaunched     => 'X. Relancé',
-            self::Approved       => 'X. Approuvé',
-            self::MadeBy         => 'X. Fait par…',
+            self::ToContact  => 'X. À contacter',
+            self::Contacted  => 'X. Contacté',
+            self::Sent       => 'X. Envoyé',
+            self::SentByPost => 'X. Envoyé par poste',
+            self::ToConfirm  => 'X. À confirmer',
+            self::ToModify   => 'X. À modifier',
+            self::ToRelaunch => 'X. À relancer',
+            self::Relaunched => 'X. Relancé',
+            self::Approved   => 'X. Approuvé',
+            self::MadeBy     => 'X. Fait par…',
         };
     }
 
