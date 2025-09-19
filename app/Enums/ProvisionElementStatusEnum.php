@@ -7,25 +7,26 @@ use Filament\Support\Contracts\HasLabel;
 
 enum ProvisionElementStatusEnum: string implements HasColor, HasLabel
 {
-    case ToPrepare = 'to_prepare';
     case Confirmed = 'confirmed';
+    case ToPrepare = 'to_prepare';
     case Ready = 'ready';
     case Done = 'done';
     case Cancelled = 'cancelled';
+
+    case Received = 'received';
+    case ActionRequired = 'action_required';
+    case Suspended = 'suspended';
 
     // Old values
     case ToContact = 'to_contact';
     case Contacted = 'contacted';
     case Sent = 'sent';
     case SentByPost = 'sent_by_post';
-    case Received = 'received';
     case ToConfirm = 'to_confirm';
     case ToModify = 'to_modify';
     case ToRelaunch = 'to_relaunch';
     case Relaunched = 'relaunched';
     case Approved = 'approved';
-    case ActionRequired = 'action_required';
-    case Suspended = 'suspended';
     case MadeBy = 'made_by';
 
     public function getLabel(): ?string
@@ -37,18 +38,19 @@ enum ProvisionElementStatusEnum: string implements HasColor, HasLabel
             self::Done      => '4. Fait',
             self::Cancelled => 'Annulé',
 
+            self::Received       => 'Reçu',
+            self::ActionRequired => 'Action requise',
+            self::Suspended      => 'Suspendu',
+
             self::ToContact      => 'X. À contacter',
             self::Contacted      => 'X. Contacté',
             self::Sent           => 'X. Envoyé',
             self::SentByPost     => 'X. Envoyé par poste',
-            self::Received       => 'Reçu',
             self::ToConfirm      => 'X. À confirmer',
             self::ToModify       => 'X. À modifier',
             self::ToRelaunch     => 'X. À relancer',
             self::Relaunched     => 'X. Relancé',
             self::Approved       => 'X. Approuvé',
-            self::ActionRequired => 'Action requise',
-            self::Suspended      => 'Suspendu',
             self::MadeBy         => 'X. Fait par…',
         };
     }
