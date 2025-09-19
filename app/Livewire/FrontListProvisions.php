@@ -131,6 +131,14 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->recipient?->address}<br>".($record->recipient?->address_extension ? "{$record->recipient?->address_extension}<br>" : null)."{$record->recipient?->postal_code} {$record->recipient?->locality}"))
                     ->verticallyAlignStart()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('client.currentEngagement.stage')
+                    ->label('Progression')
+                    ->badge()
+                    ->toggleable(),
+                TextColumn::make('client.currentEngagement.status')
+                    ->label('Statut')
+                    ->badge()
+                    ->toggleable(),
                 TextColumn::make('recipient.contacts.name')
                     ->label('Contacts')
                     ->searchable()

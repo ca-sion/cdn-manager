@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Filament\Exports\ClientExporter;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\ExportAction;
+use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
 use App\Notifications\ClientAdvertiserFormLink;
@@ -219,11 +221,36 @@ class ClientResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\SelectFilter::make('category')
+                SelectFilter::make('category')
                     ->label('Catégorie')
                     ->multiple()
                     ->preload()
                     ->relationship('category', 'name'),
+                SelectFilter::make('stage')
+                    ->label('Progression')
+                    ->options(EngagementStageEnum::class)
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
+                        return $query->whereHas('currentEngagement', function (Builder $query) use ($data) {
+                            $query->where('stage', $data['value']);
+                        });
+                    }),
+
+                SelectFilter::make('status')
+                    ->label('Statut')
+                    ->options(EngagementStatusEnum::class)
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
+                        return $query->whereHas('currentEngagement', function (Builder $query) use ($data) {
+                            $query->where('status', $data['value']);
+                        });
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

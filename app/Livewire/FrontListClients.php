@@ -6,7 +6,9 @@ use App\Models\Client;
 use Livewire\Component;
 use Filament\Tables\Table;
 use Livewire\Attributes\Url;
+use App\Enums\EngagementStageEnum;
 use Illuminate\Support\HtmlString;
+use App\Enums\EngagementStatusEnum;
 use Filament\Support\Enums\Alignment;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Support\Enums\FontWeight;
@@ -16,6 +18,7 @@ use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
@@ -62,31 +65,53 @@ class FrontListClients extends Component implements HasForms, HasTable
             ->striped()
             ->columns([
                 IconColumn::make('pdfLink')
-                    ->label('')
+                    ->label('PDF')
                     ->icon('heroicon-o-document')
                     ->url(fn (Model $record): string => $record->pdfLink)
                     ->openUrlInNewTab()
-                    ->size(IconColumn\IconColumnSize::Small),
+                    ->size(IconColumn\IconColumnSize::Small)
+                    ->toggleable(),
                 TextColumn::make('category.name')
                     ->label('Catégorie')
                     ->html()
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString('<span class="text-white text-xs font-medium me-2 px-2.5 py-0.5 rounded" style="background-color:'.$record->category?->color.';">'.$record->category?->name.'</span>'))
                     ->sortable()
-                    ->verticallyAlignStart(),
+                    ->verticallyAlignStart()
+                    ->toggleable(),
+                // TextColumn::make('name')
+                //     ->label('Nom')
+                //     ->searchable()
+                //     ->sortable()
+                //     ->description(fn (Model $record): string => "{$record->long_name}")
+                //     ->alignment(Alignment::Start)
+                //     ->alignStart()
+                //     ->verticallyAlignStart()
+                //     ->wrapHeader()
+                //     ->weight(FontWeight::Bold)
+                //     ->toggleable(),
                 TextColumn::make('name')
                     ->label('Nom')
                     ->searchable()
                     ->sortable()
-                    ->description(fn (Model $record): string => "{$record->long_name}")
-                    ->alignment(Alignment::Start)
-                    ->alignStart()
-                    ->verticallyAlignStart()
-                    ->wrapHeader()
-                    ->weight(FontWeight::Bold),
+                    ->toggleable(),
+                TextColumn::make('long_name')
+                    ->label('Nom long')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('currentEngagement.stage')
+                    ->label('Progression')
+                    ->badge()
+                    ->toggleable(),
+                TextColumn::make('currentEngagement.status')
+                    ->label('Statut')
+                    ->badge()
+                    ->toggleable(),
                 TextColumn::make('address')
                     ->label('Adresse')
                     ->formatStateUsing(fn (Model $record): HtmlString => new HtmlString("{$record->address}<br>".($record->address_extension ? "{$record->address_extension}<br>" : null)."{$record->postal_code} {$record->locality}"))
-                    ->verticallyAlignStart(),
+                    ->verticallyAlignStart()
+                    ->toggleable(),
                 TextColumn::make('contacts.name')
                     ->label('Contacts')
                     ->searchable()
@@ -95,11 +120,13 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->expandableLimitedList()
                     ->html()
                     ->formatStateUsing(fn (Model $record, string $state): HtmlString => new HtmlString("<a href='mailto:{$record->contacts?->where('name', $state)->first()?->email}'>{$state}</a>"))
-                    ->verticallyAlignStart(),
+                    ->verticallyAlignStart()
+                    ->toggleable(),
                 ViewColumn::make('provisionElements.provision.name')->view('tables.columns.provision-elements-infolist')
                     ->label('Prestations')
                     ->searchable()
-                    ->verticallyAlignStart(),
+                    ->verticallyAlignStart()
+                    ->toggleable(),
                 TextColumn::make('documents.id')
                     ->label('Documents')
                     ->listWithLineBreaks()
@@ -113,8 +140,9 @@ class FrontListClients extends Component implements HasForms, HasTable
                         \Carbon\Carbon::parse($record->documents?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'
                     ))
-                    ->verticallyAlignStart(),
-                TextColumn::make('invoices.id')
+                    ->verticallyAlignStart()
+                    ->toggleable(),
+                TextColumn::make('currentInvoices.id')
                     ->label('Factures')
                     ->listWithLineBreaks()
                     ->limitList(2)
@@ -128,7 +156,8 @@ class FrontListClients extends Component implements HasForms, HasTable
                         .'</a>'.
                         ($record->invoices?->where('id', $state)->first()?->status->value == 'payed' ? ' ✓' : null)
                     ))
-                    ->verticallyAlignStart(),
+                    ->verticallyAlignStart()
+                    ->toggleable(),
                 TextColumn::make('note')
                     ->label('Note')
                     ->verticallyAlignStart(),
@@ -148,6 +177,32 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->label('Édition')
                     ->preload()
                     ->relationship('provisionElements.edition', 'year'),
+                
+                SelectFilter::make('stage')
+                    ->label('Progression')
+                    ->options(EngagementStageEnum::class)
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
+                        return $query->whereHas('currentEngagement', function (Builder $query) use ($data) {
+                            $query->where('stage', $data['value']);
+                        });
+                    }),
+
+                SelectFilter::make('status')
+                    ->label('Statut')
+                    ->options(EngagementStatusEnum::class)
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+
+                        return $query->whereHas('currentEngagement', function (Builder $query) use ($data) {
+                            $query->where('status', $data['value']);
+                        });
+                    }),
             ])
             ->filtersFormColumns(3)
             ->actions([
