@@ -38,7 +38,7 @@ class Client extends Model implements HasMedia
      *
      * @var array
      */
-    protected $with = ['provisionElements', 'latestEngagement'];
+    protected $with = ['provisionElements', 'currentEngagement'];
 
     /**
      * The provisions that belong to the client.
@@ -111,11 +111,12 @@ class Client extends Model implements HasMedia
     }
 
     /**
-     * The latest engagement that belong to the client.
+     * The current engagement that belong to the client.
      */
-    public function latestEngagement(): HasOne
+    public function currentEngagement(): HasOne
     {
-        return $this->hasOne(ClientEngagement::class)->latestOfMany();
+        return $this->hasOne(ClientEngagement::class)
+            ->currentEdition();
     }
 
     /**

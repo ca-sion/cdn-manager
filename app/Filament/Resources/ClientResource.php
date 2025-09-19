@@ -162,11 +162,11 @@ class ClientResource extends Resource
                     ->badge()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('latestEngagement.stage')
+                Tables\Columns\TextColumn::make('currentEngagement.stage')
                     ->label('Progression')
                     ->badge()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('latestEngagement.status')
+                Tables\Columns\TextColumn::make('currentEngagement.status')
                     ->label('Statut')
                     ->badge()
                     ->toggleable(),
