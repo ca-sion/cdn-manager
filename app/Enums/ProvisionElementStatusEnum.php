@@ -31,8 +31,8 @@ enum ProvisionElementStatusEnum: string implements HasColor, HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::ToPrepare => '1. À préparer',
-            self::Confirmed => '2. Confirmé',
+            self::Confirmed => '1. Confirmé',
+            self::ToPrepare => '2. À préparer',
             self::Ready     => '3. Prêt',
             self::Done      => '4. Fait',
             self::Cancelled => 'Annulé',

@@ -19,7 +19,7 @@ enum EngagementStageEnum: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Prospect     => '1. À contacter',
-            self::ProposalSent => '2. Envoyé',
+            self::ProposalSent => '2. Envoyé/Contacté',
             self::Confirmed    => '3. Confirmé',
             self::Billed       => '4. Facturé',
             self::Paid         => '5. Payé',

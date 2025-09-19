@@ -56,6 +56,9 @@ class ProvisionElementObserver
                 ->where('recipient_type', 'App\\Models\\Client')
                 ->where('edition_id', $engagement->edition_id)
                 ->where('status', '!=', 'to_prepare')
+                ->whereIn('status', [
+                        'to_prepare', 'confirmed', 'ready',
+                    ])
                 ->doesntExist();
 
             if ($allToPrepare) {
