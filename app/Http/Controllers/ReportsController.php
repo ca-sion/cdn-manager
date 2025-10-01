@@ -57,8 +57,10 @@ class ReportsController extends Controller
         });
 
         $clients = $clients->sortBy([
-            ['currentEngagement.stage', 'asc'],
+            ['category.name', 'asc'],
             ['name', 'asc'],
+            // ['currentEngagement.stage', 'asc'],
+            // fn ($client) => $client->currentEngagement?->stage?->getLabel(),
         ]);
 
         $view = View::make('pdf.advertisers', ['clients' => $clients, 'edition' => $edition, 'grandTotal' => $grandTotal]);

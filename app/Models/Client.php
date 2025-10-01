@@ -41,7 +41,7 @@ class Client extends Model implements HasMedia
      *
      * @var array
      */
-    protected $with = ['provisionElements', 'currentEngagement'];
+    protected $with = ['provisionElements'];
 
     /**
      * The provisions that belong to the client.
