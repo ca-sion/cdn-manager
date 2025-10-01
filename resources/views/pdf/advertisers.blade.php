@@ -58,7 +58,7 @@
         .table {
             width: 100%;
             border-collapse:collapse;
-            font-size: x-small;
+            font-size: xx-small;
         }
         .table thead {
             font-weight: bold;
