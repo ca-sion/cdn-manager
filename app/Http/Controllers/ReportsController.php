@@ -56,9 +56,14 @@ class ReportsController extends Controller
             $grandTotal += $clientTotal;
         });
 
+        $clients->each(function ($client) {
+            $clientOrder = $client->currentEngagement?->stage?->getLabel();
+            $client->order = $clientOrder;
+        });
+
         $clients = $clients->sortBy([
             ['category.name', 'asc'],
-            ['currentEngagement.stage', 'asc'],
+            ['order', 'asc'],
             ['name', 'asc'],
             // fn ($client) => $client->currentEngagement?->stage?->getLabel(),
         ]);
