@@ -35,6 +35,7 @@ class ReportsController extends Controller
         $clients = Client::whereIn('category_id', $clientCategoryIds)
             ->with([
                 'category',
+                'contacts',
                 'currentEngagement',
                 'provisionElements' => function ($query) use ($provisionCategoryIds, $donationProvisionId, $edition) {
                     $query->where('edition_id', $edition->id)

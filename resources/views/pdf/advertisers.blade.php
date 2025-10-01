@@ -92,6 +92,7 @@
                     <td>Catégorie</td>
                     <td>Responsable</td>
                     <td>Client</td>
+                    <td>Contact</td>
                     <td>Status</td>
                     <td>Prestations</td>
                     <td style="text-align: right">Montant</td>
@@ -103,6 +104,13 @@
                     <td>{{ $client->category?->name }}</td>
                     <td>{{ $client->currentEngagement?->responsible }}</td>
                     <td>{{ $client->name }}</td>
+                    <td>
+                        @foreach ($client->contacts->sortBy('order_column') as $contact)
+                        @if ($loop->first)
+                            {{ $contact->name }}
+                        @endif
+                        @endforeach
+                    </td>
                     <td style="max-width: 100px;">
                         {{ $client->currentEngagement?->stage?->getLabel() }}
                     </td>
@@ -124,7 +132,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="5" style="text-align: right"><strong>Total</strong></td>
+                    <td colspan="6" style="text-align: right"><strong>Total</strong></td>
                     <td style="text-align: right"><strong>{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'pdf') }}</strong></td>
                 </tr>
             </tfoot>
