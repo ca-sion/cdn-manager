@@ -58,8 +58,8 @@ class ReportsController extends Controller
 
         $clients = $clients->sortBy([
             ['category.name', 'asc'],
+            ['currentEngagement.stage', 'asc'],
             ['name', 'asc'],
-            // ['currentEngagement.stage', 'asc'],
             // fn ($client) => $client->currentEngagement?->stage?->getLabel(),
         ]);
 
