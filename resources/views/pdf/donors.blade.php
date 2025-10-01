@@ -100,7 +100,7 @@
                 @foreach ($contacts as $contact)
                 <tr>
                     <td>{{ $contact->category?->name }}</td>
-                    <td>{{ $contact->name }}</td>
+                    <td>{{ str($contact->name)->limit(24) }}</td>
                     <td>
                         @foreach ($contact->provisionElements as $pe)
                             {{ $pe->textual_indicator }}

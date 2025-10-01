@@ -103,11 +103,11 @@
                 <tr>
                     <td>{{ $client->category?->name }}</td>
                     <td>{{ $client->currentEngagement?->responsible }}</td>
-                    <td>{{ $client->name }}</td>
+                    <td>{{ str($client->name)->limit(24) }}</td>
                     <td>
                         @foreach ($client->contacts->sortBy('order_column') as $contact)
                         @if ($loop->first)
-                            {{ $contact->name }}
+                            {{ str($contact->name)->limit(22) }}
                         @endif
                         @endforeach
                     </td>
