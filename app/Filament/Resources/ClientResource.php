@@ -20,6 +20,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Columns\TextInputColumn;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
 use App\Notifications\ClientAdvertiserFormLink;
@@ -176,15 +177,16 @@ class ClientResource extends Resource
                     ->label('Statut')
                     ->badge()
                     ->toggleable(),
+                TextInputColumn::make('currentEngagement.responsible')
+                    ->label('Responsable')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('name')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('long_name')
                     ->sortable()
-                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
-                /*Tables\Columns\ImageColumn::make('logo')
-                    ->label('Logo'),*/
                 SpatieMediaLibraryImageColumn::make('logo')
                     ->collection('logos'),
                 Tables\Columns\TextColumn::make('email')

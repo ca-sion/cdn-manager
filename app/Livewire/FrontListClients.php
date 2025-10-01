@@ -177,7 +177,7 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->label('Édition')
                     ->preload()
                     ->relationship('provisionElements.edition', 'year'),
-                
+
                 SelectFilter::make('stage')
                     ->label('Progression')
                     ->options(EngagementStageEnum::class)

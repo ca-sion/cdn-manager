@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ReportsController;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
 
 Route::get('/', function () {
@@ -37,3 +38,8 @@ Route::get('donors/form/{contact}', DonorForm::class)->middleware('signed')->nam
 Route::get('donors/success', [MessageController::class, 'donorSuccess'])->middleware('signed')->name('donors.success');
 
 Route::get('vip/response/{provisionElement}', VipResponse::class)->name('vip.response')->middleware('signed');
+
+Route::prefix('reports')->middleware([SiteProtection::class])->group(function () {
+    Route::get('advertisers', [ReportsController::class, 'advertisers'])->name('reports.advertisers');
+    Route::get('donors', [ReportsController::class, 'donors'])->name('reports.donors');
+});

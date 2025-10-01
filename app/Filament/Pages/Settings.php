@@ -56,6 +56,13 @@ class Settings extends BaseSettings
                         ->label('Prestation')
                         ->options(Provision::all()->pluck('name', 'id')),
                 ]),
+            Section::make('Rapports')
+                ->schema([
+                    Select::make('reports_advertisers_categories')
+                        ->label('Catégories des annonceurs')
+                        ->options(ClientCategory::all()->pluck('name', 'id'))
+                        ->multiple(),
+                ]),
         ];
     }
 }
