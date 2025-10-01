@@ -313,12 +313,12 @@ class ClientResource extends Resource
                         ->form([
                             Select::make('stage')
                                 ->label('Progression')
-                                ->required()
+                                ->nullable()
                                 ->options(EngagementStageEnum::class)
                                 ->default(EngagementStageEnum::Prospect),
                             Select::make('status')
                                 ->label('Statut')
-                                ->required()
+                                ->nullable()
                                 ->options(EngagementStatusEnum::class)
                                 ->default(EngagementStatusEnum::Idle),
                         ])
