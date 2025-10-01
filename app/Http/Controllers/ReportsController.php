@@ -5,8 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Contact;
 use App\Models\Edition;
+use App\Models\Provision;
+use App\Models\ClientCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\ProvisionElement;
+use App\Models\ProvisionCategory;
 use Illuminate\Support\Facades\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ReportsController extends Controller
 {
@@ -51,7 +57,7 @@ class ReportsController extends Controller
         });
 
         $clients = $clients->sortBy([
-            fn ($client) => $client->currentEngagement?->stage->getLabel(),
+            ['currentEngagement.stage', 'asc'],
             ['name', 'asc'],
         ]);
 
@@ -97,7 +103,7 @@ class ReportsController extends Controller
         });
 
         $contacts = $contacts->sortBy([
-            fn ($contact) => $contact->category?->name,
+            ['category.name', 'asc'],
             ['donation_total', 'desc'],
             ['name', 'asc'],
         ]);
