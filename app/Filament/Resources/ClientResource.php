@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Client;
+use App\Models\Edition;
 use Filament\Forms\Form;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
@@ -12,6 +13,7 @@ use Filament\Resources\Resource;
 use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
 use Filament\Forms\Components\Tabs;
+use Filament\Tables\Actions\Action;
 use Illuminate\Contracts\View\View;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Actions\BulkAction;
@@ -343,6 +345,41 @@ class ClientResource extends Resource
                 ]),
             ])
             ->headerActions([
+                Action::make('provisions_comparison_report')
+                    ->label('Rapport comparatif des prestations')
+                    ->icon('heroicon-o-chart-bar-square')
+                    ->form(function () {
+                        $editions = Edition::orderBy('year', 'desc')->pluck('year', 'id');
+                        $currentEdition = Edition::find(AppHelper::getCurrentEditionId());
+                        $previousEdition = Edition::where('year', '<', $currentEdition?->year)->orderBy('year', 'desc')->first();
+
+                        return [
+                            Select::make('reference_edition_id')
+                                ->label('Édition de référence')
+                                ->options($editions)
+                                ->default($currentEdition?->id)
+                                ->required(),
+                            Select::make('comparison_edition_id')
+                                ->label('Édition de comparaison')
+                                ->options($editions)
+                                ->default($previousEdition?->id)
+                                ->required(),
+                        ];
+                    })
+                    ->action(function (array $data) {
+                        $url = route('reports.provisions-comparison', [
+                            'reference_edition_id'  => $data['reference_edition_id'],
+                            'comparison_edition_id' => $data['comparison_edition_id'],
+                        ]);
+
+                        return redirect($url);
+                        // This requires a new browser tab, which is not directly possible from the backend.
+                        // A workaround is to use a little bit of JavaScript.
+                        // return Action::close() and dispatch a browser event that opens the URL.
+                        // For now, we will just redirect.
+                    })
+                    ->openUrlInNewTab()
+                    ->modalSubmitActionLabel('Générer le rapport'),
                 ExportAction::make()
                     ->label('Exporter')
                     ->exporter(ClientExporter::class),

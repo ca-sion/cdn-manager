@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Contact;
 use App\Models\Edition;
+use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;
+use App\Services\ProvisionComparisonService;
 
 class ReportsController extends Controller
 {
@@ -161,6 +163,34 @@ class ReportsController extends Controller
             ->setPaper('A4', 'landscape')
             ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
             ->stream(str($edition->year)->slug().'-client-provisions.pdf');
+
+        return $pdf;
+    }
+
+    public function provisionsComparison(Request $request, ProvisionComparisonService $comparisonService)
+    {
+        $request->validate([
+            'reference_edition_id'  => 'required|exists:editions,id',
+            'comparison_edition_id' => 'required|exists:editions,id',
+        ]);
+
+        $referenceEdition = Edition::find($request->input('reference_edition_id'));
+        $comparisonEdition = Edition::find($request->input('comparison_edition_id'));
+
+        $comparisonData = $comparisonService->compareEditions($referenceEdition, $comparisonEdition);
+
+        $view = View::make('pdf.provisions-comparison', [
+            'referenceEdition'  => $referenceEdition,
+            'comparisonEdition' => $comparisonEdition,
+            'comparisonData'    => $comparisonData,
+        ]);
+
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($referenceEdition->year.'-vs-'.$comparisonEdition->year)->slug().'-provisions-comparison.pdf');
 
         return $pdf;
     }
