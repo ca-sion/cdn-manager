@@ -117,7 +117,7 @@
                         {{ $client->currentEngagement?->stage?->getLabel() }}
                     </td>
                     <td>
-                        @foreach ($client->provisionElements as $pe)
+                        @foreach ($client->provisionElements->sortBy('order_column') as $pe)
                             {{ $pe->name }}
                             @if ($pe->numeric_indicator)
                                 · {{ $pe->numeric_indicator }}x

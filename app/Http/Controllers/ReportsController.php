@@ -127,14 +127,17 @@ class ReportsController extends Controller
 
         $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
 
-        $clients = Client::with([
-            'category',
-            'contacts',
-            'currentEngagement',
-            'provisionElements' => function ($query) use ($edition) {
-                $query->where('edition_id', $edition->id);
-            },
-        ])
+        $clients = Client::whereHas('provisionElements', function ($query) use ($edition) {
+            $query->where('edition_id', $edition->id);
+        })
+            ->with([
+                'category',
+                'contacts',
+                'currentEngagement',
+                'provisionElements' => function ($query) use ($edition) {
+                    $query->where('edition_id', $edition->id);
+                },
+            ])
             ->get();
 
         $grandTotal = 0;
