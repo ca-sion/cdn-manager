@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Client;
+use App\Helpers\AppHelper;
 use App\Enums\EngagementStageEnum;
 
 class ClientObserver
@@ -14,7 +15,7 @@ class ClientObserver
     {
         // Créer l'engagement du client pour l'édition actuelle.
         $engagement = $client->currentEngagement()->firstOrCreate([
-            'edition_id' => session()->get('edition_id') ?? setting('edition_id'),
+            'edition_id' => AppHelper::getCurrentEditionId(),
         ]);
         $engagement->stage = EngagementStageEnum::Prospect;
         $engagement->save();

@@ -6,6 +6,7 @@ use Filament\Forms;
 use Filament\Tables;
 use App\Models\Client;
 use Filament\Forms\Form;
+use App\Helpers\AppHelper;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Enums\EngagementStageEnum;
@@ -296,7 +297,7 @@ class ClientResource extends Resource
 
                                 // ClientEngagement
                                 $engagement = $client->currentEngagement()->firstOrCreate([
-                                    'edition_id' => session()->get('edition_id') ?? setting('edition_id'),
+                                    'edition_id' => AppHelper::getCurrentEditionId(),
                                 ]);
                                 $engagement->stage = EngagementStageEnum::ProposalSent;
                                 $engagement->status = EngagementStatusEnum::Idle;
@@ -325,7 +326,7 @@ class ClientResource extends Resource
                         ->action(function (Collection $records, array $data) {
                             foreach ($records as $client) {
                                 $engagement = $client->currentEngagement()->firstOrCreate([
-                                    'edition_id' => session()->get('edition_id') ?? setting('edition_id'),
+                                    'edition_id' => AppHelper::getCurrentEditionId(),
                                 ]);
 
                                 $engagement->stage = $data['stage'];
