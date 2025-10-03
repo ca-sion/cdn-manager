@@ -48,6 +48,9 @@ class ContactsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('type')
                     ->label('Type')
                     ->formatStateUsing(fn (string $state) => ContactRoleEnum::from($state)->getLabel()),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
+                    ->copyable(),
             ])
             ->filters([
                 //

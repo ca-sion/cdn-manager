@@ -3,10 +3,13 @@
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
 use Filament\Tables;
+use App\Models\Edition;
 use Filament\Forms\Form;
+use App\Helpers\AppHelper;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Notifications\Notification;
 use App\Enums\ProvisionElementStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Actions\ExportMediaBulkAction;
@@ -67,7 +70,56 @@ class ProvisionElementsRelationManager extends RelationManager
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()->icon('heroicon-o-plus'),
+                Tables\Actions\Action::make('copy_previous')
+                    ->label("Reprendre de l'édition précédente")
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->requiresConfirmation()
+                    ->modalHeading('Reprendre les prestations')
+                    ->modalDescription("Êtes-vous sûr de vouloir copier les prestations de l'édition précédente ? Les prestations existantes pour l'édition actuelle ne seront pas affectées.")
+                    ->action(function (RelationManager $livewire) {
+                        $client = $livewire->getOwnerRecord();
+                        $currentEdition = Edition::find(AppHelper::getCurrentEditionId());
+
+                        if (! $currentEdition) {
+                            Notification::make()->title('Aucune édition actuelle définie')->warning()->send();
+
+                            return;
+                        }
+
+                        $previousEdition = Edition::where('year', '<', $currentEdition->year)
+                            ->orderBy('year', 'desc')
+                            ->first();
+
+                        if (! $previousEdition) {
+                            Notification::make()->title('Aucune édition précédente trouvée')->warning()->send();
+
+                            return;
+                        }
+
+                        $provisionsToCopy = $client->provisionElements()
+                            ->where('edition_id', $previousEdition->id)
+                            ->get();
+
+                        if ($provisionsToCopy->isEmpty()) {
+                            Notification::make()->title("Aucune prestation à copier depuis l'édition {$previousEdition->year}")->info()->send();
+
+                            return;
+                        }
+
+                        foreach ($provisionsToCopy as $provision) {
+                            $newProvision = $provision->replicate([
+                                'edition_id', 'client_id',
+                            ]);
+                            $newProvision->fill([
+                                'edition_id' => $currentEdition->id,
+                                'status'     => ProvisionElementStatusEnum::Confirmed,
+                            ]);
+                            $client->provisionElements()->save($newProvision);
+                        }
+
+                        Notification::make()->title('Prestations copiées')->body("{$provisionsToCopy->count()} prestations ont été copiées depuis l'édition {$previousEdition->year}.")->success()->send();
+                    }),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
