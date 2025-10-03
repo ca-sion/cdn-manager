@@ -159,9 +159,10 @@
 
         @if($comparisonData['new']->isNotEmpty())
             <div class="section-title">Nouveaux Clients ({{ $comparisonData['new']->count() }})</div>
-            <table class="table break-avoid">
+            <table class="table">
                 <thead>
                     <tr>
+                        <td>Catégorie</td>
                         <td>Client</td>
                         <td>Prestations</td>
                         <td class="text-right">Montant {{ $referenceEdition->year }}</td>
@@ -170,11 +171,18 @@
                 <tbody>
                     @foreach ($comparisonData['new'] as $client)
                         <tr>
+                            <td>{{ $client->category?->name }}</td>
                             <td>{{ $client->name }}</td>
                             <td>
                                 <ul class="provisions-list">
-                                    @foreach($client->diff_details['provisions'] as $pe)
-                                        <li>{{ $pe->name }} ({{ $pe->quantity ?: 1 }})</li>
+                                    @foreach($client->diff_details['provisions']->sortBy('order_column') as $pe)
+                                        <li>{{ $pe->name }}
+                                            @if($pe->numeric_indicator)({{ $pe->numeric_indicator }}x)@endif
+                                            @if($pe->vip_invitation_number)({{ $pe->vip_invitation_number }}x)@endif
+                                            @if ($pe->textual_indicator)
+                                                · {{ str($pe->textual_indicator)->limit(25) }}
+                                            @endif
+                                        </li>
                                     @endforeach
                                 </ul>
                             </td>
@@ -187,9 +195,10 @@
 
         @if($comparisonData['lost']->isNotEmpty())
             <div class="section-title">Clients Perdus ({{ $comparisonData['lost']->count() }})</div>
-            <table class="table break-avoid">
+            <table class="table">
                 <thead>
                     <tr>
+                        <td>Catégorie</td>
                         <td>Client</td>
                         <td>Prestations</td>
                         <td class="text-right">Montant {{ $comparisonEdition->year }}</td>
@@ -198,11 +207,19 @@
                 <tbody>
                     @foreach ($comparisonData['lost'] as $client)
                         <tr>
+                            <td>{{ $client->category?->name }}</td>
                             <td>{{ $client->name }}</td>
                             <td>
                                 <ul class="provisions-list">
-                                    @foreach($client->diff_details['provisions'] as $pe)
-                                        <li>{{ $pe->name }} ({{ $pe->quantity ?: 1 }})</li>
+                                    @foreach($client->diff_details['provisions']->sortBy('order_column') as $pe)
+                                        <li>
+                                            {{ $pe->name }}
+                                            @if($pe->numeric_indicator)({{ $pe->numeric_indicator }}x)@endif
+                                            @if($pe->vip_invitation_number)({{ $pe->vip_invitation_number }}x)@endif
+                                            @if ($pe->textual_indicator)
+                                                · {{ str($pe->textual_indicator)->limit(25) }}
+                                            @endif
+                                        </li>
                                     @endforeach
                                 </ul>
                             </td>
@@ -218,6 +235,7 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <td>Catégorie</td>
                         <td>Client</td>
                         <td>Prestations {{ $comparisonEdition->year }}</td>
                         <td class="text-right">Montant {{ $comparisonEdition->year }}</td>
@@ -229,19 +247,34 @@
                 <tbody>
                     @foreach ($comparisonData['modified'] as $client)
                         <tr class="break-avoid">
+                            <td>{{ $client->category?->name }}</td>
                             <td>{{ $client->name }}</td>
                             <td>
                                 <ul class="provisions-list">
-                                    @foreach($client->diff_details['comparison_provisions'] as $pe)
-                                        <li>{{ $pe->name }} ({{ $pe->quantity ?: 1 }})</li>
+                                    @foreach($client->diff_details['comparison_provisions']->sortBy('order_column') as $pe)
+                                        <li>
+                                            {{ $pe->name }}
+                                            @if($pe->numeric_indicator)({{ $pe->numeric_indicator }}x)@endif
+                                            @if($pe->vip_invitation_number)({{ $pe->vip_invitation_number }}x)@endif
+                                            @if ($pe->textual_indicator)
+                                                · {{ str($pe->textual_indicator)->limit(25) }}
+                                            @endif
+                                    </li>
                                     @endforeach
                                 </ul>
                             </td>
                             <td class="text-right">{{ (new App\Classes\Price())->generateFormatted($client->diff_details['comparison_total'], 'pdf') }}</td>
                             <td>
                                 <ul class="provisions-list">
-                                    @foreach($client->diff_details['reference_provisions'] as $pe)
-                                        <li>{{ $pe->name }} ({{ $pe->quantity ?: 1 }})</li>
+                                    @foreach($client->diff_details['reference_provisions']->sortBy('order_column') as $pe)
+                                        <li>
+                                            {{ $pe->name }}
+                                            @if($pe->numeric_indicator)({{ $pe->numeric_indicator }}x)@endif
+                                            @if($pe->vip_invitation_number)({{ $pe->vip_invitation_number }}x)@endif
+                                            @if ($pe->textual_indicator)
+                                                · {{ str($pe->textual_indicator)->limit(25) }}
+                                            @endif
+                                        </li>
                                     @endforeach
                                 </ul>
                             </td>

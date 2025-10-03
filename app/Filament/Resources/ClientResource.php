@@ -373,10 +373,6 @@ class ClientResource extends Resource
                         ]);
 
                         return redirect($url);
-                        // This requires a new browser tab, which is not directly possible from the backend.
-                        // A workaround is to use a little bit of JavaScript.
-                        // return Action::close() and dispatch a browser event that opens the URL.
-                        // For now, we will just redirect.
                     })
                     ->openUrlInNewTab()
                     ->modalSubmitActionLabel('Générer le rapport'),

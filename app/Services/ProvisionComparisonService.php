@@ -19,11 +19,15 @@ class ProvisionComparisonService
         $allClientIds = $clientIdsInReference->merge($clientIdsInComparison)->unique();
 
         $clients = Client::with([
+            'category',
             'provisionElements' => function ($query) use ($referenceEdition, $comparisonEdition) {
                 $query->whereIn('edition_id', [$referenceEdition->id, $comparisonEdition->id]);
             },
             'provisionElements.provision',
-        ])->findMany($allClientIds)->sortBy('name');
+        ])->findMany($allClientIds)->sortBy([
+            ['category.name', 'asc'],
+            ['name', 'asc'],
+        ]);
 
         $comparisonData = [
             'new'       => collect(),
@@ -62,8 +66,8 @@ class ProvisionComparisonService
                 $comparisonData['lost']->push($client);
                 $comparisonData['totals']['lost'] += $comparisonTotal;
             } elseif ($hasReferenceProvisions && $hasComparisonProvisions) {
-                $referenceSignature = $referenceProvisions->map(fn ($el) => $el->provision_id.':'.$el->quantity)->sort()->implode('|');
-                $comparisonSignature = $comparisonProvisions->map(fn ($el) => $el->provision_id.':'.$el->quantity)->sort()->implode('|');
+                $referenceSignature = $referenceProvisions->map(fn ($el) => $el->provision_id.':'.$el->numeric_indicator)->sort()->implode('|');
+                $comparisonSignature = $comparisonProvisions->map(fn ($el) => $el->provision_id.':'.$el->numeric_indicator)->sort()->implode('|');
 
                 if ($referenceSignature === $comparisonSignature && $referenceTotal === $comparisonTotal) {
                     $comparisonData['unchanged']->push($client);

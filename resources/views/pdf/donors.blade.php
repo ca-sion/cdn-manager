@@ -92,7 +92,7 @@
                     <td>Catégorie</td>
                     <td>Contact</td>
                     <td>Mention</td>
-                    <td>Status</td>
+                    <td>Statut</td>
                     <td style="text-align: right">Montant</td>
                 </tr>
             </thead>

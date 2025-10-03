@@ -93,7 +93,7 @@
                     <td>Responsable</td>
                     <td>Client</td>
                     <td>Contact</td>
-                    <td>Status</td>
+                    <td>Statut</td>
                     <td>Prestations</td>
                     <td style="text-align: right">Montant</td>
                 </tr>
