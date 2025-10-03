@@ -118,7 +118,12 @@
 <body>
     <div class="document-vertical-line"></div>
 
-    <div class="title">Rapport comparatif des prestations</div>
+    <div class="title">
+        Rapport comparatif des prestations
+        @if ($clientCategory)
+            - {{ $clientCategory->name }}
+        @endif
+    </div>
     <div class="subtitle">Comparaison entre l'édition <strong>{{ $referenceEdition->year }}</strong> et <strong>{{ $comparisonEdition->year }}</strong></div>
 
     <div class="container">

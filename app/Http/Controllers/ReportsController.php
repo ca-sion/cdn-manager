@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Contact;
 use App\Models\Edition;
 use Illuminate\Http\Request;
+use App\Models\ClientCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;
 use App\Services\ProvisionComparisonService;
@@ -172,17 +173,21 @@ class ReportsController extends Controller
         $request->validate([
             'reference_edition_id'  => 'required|exists:editions,id',
             'comparison_edition_id' => 'required|exists:editions,id',
+            'client_category_id'    => 'nullable|exists:client_categories,id',
         ]);
 
         $referenceEdition = Edition::find($request->input('reference_edition_id'));
         $comparisonEdition = Edition::find($request->input('comparison_edition_id'));
+        $clientCategoryId = $request->input('client_category_id');
+        $clientCategory = $clientCategoryId ? ClientCategory::find($clientCategoryId) : null;
 
-        $comparisonData = $comparisonService->compareEditions($referenceEdition, $comparisonEdition);
+        $comparisonData = $comparisonService->compareEditions($referenceEdition, $comparisonEdition, $clientCategoryId);
 
         $view = View::make('pdf.provisions-comparison', [
             'referenceEdition'  => $referenceEdition,
             'comparisonEdition' => $comparisonEdition,
             'comparisonData'    => $comparisonData,
+            'clientCategory'    => $clientCategory,
         ]);
 
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');

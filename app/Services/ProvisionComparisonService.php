@@ -7,13 +7,17 @@ use App\Models\Edition;
 
 class ProvisionComparisonService
 {
-    public function compareEditions(Edition $referenceEdition, Edition $comparisonEdition): array
+    public function compareEditions(Edition $referenceEdition, Edition $comparisonEdition, ?int $clientCategoryId = null): array
     {
         // 1. Get all client IDs that have provision elements in either edition
-        $clientIdsInReference = Client::whereHas('provisionElements', fn ($q) => $q->where('edition_id', $referenceEdition->id))
+        $clientIdsInReference = Client::query()
+            ->when($clientCategoryId, fn ($q) => $q->where('category_id', $clientCategoryId))
+            ->whereHas('provisionElements', fn ($q) => $q->where('edition_id', $referenceEdition->id))
             ->pluck('id');
 
-        $clientIdsInComparison = Client::whereHas('provisionElements', fn ($q) => $q->where('edition_id', $comparisonEdition->id))
+        $clientIdsInComparison = Client::query()
+            ->when($clientCategoryId, fn ($q) => $q->where('category_id', $clientCategoryId))
+            ->whereHas('provisionElements', fn ($q) => $q->where('edition_id', $comparisonEdition->id))
             ->pluck('id');
 
         $allClientIds = $clientIdsInReference->merge($clientIdsInComparison)->unique();

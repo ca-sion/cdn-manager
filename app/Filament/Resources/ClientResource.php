@@ -9,6 +9,7 @@ use App\Models\Edition;
 use Filament\Forms\Form;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
+use App\Models\ClientCategory;
 use Filament\Resources\Resource;
 use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
@@ -352,6 +353,7 @@ class ClientResource extends Resource
                         $editions = Edition::orderBy('year', 'desc')->pluck('year', 'id');
                         $currentEdition = Edition::find(AppHelper::getCurrentEditionId());
                         $previousEdition = Edition::where('year', '<', $currentEdition?->year)->orderBy('year', 'desc')->first();
+                        $clientCategories = ClientCategory::orderBy('name')->pluck('name', 'id');
 
                         return [
                             Select::make('reference_edition_id')
@@ -364,12 +366,18 @@ class ClientResource extends Resource
                                 ->options($editions)
                                 ->default($previousEdition?->id)
                                 ->required(),
+                            Select::make('client_category_id')
+                                ->label('Catégorie de client')
+                                ->options($clientCategories)
+                                ->searchable()
+                                ->preload(),
                         ];
                     })
                     ->action(function (array $data) {
                         $url = route('reports.provisions-comparison', [
                             'reference_edition_id'  => $data['reference_edition_id'],
                             'comparison_edition_id' => $data['comparison_edition_id'],
+                            'client_category_id'    => $data['client_category_id'] ?? null,
                         ]);
 
                         return redirect($url);
