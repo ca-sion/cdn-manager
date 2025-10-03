@@ -5,14 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Contact;
 use App\Models\Edition;
-use App\Models\Provision;
-use App\Models\ClientCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\ProvisionElement;
-use App\Models\ProvisionCategory;
 use Illuminate\Support\Facades\View;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ReportsController extends Controller
 {
@@ -123,6 +117,47 @@ class ReportsController extends Controller
             ->setPaper('A4', 'landscape')
             ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
             ->stream(str($edition->year)->slug().'-donors.pdf');
+
+        return $pdf;
+    }
+
+    public function clientProvisions()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $clients = Client::with([
+            'category',
+            'contacts',
+            'currentEngagement',
+            'provisionElements' => function ($query) use ($edition) {
+                $query->where('edition_id', $edition->id);
+            },
+        ])
+            ->get();
+
+        $grandTotal = 0;
+        $clients->each(function ($client) use (&$grandTotal) {
+            $clientTotal = $client->provisionElements->sum(function ($element) {
+                return $element->price->amount ?? 0;
+            });
+            $client->advertiser_total = $clientTotal;
+            $grandTotal += $clientTotal;
+        });
+
+        $clients = $clients->sortBy([
+            ['category.name', 'asc'],
+            ['name', 'asc'],
+        ]);
+
+        $view = View::make('pdf.client-provisions', ['clients' => $clients, 'edition' => $edition, 'grandTotal' => $grandTotal]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-client-provisions.pdf');
 
         return $pdf;
     }
