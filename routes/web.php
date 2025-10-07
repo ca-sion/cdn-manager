@@ -3,6 +3,7 @@
 use App\Livewire\DonorForm;
 use App\Livewire\VipResponse;
 use App\Livewire\AdvertiserForm;
+use App\Livewire\AdvertiserStart;
 use App\Livewire\FrontEditClient;
 use App\Livewire\FrontListClients;
 use App\Livewire\FrontListProvisions;
@@ -29,6 +30,7 @@ Route::get('provisions', FrontListProvisions::class)->middleware(SiteProtection:
 Route::get('clients', FrontListClients::class)->middleware(SiteProtection::class)->name('front.clients');
 Route::get('clients/{record}', FrontEditClient::class)->name('front.client');
 
+Route::get('advertisers/start', AdvertiserStart::class)->name('advertisers.start');
 Route::get('advertisers/form', AdvertiserForm::class)->name('advertisers.form');
 Route::get('advertisers/form/{client}', AdvertiserForm::class)->middleware('signed')->name('advertisers.form.client');
 Route::get('advertisers/success', [MessageController::class, 'advertiserSuccess'])->middleware('signed')->name('advertisers.success');
