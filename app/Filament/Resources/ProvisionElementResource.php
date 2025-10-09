@@ -86,7 +86,7 @@ class ProvisionElementResource extends Resource
                         ->hiddenOn(ProvisionElementsRelationManager::class),
                     Forms\Components\Select::make('status')
                         ->label('Statut')
-                        ->default('to_prepare')
+                        ->default(ProvisionElementStatusEnum::Confirmed)
                         ->options(ProvisionElementStatusEnum::class),
                 ])->columns(4),
                 Section::make('Champs')

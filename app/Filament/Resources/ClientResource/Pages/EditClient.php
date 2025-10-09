@@ -32,7 +32,7 @@ class EditClient extends EditRecord
                 ->color('gray')
                 ->requiresConfirmation()
                 ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated)),
-            Actions\Action::make('ClientAdvertiserFormCreated')
+            Actions\Action::make('ClientMofidyStageStatus')
                 ->label('Modifier le statut')
                 ->icon('heroicon-o-briefcase')
                 ->color('gray')
