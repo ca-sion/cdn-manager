@@ -154,7 +154,7 @@ class FrontListClients extends Component implements HasForms, HasTable
                         $record->invoices?->where('id', $state)->first()?->number.' ('.
                         \Carbon\Carbon::parse($record->invoices?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'.
-                        ($record->invoices?->where('id', $state)->first()?->status->value == 'payed' ? ' ✓' : null)
+                        ($record->invoices?->where('id', $state)->first()?->status->value == 'paid' ? ' ✓' : null)
                     ))
                     ->verticallyAlignStart()
                     ->toggleable(),

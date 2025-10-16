@@ -74,7 +74,7 @@ class ReconcileInvoiceImporter extends Importer
             if ($invoice->total != $this->data['amount']) {
                 throw new RowImportFailedException("Montant payé de la facture #{$invoice->number} inexact.");
             }
-            $invoice->status = InvoiceStatusEnum::Payed->value;
+            $invoice->status = InvoiceStatusEnum::Paid->value;
             $invoice->paid_on = $this->data['paid_on'];
             $invoice->reference = empty($invoice->reference) ? $this->data['transaction_number'] : $invoice->reference;
             $invoice->save();

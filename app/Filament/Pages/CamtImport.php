@@ -94,7 +94,7 @@ class CamtImport extends Page implements HasForms
                                         ->persistent()
                                         ->send();
                                 } else {
-                                    $invoiceStatus = InvoiceStatusEnum::Payed->value;
+                                    $invoiceStatus = InvoiceStatusEnum::Paid->value;
                                 }
 
                                 $invoice->status = $invoiceStatus;
