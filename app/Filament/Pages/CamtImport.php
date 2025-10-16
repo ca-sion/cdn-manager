@@ -57,7 +57,9 @@ class CamtImport extends Page implements HasForms
         $reader = new Reader(Config::getDefault());
 
         try {
-            $message = $reader->readFile($file->getRealPath());
+            $xmlContent = file_get_contents($file->getRealPath());
+            $xmlContent = str_replace('T24:00:00', 'T23:59:59', $xmlContent);
+            $message = $reader->readString($xmlContent);
             $notifications = $message->getRecords();
 
             $this->transactions = collect();
