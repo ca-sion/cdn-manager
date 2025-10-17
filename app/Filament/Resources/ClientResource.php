@@ -10,12 +10,16 @@ use Filament\Forms\Form;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
 use App\Models\ClientCategory;
+use App\Models\ClientEngagement;
 use Filament\Resources\Resource;
 use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
 use Filament\Forms\Components\Tabs;
 use Filament\Tables\Actions\Action;
 use Illuminate\Contracts\View\View;
+use App\Services\ClientMergeService;
+use Filament\Forms\Components\Radio;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
@@ -270,6 +274,7 @@ class ClientResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
+
                     BulkAction::make('export_logos')
                         ->label('Exporter les logos (.zip)')
                         ->icon('heroicon-o-arrow-down-on-square-stack')
@@ -343,6 +348,90 @@ class ClientResource extends Resource
                                 ->success()
                                 ->send();
                         }),
+                    BulkAction::make('merge_clients')
+                        ->label('Fusionner les clients')
+                        ->icon('heroicon-o-user-group')
+                        ->requiresConfirmation()
+                        ->form(function (Collection $records) {
+                            if ($records->count() !== 2) {
+                                Notification::make()
+                                    ->title('Sélection invalide')
+                                    ->body('Veuillez sélectionner exactement deux clients à fusionner.')
+                                    ->danger()
+                                    ->send();
+
+                                return [];
+                            }
+
+                            [$clientA, $clientB] = $records->all();
+
+                            return [
+                                Radio::make('primary_client_id')
+                                    ->label('Client principal')
+                                    ->helperText('Sélectionnez le client qui sera conservé. L\'autre sera supprimé.')
+                                    ->options([
+                                        $clientA->id => $clientA->name,
+                                        $clientB->id => $clientB->name,
+                                    ])
+                                    ->required(),
+                                Forms\Components\Fieldset::make('Données à conserver')
+                                    ->columns(2)
+                                    ->schema(function () use ($clientA, $clientB) {
+                                        $fields = ['name', 'long_name', 'email', 'phone', 'website', 'address', 'address_extension', 'postal_code', 'locality', 'invoicing_name', 'invoicing_email', 'invoicing_address', 'invoicing_address_extension', 'invoicing_postal_code', 'invoicing_locality', 'ide', 'iban', 'iban_qr'];
+                                        $radioFields = [];
+                                        foreach ($fields as $field) {
+                                            if ($clientA->$field !== $clientB->$field) {
+                                                $radioFields[] = Radio::make($field)
+                                                    ->label(str_replace('_', ' ', ucfirst($field)))
+                                                    ->options([
+                                                        'A' => $clientA->$field ?? 'Vide',
+                                                        'B' => $clientB->$field ?? 'Vide',
+                                                    ])
+                                                    ->default('A');
+                                            }
+                                        }
+                                        $radioFields[] = Forms\Components\Textarea::make('note')
+                                            ->label('Note')
+                                            ->default(trim($clientA->note."\n---\n".$clientB->note))
+                                            ->helperText('Les notes des deux clients seront fusionnées par défaut.');
+                                        $radioFields[] = Forms\Components\Textarea::make('invoicing_note')
+                                            ->label('Note de facturation')
+                                            ->default(trim($clientA->invoicing_note."\n---\n".$clientB->invoicing_note))
+                                            ->helperText('Les notes de facturation des deux clients seront fusionnées par défaut.');
+
+                                        return $radioFields;
+                                    }),
+                            ];
+                        })
+                        ->action(function (Collection $records, array $data) {
+                            if ($records->count() !== 2) {
+                                return;
+                            }
+
+                            [$clientA, $clientB] = $records->all();
+
+                            $primaryClientId = $data['primary_client_id'];
+                            $primaryClient = ($clientA->id == $primaryClientId) ? $clientA : $clientB;
+                            $secondaryClient = ($clientA->id != $primaryClientId) ? $clientA : $clientB;
+
+                            try {
+                                app(ClientMergeService::class)->merge($primaryClient, $secondaryClient, $data, $clientA, $clientB);
+
+                                Notification::make()
+                                    ->title('Fusion réussie')
+                                    ->body("Le client '{$secondaryClient->name}' a été fusionné dans '{$primaryClient->name}'.")
+                                    ->success()
+                                    ->send();
+
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Erreur lors de la fusion')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->modalWidth(MaxWidth::FourExtraLarge),
                 ]),
             ])
             ->headerActions([

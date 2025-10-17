@@ -114,6 +114,14 @@ class Client extends Model implements HasMedia
     }
 
     /**
+     * The engagements that belong to the client.
+     */
+    public function clientEngagements(): HasMany
+    {
+        return $this->hasMany(ClientEngagement::class);
+    }
+
+    /**
      * The current engagement that belong to the client.
      */
     public function currentEngagement(): HasOne
