@@ -92,8 +92,10 @@
                     <td>Catégorie</td>
                     <td>Responsable</td>
                     <td>Client</td>
+                    <td> </td>
                     <td>Contact</td>
                     <td>Statut</td>
+                    <td>Anc.</td>
                     <td>Prestations</td>
                     <td style="text-align: right">Montant</td>
                 </tr>
@@ -104,6 +106,9 @@
                     <td>{{ $client->category?->name }}</td>
                     <td>{{ $client->currentEngagement?->responsible }}</td>
                     <td>{{ str($client->name)->limit(24) }}</td>
+                    <td style="max-width: 60px;">
+                        {{ $client->phone }}
+                    </td>
                     <td>
                         @foreach ($client->contacts->sortBy('order_column') as $contact)
                         @if ($loop->first)
@@ -113,6 +118,11 @@
                     </td>
                     <td style="max-width: 100px;">
                         {{ $client->currentEngagement?->stage?->getLabel() }}
+                    </td>
+                    <td>
+                        @if ($client->had_previous_provisions)
+                            Oui
+                        @endif
                     </td>
                     <td>
                         @foreach ($client->provisionElements as $pe)
@@ -132,7 +142,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="6" style="text-align: right"><strong>Total</strong></td>
+                    <td colspan="8" style="text-align: right"><strong>Total</strong></td>
                     <td style="text-align: right"><strong>{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'pdf') }}</strong></td>
                 </tr>
             </tfoot>

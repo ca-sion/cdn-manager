@@ -54,6 +54,14 @@ class ReportsController extends Controller
             $grandTotal += $clientTotal;
         });
 
+        $clients->each(function ($client) use ($edition) {
+            $client->had_previous_provisions = $client->provisionElements()
+                ->whereHas('edition', function ($query) use ($edition) {
+                    $query->where('year', '<', $edition->year);
+                })
+                ->exists();
+        });
+
         $clients->each(function ($client) {
             $clientOrder = $client->currentEngagement?->stage?->getLabel();
             $client->order = $clientOrder;
@@ -63,7 +71,6 @@ class ReportsController extends Controller
             ['category.name', 'asc'],
             ['order', 'asc'],
             ['name', 'asc'],
-            // fn ($client) => $client->currentEngagement?->stage?->getLabel(),
         ]);
 
         $view = View::make('pdf.advertisers', ['clients' => $clients, 'edition' => $edition, 'grandTotal' => $grandTotal]);
