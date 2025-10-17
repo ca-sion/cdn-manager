@@ -274,6 +274,7 @@ class ClientResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
 
                     BulkAction::make('export_logos')
                         ->label('Exporter les logos (.zip)')
