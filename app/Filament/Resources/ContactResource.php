@@ -15,6 +15,8 @@ use Filament\Forms\Components\Select;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use App\Filament\Exports\ContactExporter;
+use Filament\Tables\Actions\ExportAction;
 use Illuminate\Database\Eloquent\Builder;
 use App\Notifications\ContactDonorFormLink;
 use Illuminate\Database\Eloquent\Collection;
@@ -160,6 +162,36 @@ class ContactResource extends Resource
                     ->multiple()
                     ->preload()
                     ->relationship('clients', 'name'),
+                Tables\Filters\SelectFilter::make('provision_in')
+                    ->label('Prestations')
+                    ->multiple()
+                    ->options(Provision::all()->pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data): Builder {
+                        $values = $data['values'];
+                        if (empty($values)) {
+                            return $query;
+                        }
+
+                        return $query->whereRelation('provisionElements', function (Builder $query) use ($values) {
+                            $query->whereIn('provision_id', $values)
+                                ->where('edition_id', session('edition_id'));
+                        });
+                    }),
+                Tables\Filters\SelectFilter::make('provision_not_in')
+                    ->label('N\'a pas les prestations')
+                    ->multiple()
+                    ->options(Provision::all()->pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data): Builder {
+                        $values = $data['values'];
+                        if (empty($values)) {
+                            return $query;
+                        }
+
+                        return $query->whereDoesntHave('provisionElements', function (Builder $query) use ($values) {
+                            $query->whereIn('provision_id', $values)
+                                ->where('edition_id', session('edition_id'));
+                        });
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -270,6 +302,11 @@ class ContactResource extends Resource
                                 ->send();
                         }),
                 ]),
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->label('Exporter')
+                    ->exporter(ContactExporter::class),
             ]);
     }
 
