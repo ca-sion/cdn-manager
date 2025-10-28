@@ -38,6 +38,18 @@ class AdvertiserForm extends Component implements HasForms
 
         if ($client && request()->hasValidSignature()) {
             $this->client = $client;
+
+            // Track engagement view
+            $engagement = $this->client->currentEngagement;
+            if ($engagement) {
+                $referer = request()->headers->get('referer');
+                $host = request()->host();
+                if (empty($referer) || ! str($referer)->contains($host)) {
+                    $engagement->viewed_at = now();
+                    $engagement->save();
+                }
+            }
+
             if ($this->client) {
                 $this->form->fill([
                     'name'                        => $this->client->name,

@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Traits\Editionable;
 use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -37,6 +39,10 @@ class ClientEngagement extends Model
         return [
             'stage'  => EngagementStageEnum::class,
             'status' => EngagementStatusEnum::class,
+            'sent_at' => 'datetime',
+            'viewed_at' => 'datetime',
+            'relaunched_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -62,6 +68,16 @@ class ClientEngagement extends Model
     public function edition(): BelongsTo
     {
         return $this->belongsTo(Edition::class);
+    }
+
+    /**
+     * Get the tracker url.
+     */
+    protected function tracker(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => URL::signedRoute('track.engagement', $this->id),
+        );
     }
 
     /**

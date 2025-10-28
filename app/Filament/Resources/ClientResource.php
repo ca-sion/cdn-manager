@@ -24,7 +24,9 @@ use Filament\Forms\Components\Select;
 use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
 use App\Filament\Exports\ClientExporter;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,6 +35,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
 use App\Notifications\ClientAdvertiserFormLink;
 use App\Filament\Resources\ClientResource\Pages;
+use App\Notifications\ClientAdvertiserFormRelaunch;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager;
@@ -221,6 +224,24 @@ class ClientResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('currentEngagement.sent_at')
+                    ->label('Env. le')
+                    ->date('d.m.y')
+                    ->dateTimeTooltip('d.m.Y H:i:s')
+                    ->toggleable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('currentEngagement.viewed_at')
+                    ->label('Vu le')
+                    ->date('d.m.y')
+                    ->dateTimeTooltip('d.m.Y H:i:s')
+                    ->toggleable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('currentEngagement.relaunched_at')
+                    ->label('Rel. le')
+                    ->date('d.m.y')
+                    ->dateTimeTooltip('d.m.Y H:i:s')
+                    ->toggleable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('currentInvoices.number')
                     ->label('Factures')
                     ->toggleable()
@@ -263,12 +284,14 @@ class ClientResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('pdf')
-                    ->label('Fiche')
-                    ->url(fn (Model $record): string => $record->pdfLink)
-                    ->openUrlInNewTab()
-                    ->icon('heroicon-o-document'),
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('pdf')
+                        ->label('Fiche')
+                        ->url(fn (Model $record): string => $record->pdfLink)
+                        ->openUrlInNewTab()
+                        ->icon('heroicon-o-document'),
+                ])->iconButton()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -297,7 +320,7 @@ class ClientResource extends Resource
                             return MediaStream::create('logos.zip')->addMedia($downloads);
                         }),
                     BulkAction::make('send_advertiser_form')
-                        ->label('Envoyer formulaire annonceur')
+                        ->label('Envoyer le formulaire annonceur')
                         ->icon('heroicon-o-envelope')
                         ->action(function (Collection $records) {
                             foreach ($records as $client) {
@@ -310,10 +333,33 @@ class ClientResource extends Resource
                                 ]);
                                 $engagement->stage = EngagementStageEnum::ProposalSent;
                                 $engagement->status = EngagementStatusEnum::Idle;
+                                $engagement->sent_at = now();
                                 $engagement->save();
                             }
                             Notification::make()
                                 ->title('Formulaires annonceurs envoyés')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('relaunch_advertiser_form')
+                        ->label('Relancer annonceur avec formulaire')
+                        ->icon('heroicon-o-envelope')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $client) {
+                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
+                                $client->notify(new ClientAdvertiserFormRelaunch($client, $previousOrderDetails));
+
+                                // ClientEngagement
+                                $engagement = $client->currentEngagement()->firstOrCreate([
+                                    'edition_id' => AppHelper::getCurrentEditionId(),
+                                ]);
+                                $engagement->stage = EngagementStageEnum::ProposalSent;
+                                $engagement->status = EngagementStatusEnum::Relaunched;
+                                $engagement->relaunched_at = now();
+                                $engagement->save();
+                            }
+                            Notification::make()
+                                ->title('Formulaires annonceurs re-envoyés')
                                 ->success()
                                 ->send();
                         }),
@@ -331,6 +377,9 @@ class ClientResource extends Resource
                                 ->nullable()
                                 ->options(EngagementStatusEnum::class)
                                 ->default(EngagementStatusEnum::Idle),
+                            TextInput::make('responsible')
+                                ->label('Responsable')
+                                ->nullable(),
                         ])
                         ->action(function (Collection $records, array $data) {
                             foreach ($records as $client) {
@@ -340,6 +389,7 @@ class ClientResource extends Resource
 
                                 $engagement->stage = $data['stage'];
                                 $engagement->status = $data['status'];
+                                $engagement->responsible = $data['responsible'];
                                 $engagement->save();
                             }
 
@@ -433,7 +483,7 @@ class ClientResource extends Resource
                             }
                         })
                         ->modalWidth(MaxWidth::FourExtraLarge),
-                ]),
+                ])->dropdownWidth(MaxWidth::Large),
             ])
             ->headerActions([
                 Action::make('provisions_comparison_report')

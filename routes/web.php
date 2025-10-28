@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TrackingController;
 use App\Livewire\DonorForm;
 use App\Livewire\VipResponse;
 use App\Livewire\AdvertiserForm;
@@ -40,6 +41,8 @@ Route::get('donors/form/{contact}', DonorForm::class)->middleware('signed')->nam
 Route::get('donors/success', [MessageController::class, 'donorSuccess'])->middleware('signed')->name('donors.success');
 
 Route::get('vip/response/{provisionElement}', VipResponse::class)->name('vip.response')->middleware('signed');
+
+Route::get('/track/engagements/{engagement}', [TrackingController::class, 'engagement'])->name('track.engagement')->middleware('signed');
 
 Route::prefix('reports')->middleware([SiteProtection::class])->group(function () {
     Route::get('advertisers', [ReportsController::class, 'advertisers'])->name('reports.advertisers');

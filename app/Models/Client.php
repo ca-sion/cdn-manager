@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\AppHelper;
 use App\Observers\ClientObserver;
 use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Support\Facades\URL;
@@ -155,7 +156,7 @@ class Client extends Model implements HasMedia
      */
     public function currentInvoices(): HasMany
     {
-        return $this->hasMany(Invoice::class)->where('edition_id', setting('edition_id', config('cdn.default_edition_id')));
+        return $this->hasMany(Invoice::class)->where('edition_id', AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id'));
     }
 
     /**
@@ -163,7 +164,7 @@ class Client extends Model implements HasMedia
      */
     public function currentProvisionElements(): MorphMany
     {
-        return $this->morphMany(ProvisionElement::class, 'recipient')->where('edition_id', setting('edition_id', config('cdn.default_edition_id')));
+        return $this->morphMany(ProvisionElement::class, 'recipient')->where('edition_id', AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id'));
     }
 
     /**

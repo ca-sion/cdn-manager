@@ -12,6 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\ClientResource;
 use App\Notifications\ClientAdvertiserFormCreated;
+use Filament\Forms\Components\TextInput;
 
 class EditClient extends EditRecord
 {
@@ -36,18 +37,26 @@ class EditClient extends EditRecord
                 ->label('Modifier le statut')
                 ->icon('heroicon-o-briefcase')
                 ->color('gray')
-                ->form([
-                    Select::make('stage')
-                        ->label('Progression')
-                        ->nullable()
-                        ->options(EngagementStageEnum::class)
-                        ->default(EngagementStageEnum::Prospect),
-                    Select::make('status')
-                        ->label('Statut')
-                        ->nullable()
-                        ->options(EngagementStatusEnum::class)
-                        ->default(EngagementStatusEnum::Idle),
-                ])
+                ->form(function (Model $record) {
+                    $engagement = $record->currentEngagement;
+
+                    return [
+                        Select::make('stage')
+                            ->label('Progression')
+                            ->nullable()
+                            ->options(EngagementStageEnum::class)
+                            ->default($engagement?->stage ?? EngagementStageEnum::Prospect),
+                        Select::make('status')
+                            ->label('Statut')
+                            ->nullable()
+                            ->options(EngagementStatusEnum::class)
+                            ->default($engagement?->status ?? EngagementStatusEnum::Idle),
+                        TextInput::make('responsible')
+                            ->label('Responsable')
+                            ->nullable()
+                            ->default($engagement?->responsible ?? null),
+                    ];
+                })
                 ->action(function (Model $record, array $data) {
                     $engagement = $record->currentEngagement()->firstOrCreate([
                         'edition_id' => AppHelper::getCurrentEditionId(),
@@ -55,6 +64,7 @@ class EditClient extends EditRecord
 
                     $engagement->stage = $data['stage'];
                     $engagement->status = $data['status'];
+                    $engagement->responsible = $data['responsible'];
                     $engagement->save();
 
                     Notification::make()
