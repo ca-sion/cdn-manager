@@ -30,6 +30,21 @@ class ProvisionElementObserver
                 $engagement->stage = EngagementStageEnum::ProposalSent;
                 $engagement->save();
             }
+
+            // Cas : Prestation confirmée
+            if ($provisionElement->status === ProvisionElementStatusEnum::Confirmed) {
+                $allConfirmed = ProvisionElement::where('recipient_id', $engagement->client_id)
+                    ->where('recipient_type', 'App\Models\Client')
+                    ->where('edition_id', $engagement->edition_id)
+                    ->where('status', '!=', 'confirmed')
+                    ->doesntExist();
+
+                if ($allConfirmed) {
+                    $engagement->stage = EngagementStageEnum::Confirmed;
+                    $engagement->status = EngagementStatusEnum::Idle;
+                    $engagement->save();
+                }
+            }
         }
     }
 
