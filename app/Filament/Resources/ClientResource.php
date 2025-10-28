@@ -291,7 +291,7 @@ class ClientResource extends Resource
                         ->url(fn (Model $record): string => $record->pdfLink)
                         ->openUrlInNewTab()
                         ->icon('heroicon-o-document'),
-                ])->iconButton()
+                ])->iconButton(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

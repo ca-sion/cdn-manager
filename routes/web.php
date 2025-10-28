@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\TrackingController;
 use App\Livewire\DonorForm;
 use App\Livewire\VipResponse;
 use App\Livewire\AdvertiserForm;
@@ -13,6 +12,7 @@ use App\Http\Controllers\PdfController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\TrackingController;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
 
 Route::get('/', function () {

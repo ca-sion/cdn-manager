@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\EngagementStatusEnum;
 use App\Models\ClientEngagement;
-use Illuminate\Http\Request;
+use App\Enums\EngagementStatusEnum;
 use Illuminate\Support\Facades\Response;
 
 class TrackingController extends Controller
@@ -18,6 +17,7 @@ class TrackingController extends Controller
         }
 
         $pixel = base64_decode('R0lGODlhAQABAJAAAP8AAAAAACH5BAUQAAAALAAAAAABAAEAAAICRAEAOw==');
+
         return Response::make($pixel, 200, ['Content-Type' => 'image/gif']);
     }
 }

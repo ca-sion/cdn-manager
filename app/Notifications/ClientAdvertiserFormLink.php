@@ -59,7 +59,7 @@ class ClientAdvertiserFormLink extends Notification
             ->line('Vous pouvez aussi nous retourner le formulaire papier au format PDF après l\'avoir rempli à l\'adresse pub@coursedenoel.ch. Vous pouvez le télécharger sous : https://coursedenoel.ch/assets/documents/fo-annonceurs.pdf')
             ->line('Nous restons à disposition en cas de questions ou pour tout complément d\'information.')
             ->salutation('Le Comité de la Course de Noël')
-            ->line(new HtmlString('<img src="' . $notifiable->currentEngagement?->tracker . '" width="1" height="1" />'));
+            ->line(new HtmlString('<img src="'.$notifiable->currentEngagement?->tracker.'" width="1" height="1" />'));
     }
 
     /**

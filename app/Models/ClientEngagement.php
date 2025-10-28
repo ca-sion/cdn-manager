@@ -37,12 +37,12 @@ class ClientEngagement extends Model
     protected function casts(): array
     {
         return [
-            'stage'  => EngagementStageEnum::class,
-            'status' => EngagementStatusEnum::class,
-            'sent_at' => 'datetime',
-            'viewed_at' => 'datetime',
+            'stage'         => EngagementStageEnum::class,
+            'status'        => EngagementStatusEnum::class,
+            'sent_at'       => 'datetime',
+            'viewed_at'     => 'datetime',
             'relaunched_at' => 'datetime',
-            'cancelled_at' => 'datetime',
+            'cancelled_at'  => 'datetime',
         ];
     }
 
