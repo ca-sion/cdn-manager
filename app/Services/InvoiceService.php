@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Client;
 use App\Models\Edition;
 use App\Models\Invoice;
+use App\Helpers\AppHelper;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 
 class InvoiceService
@@ -19,7 +20,7 @@ class InvoiceService
 
         $invoiceNumber = self::generateInvoiceNumber();
 
-        $provisionElementsWithProduct = $client->provisionElements->where('has_product', true);
+        $provisionElementsWithProduct = $client->currentProvisionElements->where('has_product', true);
         $positions = $provisionElementsWithProduct->map(function ($item) {
             return [
                 'name'        => $item->provision->name,
@@ -40,7 +41,7 @@ class InvoiceService
         );
 
         $invoice = new Invoice;
-        $invoice->edition_id = session('edition_id');
+        $invoice->edition_id = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
         $invoice->client_id = $clientId;
         $invoice->status = 'ready';
         $invoice->title = $title;
@@ -60,7 +61,7 @@ class InvoiceService
     {
         $lastInvoice = Invoice::latest()->first();
         $lastInvoiceId = $lastInvoice ? $lastInvoice->id : 0;
-        $edition = Edition::find(session()->get('edition_id') ?? setting('edition_id', config('cdn.default_edition_id')));
+        $edition = Edition::find(AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id'));
         $editionYear = $edition->year;
 
         $invoiceNumber = str_pad($lastInvoiceId + 1, 3, '0', STR_PAD_LEFT);
