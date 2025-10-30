@@ -36,6 +36,7 @@ use Spatie\MediaLibrary\Support\MediaStream;
 use App\Notifications\ClientAdvertiserFormLink;
 use App\Filament\Resources\ClientResource\Pages;
 use App\Notifications\ClientAdvertiserFormRelaunch;
+use App\Notifications\ClientInterclassDonorRequest;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager;
@@ -360,6 +361,28 @@ class ClientResource extends Resource
                             }
                             Notification::make()
                                 ->title('Formulaires annonceurs re-envoyés')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('send_interclass_donors_email')
+                        ->label('Envoyer la demande aux donateurs interclasses')
+                        ->icon('heroicon-o-envelope')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $client) {
+                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
+                                $client->notify(new ClientInterclassDonorRequest($client, $previousOrderDetails));
+
+                                // ClientEngagement
+                                $engagement = $client->currentEngagement()->firstOrCreate([
+                                    'edition_id' => AppHelper::getCurrentEditionId(),
+                                ]);
+                                $engagement->stage = EngagementStageEnum::ProposalSent;
+                                $engagement->status = EngagementStatusEnum::Idle;
+                                $engagement->sent_at = now();
+                                $engagement->save();
+                            }
+                            Notification::make()
+                                ->title('Emails donateurs interclasses envoyés')
                                 ->success()
                                 ->send();
                         }),
