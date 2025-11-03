@@ -131,6 +131,51 @@ class ReportsController extends Controller
         return $pdf;
     }
 
+    public function interclassDonors()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $interclassProvisionId = setting('reports_interclass_donor_provision');
+
+        $clients = Client::whereHas('provisionElements', function ($query) use ($interclassProvisionId, $edition) {
+            $query->where('edition_id', $edition->id)
+                ->where('provision_id', $interclassProvisionId);
+        })
+            ->with([
+                'category',
+                'provisionElements' => function ($query) use ($interclassProvisionId, $edition) {
+                    $query->where('edition_id', $edition->id)
+                        ->where('provision_id', $interclassProvisionId);
+                },
+            ])
+            ->get();
+
+        $grandTotal = 0;
+        $clients->each(function ($client) use (&$grandTotal) {
+            $clientTotal = $client->provisionElements->sum(function ($element) {
+                return $element->numeric_indicator ?? 0;
+            });
+            $client->donor_total = $clientTotal;
+            $grandTotal += $clientTotal;
+        });
+
+        $clients = $clients->sortBy([
+            ['name', 'asc'],
+        ]);
+
+        $view = View::make('pdf.interclass-donors', ['clients' => $clients, 'edition' => $edition, 'grandTotal' => $grandTotal]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-interclass_donors.pdf');
+
+        return $pdf;
+    }
+
     public function clientProvisions()
     {
         $editionYear = request()->input('edition');

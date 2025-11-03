@@ -62,6 +62,9 @@ class Settings extends BaseSettings
                         ->label('Catégories des annonceurs')
                         ->options(ClientCategory::all()->pluck('name', 'id'))
                         ->multiple(),
+                    Select::make('reports_interclass_donor_provision')
+                        ->label('Donation interclasse : Prestation')
+                        ->options(Provision::all()->pluck('name', 'id')),
                 ]),
         ];
     }
