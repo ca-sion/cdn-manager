@@ -91,6 +91,7 @@
                 <tr>
                     <td>Catégorie</td>
                     <td>Donateur</td>
+                    <td>Contact</td>
                     <td>Prix/Don</td>
                     <td>Statut</td>
                     <td style="text-align: right">Montant</td>
@@ -102,8 +103,15 @@
                     <td>{{ $client->category?->name }}</td>
                     <td>{{ str($client->name)->limit(24) }}</td>
                     <td>
+                        @foreach ($client->contacts->sortBy('order_column') as $contact)
+                        @if ($loop->first)
+                            {{ str($contact->name)->limit(22) }}
+                        @endif
+                        @endforeach
+                    </td>
+                    <td>
                         @foreach ($client->provisionElements as $pe)
-                            {{ $pe->textual_indicator }}
+                            {{ $pe->precision }}
                         @endforeach
                     </td>
                     <td>
@@ -121,7 +129,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="4" style="text-align: right"><strong>Total</strong></td>
+                    <td colspan="5" style="text-align: right"><strong>Total</strong></td>
                     <td style="text-align: right"><strong>{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'pdf') }}</strong></td>
                 </tr>
             </tfoot>
