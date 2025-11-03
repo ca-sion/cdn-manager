@@ -93,6 +93,7 @@
                     <td>Donateur</td>
                     <td>Contact</td>
                     <td>Prix/Don</td>
+                    <td>Note</td>
                     <td>Statut</td>
                     <td style="text-align: right">Montant</td>
                 </tr>
@@ -116,6 +117,11 @@
                     </td>
                     <td>
                         @foreach ($client->provisionElements as $pe)
+                            {{ str($pe->note)->limit(24) }}
+                        @endforeach
+                    </td>
+                    <td>
+                        @foreach ($client->provisionElements as $pe)
                             {{ $pe->status?->getLabel() }}
                         @endforeach
                     </td>
@@ -129,7 +135,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="5" style="text-align: right"><strong>Total</strong></td>
+                    <td colspan="6" style="text-align: right"><strong>Total</strong></td>
                     <td style="text-align: right"><strong>{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'pdf') }}</strong></td>
                 </tr>
             </tfoot>
