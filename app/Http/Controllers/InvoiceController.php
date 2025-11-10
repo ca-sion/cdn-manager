@@ -148,10 +148,12 @@ MAIL;
         $qrBill = QrBill::create();
 
         $qrBill->setCreditor(
-            CombinedAddress::create(
+            StructuredAddress::createWithStreet(
                 'CA Sion - Course de Noël',
-                'Case postale 4057',
-                '1950 Sion',
+                'Case postale',
+                '4057',
+                '1950',
+                'Sion',
                 'CH'
             )
         );
