@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 
-class ClientInterclassDonorRequest extends Notification
+class ClientInterclassDonorRequestRelaunch extends Notification
 {
     use Queueable;
 
@@ -45,12 +45,12 @@ class ClientInterclassDonorRequest extends Notification
         $currentEditionYear = now()->format('Y');
 
         return (new MailMessage)
-            ->subject('🏃‍♂️ Course de Noël '.$currentEditionYear.' - Concours interclasses : demande pour prix spéciaux ('.$notifiable->name.')')
+            ->subject('🏃‍♂️ Course de Noël '.$currentEditionYear.' - Concours interclasses : demande pour prix spéciaux ('.$notifiable->name.') : rappel')
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
             ->greeting('Madame, Monsieur,')
-            ->line('Le samedi 13 décembre 2025 marquera un événement exceptionnel à Sion : la **Course de Noël**, qui verra plus de 6\'000 coureurs s\'élancer au cœur de la ville de Sion.')
-            ->line('Dans ce cadre, le « **Concours interclasses** » fêtera son jubilé, sa 25e édition, et permettra à nouveau à **plus de 1\'000 élèves** du degré primaire de découvrir le plaisir de courir avec leurs camarades de classe et de donner le meilleur d’eux-mêmes pour renforcer leur esprit d’équipe !')
+            ->line('Pour rappel, le samedi 13 décembre 2025 marquera un événement exceptionnel à Sion : la **Course de Noël**, qui verra plus de 6\'000 coureurs s\'élancer au cœur de la ville de Sion.')
+            ->line('Dans ce cadre, le « **Concours interclasses** » fêtera son jubilé, sa 25e édition. Au cours des 24 éditions précédentes, 19’684 jeunes écolières et écoliers ont pris part à cette sympathique épreuve athlétique qui leur est spécialement destinée.')
             ->line('Vous avez été un soutien fidèle par le passé ou partagez nos valeurs de promotion du sport jeunesse. C’est pourquoi nous nous permettons de vous solliciter afin de pouvoir primer les meilleures classes de chacune des 6 catégories.')
             ->line('Nous vous serions ainsi très reconnaissants si vous pouviez **offrir aux participant·e·s des bons/entrées** et ce jusqu\'à 25 élèves. Votre généreux geste permettrait à ces enfants et à leurs familles de passer ensemble un moment inoubliable.')
             ->line('En contrepartie, nous :')
@@ -62,7 +62,7 @@ class ClientInterclassDonorRequest extends Notification
 
             ->line('Pour confirmer votre soutien ou si vous avez des questions, nous vous invitons à répondre par retour d\'email :')
             ->line('- Adresse : pub@coursedenoel.ch')
-            ->line('- Délai : 10 novembre 2025')
+            ->line('- Délai : 24 novembre 2025')
             ->line('Les lots physiques sont à envoyer à :')
             ->line(new HtmlString('<small>Christian Masserey<br>Chemin des Amandiers 108<br>1950 Sion<br>079 453 60 03<br>christian.masserey@bluewin.ch</small>'))
 

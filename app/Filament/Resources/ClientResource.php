@@ -6,6 +6,7 @@ use Filament\Forms;
 use Filament\Tables;
 use App\Models\Client;
 use App\Models\Edition;
+use Livewire\Component;
 use Filament\Forms\Form;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
@@ -36,8 +37,10 @@ use Spatie\MediaLibrary\Support\MediaStream;
 use App\Notifications\ClientAdvertiserFormLink;
 use App\Filament\Resources\ClientResource\Pages;
 use App\Notifications\ClientAdvertiserFormRelaunch;
+use App\Notifications\ClientAdvertiserMediaMissing;
 use App\Notifications\ClientInterclassDonorRequest;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use App\Notifications\ClientInterclassDonorRequestRelaunch;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
@@ -296,33 +299,10 @@ class ClientResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-
-                    BulkAction::make('export_logos')
-                        ->label('Exporter les logos (.zip)')
-                        ->icon('heroicon-o-arrow-down-on-square-stack')
-                        ->action(function (Collection $records) {
-                            $downloads = $records->map(function ($record) {
-                                $media = $record->getMedia('logos')->first();
-                                if ($media) {
-                                    $media->name = str()->slug($record->name.'-logo');
-                                    $media->file_name = str()->slug($record->name).'-logo.'.pathinfo($media->file_name, PATHINFO_EXTENSION);
-                                    $media->save();
-
-                                    return $media;
-                                }
-
-                                return null;
-                            });
-                            $downloads = $downloads->filter();
-
-                            return MediaStream::create('logos.zip')->addMedia($downloads);
-                        }),
                     BulkAction::make('send_advertiser_form')
                         ->label('Envoyer le formulaire annonceur')
                         ->icon('heroicon-o-envelope')
+                        ->color('warning')
                         ->action(function (Collection $records) {
                             foreach ($records as $client) {
                                 $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
@@ -345,6 +325,7 @@ class ClientResource extends Resource
                     BulkAction::make('relaunch_advertiser_form')
                         ->label('Relancer annonceur avec formulaire')
                         ->icon('heroicon-o-envelope')
+                        ->color('warning')
                         ->action(function (Collection $records) {
                             foreach ($records as $client) {
                                 $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
@@ -367,6 +348,7 @@ class ClientResource extends Resource
                     BulkAction::make('send_interclass_donors_email')
                         ->label('Envoyer la demande aux donateurs interclasses')
                         ->icon('heroicon-o-envelope')
+                        ->color('warning')
                         ->action(function (Collection $records) {
                             foreach ($records as $client) {
                                 $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
@@ -386,6 +368,115 @@ class ClientResource extends Resource
                                 ->success()
                                 ->send();
                         }),
+                    BulkAction::make('relaunch_interclass_donors_email')
+                        ->label('Relancer les donateurs interclasses')
+                        ->icon('heroicon-o-envelope')
+                        ->color('warning')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $client) {
+                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
+                                $client->notify(new ClientInterclassDonorRequestRelaunch($client, $previousOrderDetails));
+
+                                // ClientEngagement
+                                $engagement = $client->currentEngagement()->firstOrCreate([
+                                    'edition_id' => AppHelper::getCurrentEditionId(),
+                                ]);
+                                $engagement->stage = EngagementStageEnum::ProposalSent;
+                                $engagement->status = EngagementStatusEnum::Relaunched;
+                                $engagement->sent_at = now();
+                                $engagement->save();
+                            }
+                            Notification::make()
+                                ->title('Emails donateurs interclasses envoyés')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('relaunch_interclass_donors_email')
+                        ->label('Relancer les donateurs interclasses')
+                        ->icon('heroicon-o-envelope')
+                        ->color('warning')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $client) {
+                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
+                                $client->notify(new ClientInterclassDonorRequestRelaunch($client, $previousOrderDetails));
+
+                                // ClientEngagement
+                                $engagement = $client->currentEngagement()->firstOrCreate([
+                                    'edition_id' => AppHelper::getCurrentEditionId(),
+                                ]);
+                                $engagement->stage = EngagementStageEnum::ProposalSent;
+                                $engagement->status = EngagementStatusEnum::Relaunched;
+                                $engagement->sent_at = now();
+                                $engagement->save();
+                            }
+                            Notification::make()
+                                ->title('Emails donateurs interclasses envoyés')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('ClientAdvertiserMediaMissing')
+                        ->label('Envoyer demande pour média manquant (avec contrôle)')
+                        ->icon('heroicon-o-envelope')
+                        ->color('warning')
+                        ->action(function (Collection $records) {
+                            $sentCount = 0;
+                            foreach ($records as $client) {
+                                // Filter provision elements that require a visual (format_indicator is not null)
+                                $elementsRequiringMedia = $client->currentProvisionElements->filter(function ($pe) {
+                                    return $pe->provision?->format_indicator !== null;
+                                });
+
+                                // If there are such elements, check if any of them is missing media
+                                if ($elementsRequiringMedia->isNotEmpty()) {
+                                    $isMissingMedia = $elementsRequiringMedia->contains(function ($pe) {
+                                        return $pe->getMedia('*')->isEmpty();
+                                    });
+
+                                    if ($isMissingMedia) {
+                                        $client->notify(new ClientAdvertiserMediaMissing);
+                                        $sentCount++;
+                                    }
+                                }
+                            }
+                            Notification::make()
+                                ->title($sentCount . ' email(s) pour médias manquants envoyé(s)')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('mark_as_relaunched')
+                        ->label('Marquer comme relancé (manuellement)')
+                        ->icon('heroicon-o-check-badge')
+                        ->color('info')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $client) {
+                                // ClientEngagement
+                                $engagement = $client->currentEngagement()->firstOrCreate([
+                                    'edition_id' => AppHelper::getCurrentEditionId(),
+                                ]);
+                                $engagement->stage = EngagementStageEnum::ProposalSent;
+                                $engagement->status = EngagementStatusEnum::Relaunched;
+                                $engagement->sent_at = now();
+                                $engagement->save();
+                            }
+                            Notification::make()
+                                ->title('Clients marqués comme relancés manuellement')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('copyEmail')
+                        ->label('Copier emails')
+                        ->icon('heroicon-m-clipboard-document-list')
+                        ->action(function (Component $livewire, Collection $records) {
+                            $clipboard = '';
+                            foreach ($records as $record) {
+                                $email = $record->contactEmail;
+                                $clipboard .= "$email\n";
+                            }
+                            $livewire->dispatch('copy-to-clipboard', $clipboard);
+                        })
+                        ->extraAttributes([
+                            'x-on:copy-to-clipboard.window' => 'navigator.clipboard.writeText($event.detail)',
+                        ]),
                     BulkAction::make('update_engagement')
                         ->label('Modifier le statut')
                         ->icon('heroicon-o-briefcase')
@@ -421,6 +512,26 @@ class ClientResource extends Resource
                                 ->body(count($records).' engagements ont été mis à jour.')
                                 ->success()
                                 ->send();
+                        }),
+                    BulkAction::make('export_logos')
+                        ->label('Exporter les logos (.zip)')
+                        ->icon('heroicon-o-arrow-down-on-square-stack')
+                        ->action(function (Collection $records) {
+                            $downloads = $records->map(function ($record) {
+                                $media = $record->getMedia('logos')->first();
+                                if ($media) {
+                                    $media->name = str()->slug($record->name.'-logo');
+                                    $media->file_name = str()->slug($record->name).'-logo.'.pathinfo($media->file_name, PATHINFO_EXTENSION);
+                                    $media->save();
+
+                                    return $media;
+                                }
+
+                                return null;
+                            });
+                            $downloads = $downloads->filter();
+
+                            return MediaStream::create('logos.zip')->addMedia($downloads);
                         }),
                     BulkAction::make('merge_clients')
                         ->label('Fusionner les clients')
@@ -506,6 +617,10 @@ class ClientResource extends Resource
                             }
                         })
                         ->modalWidth(MaxWidth::FourExtraLarge),
+                    
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ])->dropdownWidth(MaxWidth::Large),
             ])
             ->headerActions([

@@ -34,8 +34,20 @@ class ClientAdvertiserMediaMissing extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $currentEditionYear = now()->format('Y');
+
+        $provisionElementsWithMissingMedia = $notifiable->currentProvisionElements
+            ->where('provision.format_indicator', '!=', null)
+            ->filter(function ($pe) {
+                return $pe->getMedia('*')->isEmpty();
+            });
+
+        if ($provisionElementsWithMissingMedia->isEmpty()) {
+            // If no media is missing, return an empty MailMessage to prevent sending an email.
+            return (new MailMessage)->subject('')->line('');
+        }
+
         $provisionElements = '';
-        foreach ($notifiable->currentProvisionElements->where('provision.format_indicator', '!=', null) as $pe) {
+        foreach ($provisionElementsWithMissingMedia as $pe) {
             $provisionElements .= ($pe->provision->description ? '## '.$pe->provision->description : '## '.$pe->provision->name)."\n";
             $provisionElements .= $pe->provision->dimensions_indicator ? '- Dimensions : '.$pe->provision->dimensions_indicator."\n" : null;
             $provisionElements .= $pe->provision->format_indicator ? '- Format : '.$pe->provision->format_indicator."\n" : null;
