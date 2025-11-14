@@ -125,7 +125,7 @@ class ClientResource extends Resource
                             ->columns(2)
                             ->schema([
                                 Forms\Components\Fieldset::make('Contact et adresse de facturation')
-                                    //->description('Laisser vide si pas de changement par rapport à l\'adresse de base')
+                                    // ->description('Laisser vide si pas de changement par rapport à l\'adresse de base')
                                     ->columns(12)
                                     ->schema([
                                         Forms\Components\TextInput::make('invoicing_name')
@@ -439,7 +439,7 @@ class ClientResource extends Resource
                                 }
                             }
                             Notification::make()
-                                ->title($sentCount . ' email(s) pour médias manquants envoyé(s)')
+                                ->title($sentCount.' email(s) pour médias manquants envoyé(s)')
                                 ->success()
                                 ->send();
                         }),
@@ -617,7 +617,7 @@ class ClientResource extends Resource
                             }
                         })
                         ->modalWidth(MaxWidth::FourExtraLarge),
-                    
+
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),

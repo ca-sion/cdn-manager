@@ -58,7 +58,7 @@ class ClientInterclassDonorRequestRelaunch extends Notification
             ->line('- publions un post de remerciement sur nos différents réseaux sociaux;')
             ->line('- vous permettons de vous faire connaître auprès d\'un large public de plus de 1\'000 élèves et parents d\'élèves.')
 
-            //->action('Formulaire de commande', $signedUrl)
+            // ->action('Formulaire de commande', $signedUrl)
 
             ->line('Pour confirmer votre soutien ou si vous avez des questions, nous vous invitons à répondre par retour d\'email :')
             ->line('- Adresse : pub@coursedenoel.ch')

@@ -114,7 +114,7 @@ class VipResponse extends Component implements HasForms
         $this->provisionElement->save();
 
         // Email
-        //$recipient->notify(new VipResponseUpdated());
+        // $recipient->notify(new VipResponseUpdated());
 
         // Notification
         Notification::make()

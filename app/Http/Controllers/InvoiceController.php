@@ -10,7 +10,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use App\Enums\InvoiceStatusEnum;
 use Illuminate\Support\Facades\View;
 use Sprain\SwissQrBill\QrCode\QrCode;
-use Sprain\SwissQrBill\DataGroup\Element\CombinedAddress;
 use Sprain\SwissQrBill\PaymentPart\Output\DisplayOptions;
 use Sprain\SwissQrBill\DataGroup\Element\PaymentReference;
 use Sprain\SwissQrBill\DataGroup\Element\StructuredAddress;
