@@ -11,10 +11,15 @@ use App\Models\Provision;
 use Filament\Tables\Table;
 use App\Models\ProvisionElement;
 use Filament\Resources\Resource;
+use Filament\Forms\Components\Radio;
+use Filament\Support\Enums\MaxWidth;
+use App\Services\ContactMergeService;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Fieldset;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use App\Filament\Exports\ContactExporter;
 use Filament\Tables\Actions\ExportAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -198,6 +203,87 @@ class ContactResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    BulkAction::make('merge_contacts')
+                        ->label('Fusionner les contacts')
+                        ->icon('heroicon-o-user-group')
+                        ->requiresConfirmation()
+                        ->form(function (Collection $records) {
+                            if ($records->count() !== 2) {
+                                Notification::make()
+                                    ->title('Sélection invalide')
+                                    ->body('Veuillez sélectionner exactement deux contacts à fusionner.')
+                                    ->danger()
+                                    ->send();
+
+                                return [];
+                            }
+
+                            [$contactA, $contactB] = $records->all();
+
+                            return [
+                                Radio::make('primary_contact_id')
+                                    ->label('Contact principal')
+                                    ->helperText('Sélectionnez le contact qui sera conservé. L\'autre sera supprimé.')
+                                    ->options([
+                                        $contactA->id => $contactA->name,
+                                        $contactB->id => $contactB->name,
+                                    ])
+                                    ->required(),
+                                Fieldset::make('Données à conserver')
+                                    ->columns(2)
+                                    ->schema(function () use ($contactA, $contactB) {
+                                        $fields = [
+                                            'first_name', 'last_name', 'email', 'phone', 'role', 'department',
+                                            'address', 'address_extension', 'postal_code', 'locality',
+                                            'country_code', 'salutation', 'language',
+                                        ];
+                                        $radioFields = [];
+                                        foreach ($fields as $field) {
+                                            if ($contactA->$field !== $contactB->$field) {
+                                                $radioFields[] = Radio::make($field)
+                                                    ->label(str_replace('_', ' ', ucfirst($field)))
+                                                    ->options([
+                                                        'A' => $contactA->$field ?? 'Vide',
+                                                        'B' => $contactB->$field ?? 'Vide',
+                                                    ])
+                                                    ->default('A');
+                                            }
+                                        }
+
+                                        // Assuming 'note' is not a standard field on Contact model, so it's omitted unlike in Client merge.
+                                        return $radioFields;
+                                    }),
+                            ];
+                        })
+                        ->action(function (Collection $records, array $data) {
+                            if ($records->count() !== 2) {
+                                return;
+                            }
+
+                            [$contactA, $contactB] = $records->all();
+
+                            $primaryContactId = $data['primary_contact_id'];
+                            $primaryContact = ($contactA->id == $primaryContactId) ? $contactA : $contactB;
+                            $secondaryContact = ($contactA->id != $primaryContactId) ? $contactA : $contactB;
+
+                            try {
+                                app(ContactMergeService::class)->merge($primaryContact, $secondaryContact, $data, $contactA, $contactB);
+
+                                Notification::make()
+                                    ->title('Fusion réussie')
+                                    ->body("Le contact '{$secondaryContact->name}' a été fusionné dans '{$primaryContact->name}'.")
+                                    ->success()
+                                    ->send();
+
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Erreur lors de la fusion')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->modalWidth(MaxWidth::FourExtraLarge),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
