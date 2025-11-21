@@ -130,7 +130,6 @@
                             @if (! $loop->last)
                                 ·
                             @endif
-                            aaaahhjdhjhjdhjshdjshkdsjkhdjshdjshkjdhsjkhdkjshdjkhskjdhsjkhdjkshdjk
                         @endforeach
                     </td>
                     <td style="text-align: right">
