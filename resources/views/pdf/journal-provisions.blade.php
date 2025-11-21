@@ -104,8 +104,11 @@
                 <tr style="vertical-align: start;">
                     <td>{{ $pe->recipient?->category?->name }}</td>
                     <td>{{ str($pe->recipient?->name)->limit(24) }}</td>
-                    <td style="max-width: 100px;">
+                    {{-- <td style="max-width: 100px;">
                         {{ $pe->recipient->currentEngagement?->stage?->getLabel() }}
+                    </td> --}}
+                    <td style="max-width: 100px;">
+                        {{ $pe->status?->getLabel() }}
                     </td>
                     <td>
                         @if ($pe->provision)
@@ -124,13 +127,13 @@
                         @endif
                     </td>
                     <td>
-                        @if ($pe->status)
-                            {{ $pe->status->getLabel() }}
+                        @if ($pe->media_status)
+                            {{ $pe->media_status->getLabel() }}
                         @endif
                     </td>
                     <td>
                         @if ($pe->getMedia('*')->isNotEmpty())
-                            X
+                            <a href="{{ $pe->getFirstMedia('*')->getFullUrl() }}">X</a>
                         @endif
                     </td>
                     <td>
