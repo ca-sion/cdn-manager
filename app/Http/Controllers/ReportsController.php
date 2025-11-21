@@ -8,6 +8,7 @@ use App\Models\Edition;
 use Illuminate\Http\Request;
 use App\Models\ClientCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\ProvisionElement;
 use Illuminate\Support\Facades\View;
 use App\Services\ProvisionComparisonService;
 
@@ -248,6 +249,37 @@ class ReportsController extends Controller
             ->setPaper('A4', 'landscape')
             ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
             ->stream(str($referenceEdition->year.'-vs-'.$comparisonEdition->year)->slug().'-provisions-comparison.pdf');
+
+        return $pdf;
+    }
+
+    public function journalProvisions()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $journalProvisionIds = setting('reports_advertisers_journal_categories');
+
+        abort_if(! $journalProvisionIds, '401');
+
+        $provisions = ProvisionElement::with(['recipient.category', 'provision'])
+            ->where('edition_id', $edition->id)
+            ->whereIn('provision_id', $journalProvisionIds)
+            ->get();
+
+        $provisions = $provisions->sortBy([
+            ['provision.name', 'asc'],
+            ['recipient.name', 'asc'],
+        ]);
+
+        $view = View::make('pdf.journal-provisions', ['provisions' => $provisions, 'edition' => $edition]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-journal-provisions.pdf');
 
         return $pdf;
     }

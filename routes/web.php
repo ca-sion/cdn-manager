@@ -48,6 +48,7 @@ Route::prefix('reports')->middleware([SiteProtection::class])->group(function ()
     Route::get('advertisers', [ReportsController::class, 'advertisers'])->name('reports.advertisers');
     Route::get('donors', [ReportsController::class, 'donors'])->name('reports.donors');
     Route::get('interlcass-donors', [ReportsController::class, 'interclassDonors'])->name('reports.interclass-donors');
+    Route::get('journal-provisions', [ReportsController::class, 'journalProvisions'])->name('reports.journal-provisions');
     Route::get('client-provisions', [ReportsController::class, 'clientProvisions'])->name('reports.client-provisions');
     Route::get('provisions-comparison', [ReportsController::class, 'provisionsComparison'])->name('reports.provisions-comparison');
 });
