@@ -116,7 +116,7 @@
                         @endif
                         @endforeach
                     </td>
-                    <td style="max-width: 100px;">
+                    <td style="max-width: 110px;">
                         {{ $client->currentEngagement?->stage?->getLabel() }}
                     </td>
                     <td>
