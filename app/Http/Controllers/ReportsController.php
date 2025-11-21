@@ -259,7 +259,7 @@ class ReportsController extends Controller
 
         $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
 
-        $journalProvisionIds = setting('reports_advertisers_journal_categories');
+        $journalProvisionIds = setting('reports_advertisers_journal_provisions');
 
         abort_if(! $journalProvisionIds, '401');
 

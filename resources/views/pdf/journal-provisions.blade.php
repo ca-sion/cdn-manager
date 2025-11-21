@@ -95,35 +95,47 @@
                     <td>Prestation</td>
                     <td> </td>
                     <td> </td>
+                    <td>M.</td>
                     <td> </td>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($provisions as $provision)
+                @foreach ($provisions as $pe)
                 <tr style="vertical-align: start;">
-                    <td>{{ $provision->recipient?->category?->name }}</td>
-                    <td>{{ str($provision->recipient?->name)->limit(24) }}</td>
+                    <td>{{ $pe->recipient?->category?->name }}</td>
+                    <td>{{ str($pe->recipient?->name)->limit(24) }}</td>
                     <td style="max-width: 100px;">
-                        {{ $provision->recipient->currentEngagement?->stage?->getLabel() }}
+                        {{ $pe->recipient->currentEngagement?->stage?->getLabel() }}
                     </td>
                     <td>
-                        @if ($provision->provision)
-                            {{ $provision->provision?->name }}
+                        @if ($pe->provision)
+                            {{ $pe->provision?->name }}
                         @endif
                     </td>
                     <td>
-                        @if ($provision->provision)
-                            {{ $provision->provision?->dimensions_indicator }}
+                        @if ($pe->provision?->dimensions_indicator)
+                            {{ $pe->provision?->dimensions_indicator }}
+                        @endif
+                        @if ($pe->provision->id == setting('advertiser_form_donation_provision') && $pe->textual_indicator)
+                            {{ $pe->textual_indicator }}
+                            @if ($pe->price?->cost)
+                                · {{ $pe->price?->cost }} CHF
+                            @endif
                         @endif
                     </td>
                     <td>
-                        @if ($provision->status)
-                            {{ $provision->status->getLabel() }}
+                        @if ($pe->status)
+                            {{ $pe->status->getLabel() }}
                         @endif
                     </td>
                     <td>
-                        @if ($provision->note)
-                            {{ str($provision->note)->limit(25) }}
+                        @if ($pe->getMedia('*')->isNotEmpty())
+                            X
+                        @endif
+                    </td>
+                    <td>
+                        @if ($pe->note)
+                            {{ str($pe->note)->limit(25) }}
                         @endif
                     </td>
                 </tr>
