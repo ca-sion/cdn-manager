@@ -94,8 +94,8 @@
                     <td>Statut</td>
                     <td>Prestation</td>
                     <td> </td>
+                    <td>Média</td>
                     <td> </td>
-                    <td>M.</td>
                     <td> </td>
                 </tr>
             </thead>
@@ -127,13 +127,13 @@
                         @endif
                     </td>
                     <td>
-                        @if ($pe->media_status)
-                            {{ $pe->media_status->getLabel() }}
+                        @if ($pe->provision->id != setting('advertiser_form_donation_provision') && $pe->media_status)
+                            {{ $pe->media_status?->getLabel() }}
                         @endif
                     </td>
                     <td>
-                        @if ($pe->getMedia('*')->isNotEmpty())
-                            <a href="{{ $pe->getFirstMedia('*')->getFullUrl() }}">X</a>
+                        @if ($pe->provision->id != setting('advertiser_form_donation_provision') && $pe->getMedia('*')->isNotEmpty())
+                            <a href="{{ $pe->getFirstMedia('*')->getFullUrl() }}">x</a>
                         @endif
                     </td>
                     <td>
