@@ -116,7 +116,7 @@
                         @endif
                         @endforeach
                     </td>
-                    <td style="max-width: 110px;">
+                    <td style="max-width: 100px;min-width: 85px;">
                         {{ $client->currentEngagement?->stage?->getLabel() }}
                     </td>
                     <td>
@@ -130,6 +130,7 @@
                             @if (! $loop->last)
                                 ·
                             @endif
+                            aaaahhjdhjhjdhjshdjshkdsjkhdjshdjshkjdhsjkhdkjshdjkhskjdhsjkhdjkshdjk
                         @endforeach
                     </td>
                     <td style="text-align: right">
