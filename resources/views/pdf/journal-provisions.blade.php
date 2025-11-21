@@ -117,7 +117,7 @@
                             {{ $pe->provision?->dimensions_indicator }}
                         @endif
                         @if ($pe->provision->id == setting('advertiser_form_donation_provision') && $pe->textual_indicator)
-                            {{ $pe->textual_indicator }}
+                            <small>{{ $pe->textual_indicator }}</small>
                             @if ($pe->price?->cost)
                                 · {{ $pe->price?->cost }} CHF
                             @endif
