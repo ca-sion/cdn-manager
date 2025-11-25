@@ -294,11 +294,11 @@ class ContactResource extends Resource
                                     $vipProvisionElement->save();
                                 }
                                 $record->save();
-                                Notification::make()
-                                    ->title('Prestations VIP ajoutées ('.$records->count().')')
-                                    ->success()
-                                    ->send();
                             }
+                            Notification::make()
+                                ->title('Prestations VIP ajoutées ('.$records->count().')')
+                                ->success()
+                                ->send();
                         }),
                     BulkAction::make('merge_contacts')
                         ->label('Fusionner les contacts')
