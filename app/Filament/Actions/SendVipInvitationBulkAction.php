@@ -20,6 +20,7 @@ class SendVipInvitationBulkAction extends BulkAction
 
         $this->label('Envoyer invitations VIP')
             ->icon('heroicon-m-envelope')
+            ->color('warning')
             ->requiresConfirmation()
             ->action(function (Collection $records) {
                 foreach ($records as $record) {

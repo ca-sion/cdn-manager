@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Notifications\ContactDonorFormLink;
 use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Resources\ContactResource\Pages;
+use App\Notifications\RecipientSendVipInvitation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 
@@ -204,6 +205,101 @@ class ContactResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    BulkAction::make('send_donor_form')
+                        ->label('Envoyer formulaire donateur')
+                        ->icon('heroicon-o-envelope')
+                        ->color('warning')
+                        ->action(function (Collection $records) {
+                            foreach ($records as $contact) {
+                                $contact->notify(new ContactDonorFormLink($contact));
+                            }
+                            Notification::make()
+                                ->title('Formulaires donateurs envoyés')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('sendVipInvitation')
+                        ->label('Envoyer invitations VIP')
+                        ->icon('heroicon-m-envelope')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->action(function (Collection $contacts): void {
+                            foreach ($contacts as $contact) {
+                                $vipProvisionElement = $contact->currentProvisionElements()->where('provision_id', setting('vip_provision'))->first();
+                                if ($vipProvisionElement?->provision_id == (int) setting('vip_provision')) {
+                                    if ($contact->email != null) {
+                                        $contact->notify(new RecipientSendVipInvitation($vipProvisionElement));
+                                        $vipProvisionElement->status = ProvisionElementStatusEnum::Sent;
+                                        $vipProvisionElement->save();
+                                    } else {
+                                        $vipProvisionElement->status = ProvisionElementStatusEnum::ActionRequired;
+                                        $vipProvisionElement->save();
+                                    }
+                                }
+                            }
+                            Notification::make()
+                                ->title('Invitations VIP envoyées ('.$contacts->count().')')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('addVipProvision')
+                        ->label('Ajouter prestation VIP')
+                        ->icon('heroicon-m-user-circle')
+                        ->color('info')
+                        ->form([
+                            Select::make('vip_category')
+                                ->label('Catégorie VIP')
+                                ->options([
+                                    'individual'        => 'Individu',
+                                    'company'           => 'Entreprise',
+                                    'sponsor'           => 'Sponsor',
+                                    'partner'           => 'Partenaire',
+                                    'town_council'      => 'Conseil municipal',
+                                    'general_council'   => 'Conseil général',
+                                    'states_council'    => 'Conseil d\'État',
+                                    'national_council'  => 'Conseil national',
+                                    'council_of_states' => 'Conseil des États',
+                                    'committee'         => 'Comité (CDN)',
+                                    'committee_trail'   => 'Comité (Trail)',
+                                    'trail'             => 'Trail',
+                                    'swisslife'         => 'Swisslife',
+                                ]),
+                            TextInput::make('vip_invitation_number')
+                                ->label('Nombre d\'invitation VIP')
+                                ->numeric()
+                                ->default(1),
+                            Select::make('edition_id')
+                                ->label('Edition')
+                                ->options(Edition::all()->pluck('year', 'id'))
+                                ->default(session('edition_id'))
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            foreach ($records as $record) {
+                                // $vipProvision = Provision::where('id', setting('vip_provision'))->first();
+                                $contactVipProvisionElement = $record->currentProvisionElements()->where('provision_id', setting('vip_provision'))->first();
+                                if ($contactVipProvisionElement) {
+                                    $contactVipProvisionElement->vip_category = $data['vip_category'];
+                                    $contactVipProvisionElement->vip_invitation_number = $data['vip_invitation_number'];
+                                    $contactVipProvisionElement->save();
+                                } else {
+                                    $vipProvisionElement = new ProvisionElement;
+                                    $vipProvisionElement->edition_id = $data['edition_id'] ?? session('edition_id');
+                                    $vipProvisionElement->provision_id = setting('vip_provision');
+                                    $vipProvisionElement->recipient_type = 'App\Models\Contact';
+                                    $vipProvisionElement->recipient_id = $record->id;
+                                    $vipProvisionElement->status = ProvisionElementStatusEnum::ToPrepare;
+                                    $vipProvisionElement->vip_category = $data['vip_category'];
+                                    $vipProvisionElement->vip_invitation_number = $data['vip_invitation_number'] ?? 1;
+                                    $vipProvisionElement->save();
+                                }
+                                $record->save();
+                                Notification::make()
+                                    ->title('Prestations VIP ajoutées ('.$records->count().')')
+                                    ->success()
+                                    ->send();
+                            }
+                        }),
                     BulkAction::make('merge_contacts')
                         ->label('Fusionner les contacts')
                         ->icon('heroicon-o-user-group')
@@ -285,9 +381,6 @@ class ContactResource extends Resource
                             }
                         })
                         ->modalWidth(MaxWidth::FourExtraLarge),
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
                     BulkAction::make('copyEmail')
                         ->label('Copier emails')
                         ->icon('heroicon-m-clipboard-document-list')
@@ -323,76 +416,10 @@ class ContactResource extends Resource
                                 $record->save();
                             }
                         }),
-                    BulkAction::make('addVipProvision')
-                        ->label('Ajouter prestation VIP')
-                        ->icon('heroicon-m-user-circle')
-                        ->form([
-                            Select::make('vip_category')
-                                ->label('Catégorie VIP')
-                                ->options([
-                                    'individual'        => 'Individu',
-                                    'company'           => 'Entreprise',
-                                    'sponsor'           => 'Sponsor',
-                                    'partner'           => 'Partenaire',
-                                    'town_council'      => 'Conseil municipal',
-                                    'general_council'   => 'Conseil général',
-                                    'states_council'    => 'Conseil d\'État',
-                                    'national_council'  => 'Conseil national',
-                                    'council_of_states' => 'Conseil des États',
-                                    'committee'         => 'Comité (CDN)',
-                                    'committee_trail'   => 'Comité (Trail)',
-                                    'trail'             => 'Trail',
-                                    'swisslife'         => 'Swisslife',
-                                ]),
-                            TextInput::make('vip_invitation_number')
-                                ->label('Nombre d\'invitation VIP')
-                                ->numeric()
-                                ->default(1),
-                            Select::make('edition_id')
-                                ->label('Edition')
-                                ->options(Edition::all()->pluck('year', 'id'))
-                                ->default(session('edition_id'))
-                                ->required(),
-                        ])
-                        ->action(function (Collection $records, array $data): void {
-                            foreach ($records as $record) {
-                                // $vipProvision = Provision::where('id', setting('vip_provision'))->first();
-                                $contactVipProvisionElement = $record->currentProvisionElements()->where('provision_id', setting('vip_provision'))->first();
-                                if ($contactVipProvisionElement) {
-                                    $contactVipProvisionElement->vip_category = $data['vip_category'];
-                                    $contactVipProvisionElement->vip_invitation_number = $data['vip_invitation_number'];
-                                    $contactVipProvisionElement->save();
-                                } else {
-                                    $vipProvisionElement = new ProvisionElement;
-                                    $vipProvisionElement->edition_id = $data['edition_id'] ?? session('edition_id');
-                                    $vipProvisionElement->provision_id = setting('vip_provision');
-                                    $vipProvisionElement->recipient_type = 'App\Models\Contact';
-                                    $vipProvisionElement->recipient_id = $record->id;
-                                    $vipProvisionElement->status = ProvisionElementStatusEnum::ToPrepare;
-                                    $vipProvisionElement->vip_category = $data['vip_category'];
-                                    $vipProvisionElement->vip_invitation_number = $data['vip_invitation_number'] ?? 1;
-                                    $vipProvisionElement->save();
-                                }
-                                $record->save();
-                                Notification::make()
-                                    ->title('Prestations VIP ajoutées ('.$records->count().')')
-                                    ->success()
-                                    ->send();
-                            }
-                        }),
-                    BulkAction::make('send_donor_form')
-                        ->label('Envoyer formulaire donateur')
-                        ->icon('heroicon-o-envelope')
-                        ->action(function (Collection $records) {
-                            foreach ($records as $contact) {
-                                $contact->notify(new ContactDonorFormLink($contact));
-                            }
-                            Notification::make()
-                                ->title('Formulaires donateurs envoyés')
-                                ->success()
-                                ->send();
-                        }),
-                ]),
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
+                ])->dropdownWidth(MaxWidth::Large),
             ])
             ->headerActions([
                 ExportAction::make()
