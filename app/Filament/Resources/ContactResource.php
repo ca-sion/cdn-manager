@@ -20,6 +20,7 @@ use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use App\Enums\ProvisionElementStatusEnum;
 use App\Filament\Exports\ContactExporter;
 use Filament\Tables\Actions\ExportAction;
 use Illuminate\Database\Eloquent\Builder;
@@ -323,7 +324,7 @@ class ContactResource extends Resource
                             }
                         }),
                     BulkAction::make('addVipProvision')
-                        ->label('Prestation VIP')
+                        ->label('Ajouter prestation VIP')
                         ->icon('heroicon-m-user-circle')
                         ->form([
                             Select::make('vip_category')
@@ -356,7 +357,7 @@ class ContactResource extends Resource
                         ->action(function (Collection $records, array $data): void {
                             foreach ($records as $record) {
                                 // $vipProvision = Provision::where('id', setting('vip_provision'))->first();
-                                $contactVipProvisionElement = $record->provisionElements()->where('provision_id', setting('vip_provision'))->first();
+                                $contactVipProvisionElement = $record->currentProvisionElements()->where('provision_id', setting('vip_provision'))->first();
                                 if ($contactVipProvisionElement) {
                                     $contactVipProvisionElement->vip_category = $data['vip_category'];
                                     $contactVipProvisionElement->vip_invitation_number = $data['vip_invitation_number'];
@@ -367,12 +368,16 @@ class ContactResource extends Resource
                                     $vipProvisionElement->provision_id = setting('vip_provision');
                                     $vipProvisionElement->recipient_type = 'App\Models\Contact';
                                     $vipProvisionElement->recipient_id = $record->id;
-                                    $vipProvisionElement->status = 'to_prepare';
+                                    $vipProvisionElement->status = ProvisionElementStatusEnum::ToPrepare;
                                     $vipProvisionElement->vip_category = $data['vip_category'];
                                     $vipProvisionElement->vip_invitation_number = $data['vip_invitation_number'] ?? 1;
                                     $vipProvisionElement->save();
                                 }
                                 $record->save();
+                                Notification::make()
+                                    ->title('Prestations VIP ajoutées ('.$records->count().')')
+                                    ->success()
+                                    ->send();
                             }
                         }),
                     BulkAction::make('send_donor_form')
@@ -382,7 +387,7 @@ class ContactResource extends Resource
                             foreach ($records as $contact) {
                                 $contact->notify(new ContactDonorFormLink($contact));
                             }
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Formulaires donateurs envoyés')
                                 ->success()
                                 ->send();

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\AppHelper;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
@@ -64,6 +65,14 @@ class Contact extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ContactCategory::class, 'category_id');
+    }
+
+    /**
+     * The current edition provisions elements that belong to the contact.
+     */
+    public function currentProvisionElements(): MorphMany
+    {
+        return $this->morphMany(ProvisionElement::class, 'recipient')->where('edition_id', AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id'));
     }
 
     /**
