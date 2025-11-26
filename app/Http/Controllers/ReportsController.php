@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 use App\Models\ClientCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProvisionElement;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
+use Rap2hpoutre\FastExcel\FastExcel;
 use App\Services\ProvisionComparisonService;
 
 class ReportsController extends Controller
@@ -121,6 +123,14 @@ class ReportsController extends Controller
             ['name', 'asc'],
         ]);
 
+        if (request()->input('export')) {
+            $exportCollection = $this->flattenRelations($contacts, [
+                'category',
+            ]);
+
+            return (new FastExcel($exportCollection))->download($edition?->year.'-donors.xlsx');
+        }
+
         $view = View::make('pdf.donors', ['contacts' => $contacts, 'edition' => $edition, 'grandTotal' => $grandTotal]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
 
@@ -165,6 +175,14 @@ class ReportsController extends Controller
         $clients = $clients->sortBy([
             ['name', 'asc'],
         ]);
+
+        if (request()->input('export')) {
+            $exportCollection = $this->flattenRelations($clients, [
+                'category',
+            ]);
+
+            return (new FastExcel($exportCollection))->download($edition?->year.'-interclass-donors.xlsx');
+        }
 
         $view = View::make('pdf.interclass-donors', ['clients' => $clients, 'edition' => $edition, 'grandTotal' => $grandTotal]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
@@ -273,6 +291,15 @@ class ReportsController extends Controller
             ['recipient.name', 'asc'],
         ]);
 
+        if (request()->input('export')) {
+            $exportCollection = $this->flattenRelations($provisions, [
+                'provision',
+                'recipient.category',
+            ]);
+
+            return (new FastExcel($exportCollection))->download($edition?->year.'-journal-provisions.xlsx');
+        }
+
         $view = View::make('pdf.journal-provisions', ['provisions' => $provisions, 'edition' => $edition]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
 
@@ -282,5 +309,60 @@ class ReportsController extends Controller
             ->stream(str($edition->year)->slug().'-journal-provisions.pdf');
 
         return $pdf;
+    }
+
+    /**
+     * Aplatit les attributs de relations spécifiées sur chaque élément d'une collection.
+     * Gère les relations BelongsTo/HasOne et agrège les relations HasMany.
+     *
+     * @param \Illuminate\Support\Collection $collection La collection Eloquent à transformer.
+     * @param array $relations Les relations à aplatir (ex: ['provision', 'items']).
+     * @return \Illuminate\Support\Collection
+     */
+    protected function flattenRelations(Collection $collection, array $relations): Collection
+    {
+        return $collection->map(function ($model) use ($relations) {
+            $data = $model->toArray();
+
+            foreach ($relations as $relationName) {
+                $segments = explode('.', $relationName);
+                $currentObject = $model;
+
+                // 1. Trouver l'objet de relation finale
+                foreach ($segments as $segment) {
+                    if (isset($currentObject->{$segment})) {
+                        $currentObject = $currentObject->{$segment};
+                    } else {
+                        $currentObject = null;
+                        break;
+                    }
+                }
+
+                if ($currentObject) {
+                    // 2. Vérification CLÉ : Ignorer si c'est une collection (HasMany)
+                    if ($currentObject instanceof Collection) {
+                        // Ignorer les collections (relations HasMany). 
+                        // Pour FastExcel, une ligne = un enregistrement, pas une liste d'enregistrements.
+                        continue; 
+                    }
+                    
+                    // 3. Traitement des relations One-to-One (Modèle unique)
+                    $prefix = str_replace('.', '_', $relationName); 
+                    $relationData = $currentObject->toArray();
+                    
+                    foreach ($relationData as $key => $value) {
+                        // Ajout des attributs préfixés
+                        $data[$prefix . '_' . $key] = $value;
+                    }
+                }
+                
+                // Suppression de l'objet de relation complet du tableau final
+                if (count($segments) === 1) {
+                    unset($data[$relationName]);
+                }
+            }
+
+            return $data;
+        });
     }
 }
