@@ -49,7 +49,7 @@ class ProvisionElement extends Model implements HasMedia, Sortable
      *
      * @var array
      */
-    protected $appends = ['vip_name', 'recipient_vip_contact_email'];
+    //protected $appends = ['vip_name', 'recipient_vip_contact_email'];
 
     /**
      * Get the attributes that should be cast.
