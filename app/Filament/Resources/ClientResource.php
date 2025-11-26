@@ -28,6 +28,7 @@ use App\Filament\Exports\ClientExporter;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\ActionGroup;
+use App\Enums\ProvisionElementStatusEnum;
 use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
@@ -36,6 +37,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
 use App\Notifications\ClientAdvertiserFormLink;
 use App\Filament\Resources\ClientResource\Pages;
+use App\Notifications\RecipientSendVipInvitation;
 use App\Notifications\ClientAdvertiserFormRelaunch;
 use App\Notifications\ClientAdvertiserMediaMissing;
 use App\Notifications\ClientInterclassDonorRequest;
@@ -440,6 +442,30 @@ class ClientResource extends Resource
                             }
                             Notification::make()
                                 ->title($sentCount.' email(s) pour médias manquants envoyé(s)')
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('sendVipInvitation')
+                        ->label('Envoyer invitations VIP')
+                        ->icon('heroicon-m-envelope')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->action(function (Collection $clients): void {
+                            foreach ($clients as $client) {
+                                $vipProvisionElement = $client->currentProvisionElements()->where('provision_id', setting('vip_provision'))->first();
+                                if ($vipProvisionElement?->provision_id == (int) setting('vip_provision')) {
+                                    if ($client->email != null) {
+                                        $client->notify(new RecipientSendVipInvitation($vipProvisionElement));
+                                        $vipProvisionElement->status = ProvisionElementStatusEnum::Sent;
+                                        $vipProvisionElement->save();
+                                    } else {
+                                        $vipProvisionElement->status = ProvisionElementStatusEnum::ActionRequired;
+                                        $vipProvisionElement->save();
+                                    }
+                                }
+                            }
+                            Notification::make()
+                                ->title('Invitations VIP envoyées ('.$clients->count().')')
                                 ->success()
                                 ->send();
                         }),
