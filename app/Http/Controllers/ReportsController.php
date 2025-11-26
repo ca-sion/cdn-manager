@@ -338,7 +338,7 @@ class ReportsController extends Controller
             $exportCollection = $provisions->map(function ($pe) {
                 return [
                     'name'                      => $pe->vip_name,
-                    'first_name'                => $pe->recipient?->first_name,
+                    'first_name'                => $pe->recipient?->first_name ? str($pe->recipient?->first_name)->limit(24) : str($pe->client?->contacts()?->orderBy('order_column')->first()?->name)->limit(24),
                     'role'                      => $pe->recipient?->role,
                     'company'                   => $pe->recipient?->company,
                     'email'                     => $pe->recipient?->vipContactEmail ?? $pe->recipient?->email,

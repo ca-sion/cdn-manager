@@ -104,7 +104,7 @@
                 @foreach ($provisions as $pe)
                 <tr style="vertical-align: start;">
                     <td>{{ $pe->vip_name }}</td>
-                    <td>{{ $pe->recipient?->first_name ? str($pe->recipient?->first_name)->limit(24) : str($pe->client?->contacts()?->orderBy('order_column')->firstWhere('type', '=', 'executive')?->name)->limit(24) }}</td>
+                    <td>{{ $pe->recipient?->first_name ? str($pe->recipient?->first_name)->limit(24) : str($pe->client?->contacts()?->orderBy('order_column')->first()?->name)->limit(24) }}</td>
                     <td>{{ $pe->recipient?->category?->name }}</td>
                     {{-- <td>{{ $pe->vip_category }}</td> --}}
                     <td>{{ $pe->vip_invitation_number }}</td>
