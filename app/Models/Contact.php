@@ -31,7 +31,7 @@ class Contact extends Model
      *
      * @var array
      */
-    protected $with = ['provisionElements'];
+    // protected $with = ['provisionElements'];
 
     /**
      * Get the user's first name.

@@ -42,14 +42,14 @@ class ProvisionElement extends Model implements HasMedia, Sortable
      *
      * @var array
      */
-    protected $with = ['provision', 'edition'];
+    protected $with = ['provision', 'edition', 'recipient'];
 
     /**
      * The accessors to append to the model's array form.
      *
      * @var array
      */
-    //protected $appends = ['vip_name', 'recipient_vip_contact_email'];
+    protected $appends = ['vip_name', 'recipient_vip_contact_email'];
 
     /**
      * Get the attributes that should be cast.
@@ -87,6 +87,7 @@ class ProvisionElement extends Model implements HasMedia, Sortable
      */
     public function recipientContactEmail(): Attribute
     {
+        $value = null;
         if ($this->recipient instanceof Client) {
             $value = $this->recipient?->contactEmail;
         } elseif ($this->recipient instanceof Contact) {
@@ -103,6 +104,7 @@ class ProvisionElement extends Model implements HasMedia, Sortable
      */
     public function recipientVipContactEmail(): Attribute
     {
+        $value = null;
         if ($this->recipient instanceof Client) {
             $value = $this->recipient?->vipContactEmail;
         } elseif ($this->recipient instanceof Contact) {
