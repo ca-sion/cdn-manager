@@ -92,19 +92,23 @@
                     <td>Nom/Société</td>
                     <td>Prénom</td>
                     <td>Type</td>
-                    <td>Nombre invit.</td>
-                    <td>Inscrit</td>
-                    <td>Guests</td>
+                    <td> </td>
+                    <td>Nb. inv.</td>
+                    <td>Insc.</td>
+                    <td>Noms</td>
                     <td>Note</td>
-                    <td>Nombre inscrits</td>
+                    <td>Nb.</td>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($provisions as $pe)
                 <tr style="vertical-align: start;">
                     <td>{{ $pe->vip_name }}</td>
-                    <td>{{ str($pe->recipient?->first_name)->limit(24) }}</td>
-                    <td style="max-width: 100px;">
+                    <td>{{ str($pe->recipient?->first_name)->limit(24) ?? str($pe->recipient?->name)->limit(24) }}</td>
+                    <td>
+                        {{ $pe->recipient?->category?->name }}
+                    </td>
+                    <td>
                         {{ $pe->vip_category }}
                     </td>
                     <td>{{ $pe->vip_invitation_number }}</td>

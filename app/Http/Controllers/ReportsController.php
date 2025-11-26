@@ -327,7 +327,7 @@ class ReportsController extends Controller
             ->get();
 
         $provisions = $provisions->sortBy([
-            ['vip_category', 'asc'],
+            ['recipient.category.name', 'asc'],
             ['recipient.name', 'asc'],
         ]);
 
