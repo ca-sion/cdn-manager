@@ -328,7 +328,7 @@ class ReportsController extends Controller
 
         $provisions = $provisions->sortBy([
             ['recipient.category.name', 'asc'],
-            ['recipient.name', 'asc'],
+            ['vip_name', 'asc'],
         ]);
 
         if (request()->input('export')) {
