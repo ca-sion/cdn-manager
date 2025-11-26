@@ -45,6 +45,13 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     protected $with = ['provision', 'edition'];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['vip_name', 'recipient_vip_contact_email'];
+
+    /**
      * Get the attributes that should be cast.
      */
     protected function casts(): array
@@ -104,6 +111,16 @@ class ProvisionElement extends Model implements HasMedia, Sortable
 
         return Attribute::make(
             get: fn () => $value,
+        );
+    }
+
+    /**
+     * Get the client vip contact name.
+     */
+    protected function vipName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->recipient?->last_name ?? $this->recipient?->name ?? $this->recipient?->long_name,
         );
     }
 

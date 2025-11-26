@@ -311,13 +311,69 @@ class ReportsController extends Controller
         return $pdf;
     }
 
+    public function vip()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $vipProvisionId = setting('vip_provision');
+
+        abort_if(! $vipProvisionId, '401');
+
+        $provisions = ProvisionElement::with(['recipient', 'recipient.category'])
+            ->where('edition_id', $edition->id)
+            ->where('provision_id', $vipProvisionId)
+            ->get();
+
+        $provisions = $provisions->sortBy([
+            ['vip_category', 'asc'],
+            ['recipient.name', 'asc'],
+        ]);
+
+        if (request()->input('export')) {
+            $provisions = $provisions->sortBy([
+                ['vip_name', 'asc'],
+            ])->loadMissing('recipient');
+            $exportCollection = $provisions->map(function ($pe) {
+                return [
+                    'name'                      => $pe->vip_name,
+                    'first_name'                => $pe->recipient?->first_name,
+                    'role'                      => $pe->recipient?->role,
+                    'company'                   => $pe->recipient?->company,
+                    'email'                     => $pe->recipient?->vipContactEmail ?? $pe->recipient?->email,
+                    'address'                   => $pe->recipient?->address,
+                    'postal_code'               => $pe->recipient?->postal_code,
+                    'locality'                  => $pe->recipient?->locality,
+                    'vip_category'              => $pe->vip_category,
+                    'vip_invitation_number'     => $pe->vip_invitation_number,
+                    'vip_response_status'       => $pe->vip_response_status,
+                    'vip_guests'                => collect($pe->vip_guests)->implode(', '),
+                    'note'                      => $pe->note,
+                    'vip_response_status_count' => $pe->vip_response_status == true ? collect($pe->vip_guests)->count() + 1 : null,
+                ];
+            });
+
+            return (new FastExcel($exportCollection))->download($edition?->year.'-vip.xlsx');
+        }
+
+        $view = View::make('pdf.vip', ['provisions' => $provisions, 'edition' => $edition]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'portrait')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-vip.pdf');
+
+        return $pdf;
+    }
+
     /**
      * Aplatit les attributs de relations spécifiées sur chaque élément d'une collection.
      * Gère les relations BelongsTo/HasOne et agrège les relations HasMany.
      *
-     * @param \Illuminate\Support\Collection $collection La collection Eloquent à transformer.
-     * @param array $relations Les relations à aplatir (ex: ['provision', 'items']).
-     * @return \Illuminate\Support\Collection
+     * @param  \Illuminate\Support\Collection  $collection  La collection Eloquent à transformer.
+     * @param  array  $relations  Les relations à aplatir (ex: ['provision', 'items']).
      */
     protected function flattenRelations(Collection $collection, array $relations): Collection
     {
@@ -341,21 +397,21 @@ class ReportsController extends Controller
                 if ($currentObject) {
                     // 2. Vérification CLÉ : Ignorer si c'est une collection (HasMany)
                     if ($currentObject instanceof Collection) {
-                        // Ignorer les collections (relations HasMany). 
+                        // Ignorer les collections (relations HasMany).
                         // Pour FastExcel, une ligne = un enregistrement, pas une liste d'enregistrements.
-                        continue; 
+                        continue;
                     }
-                    
+
                     // 3. Traitement des relations One-to-One (Modèle unique)
-                    $prefix = str_replace('.', '_', $relationName); 
+                    $prefix = str_replace('.', '_', $relationName);
                     $relationData = $currentObject->toArray();
-                    
+
                     foreach ($relationData as $key => $value) {
                         // Ajout des attributs préfixés
-                        $data[$prefix . '_' . $key] = $value;
+                        $data[$prefix.'_'.$key] = $value;
                     }
                 }
-                
+
                 // Suppression de l'objet de relation complet du tableau final
                 if (count($segments) === 1) {
                     unset($data[$relationName]);
