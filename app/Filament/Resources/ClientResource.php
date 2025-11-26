@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Edition;
 use Livewire\Component;
 use Filament\Forms\Form;
+use App\Models\Provision;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
 use App\Models\ClientCategory;
@@ -286,6 +287,36 @@ class ClientResource extends Resource
 
                         return $query->whereHas('currentEngagement', function (Builder $query) use ($data) {
                             $query->where('status', $data['value']);
+                        });
+                    }),
+                SelectFilter::make('provision_in')
+                    ->label('Prestations')
+                    ->multiple()
+                    ->options(Provision::all()->pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data): Builder {
+                        $values = $data['values'];
+                        if (empty($values)) {
+                            return $query;
+                        }
+
+                        return $query->whereRelation('provisionElements', function (Builder $query) use ($values) {
+                            $query->whereIn('provision_id', $values)
+                                ->where('edition_id', session('edition_id'));
+                        });
+                    }),
+                SelectFilter::make('provision_not_in')
+                    ->label('N\'a pas les prestations')
+                    ->multiple()
+                    ->options(Provision::all()->pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data): Builder {
+                        $values = $data['values'];
+                        if (empty($values)) {
+                            return $query;
+                        }
+
+                        return $query->whereDoesntHave('provisionElements', function (Builder $query) use ($values) {
+                            $query->whereIn('provision_id', $values)
+                                ->where('edition_id', session('edition_id'));
                         });
                     }),
             ])
