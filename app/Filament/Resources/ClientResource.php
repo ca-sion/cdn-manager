@@ -424,29 +424,6 @@ class ClientResource extends Resource
                                 ->success()
                                 ->send();
                         }),
-                    BulkAction::make('relaunch_interclass_donors_email')
-                        ->label('Relancer les donateurs interclasses')
-                        ->icon('heroicon-o-envelope')
-                        ->color('warning')
-                        ->action(function (Collection $records) {
-                            foreach ($records as $client) {
-                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
-                                $client->notify(new ClientInterclassDonorRequestRelaunch($client, $previousOrderDetails));
-
-                                // ClientEngagement
-                                $engagement = $client->currentEngagement()->firstOrCreate([
-                                    'edition_id' => AppHelper::getCurrentEditionId(),
-                                ]);
-                                $engagement->stage = EngagementStageEnum::ProposalSent;
-                                $engagement->status = EngagementStatusEnum::Relaunched;
-                                $engagement->sent_at = now();
-                                $engagement->save();
-                            }
-                            Notification::make()
-                                ->title('Emails donateurs interclasses envoyés')
-                                ->success()
-                                ->send();
-                        }),
                     BulkAction::make('ClientAdvertiserMediaMissing')
                         ->label('Envoyer demande pour média manquant (avec contrôle)')
                         ->icon('heroicon-o-envelope')
