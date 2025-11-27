@@ -15,6 +15,10 @@
                         ])" class="underline">Prestations : comparaisons année</x-filament::link></li>
     </ul>
     <p class="text-sm mt-2">Ajouter <code class="text-xs">?export=1</code> à l'URL pour exporter en Excel.</p>
+
+    <ul class="mt-2">
+        <li><x-filament::link :href="\App\Filament\Pages\ProFormaInvoice::getUrl()" class="underline">Générer un justificatif</x-filament::link></li>
+    </ul>
 </div>
 
 </x-filament-panels::page>

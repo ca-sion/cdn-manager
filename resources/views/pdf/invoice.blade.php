@@ -175,10 +175,12 @@
             @endif
         </div>
 
+        @if (! $invoice->content)
         <div style="font-size: x-small;">
             <p>Nous vous remercions chaleureusement pour votre généreux soutien, et vous prions d’agréer nos salutations les meilleures.</p>
             <p>Le Comité de la Course de Noël</p>
         </div>
+        @endif
 
         <table width="100%" class="products-table break-avoid">
             <thead>
@@ -266,7 +268,9 @@
         @endif
 
         @if ($invoice->footer)
+        <div style="font-size: x-small;">
             <p>{{ $invoice->footer }}</p>
+        </div>
         @endif
 
     </div>
