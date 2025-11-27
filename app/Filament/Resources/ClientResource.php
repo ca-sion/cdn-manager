@@ -462,7 +462,7 @@ class ClientResource extends Resource
                             foreach ($clients as $client) {
                                 $vipProvisionElement = $client->currentProvisionElements()->where('provision_id', setting('vip_provision'))->first();
                                 if ($vipProvisionElement?->provision_id == (int) setting('vip_provision')) {
-                                    if ($client->email != null) {
+                                    if ($client->vipContactEmail != null) {
                                         $client->notify(new RecipientSendVipInvitation($vipProvisionElement));
                                         $vipProvisionElement->status = ProvisionElementStatusEnum::Sent;
                                         $vipProvisionElement->save();
