@@ -122,7 +122,7 @@
                         <td>{{ str($pe->recipient->name)->limit(24) }}</td>
                         <td><small>{{ $pe->recipient?->address }}</small></td>
                         <td><small>{{ $pe->recipient?->locality }}</small></td>
-                        <td>{{ str($pe->name)->replace('Banderole ', '')->replace('(', '')->replace(')', '')->ucfirst() }}</td>
+                        <td>{{ $pe->description }}</td>
                         <td>{{ $pe->numeric_indicator }}</td>
                         <td>{{ $pe->precision }}</td>
                         <td>
