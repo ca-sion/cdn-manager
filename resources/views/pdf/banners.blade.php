@@ -132,11 +132,17 @@
                             @if ($pe->contact_time)
                                 {{ $pe->contact_time }}
                             @endif
+                            @if (($pe->contact_time || $pe->contact_date) && $pe->contact_location)
+                                ·
+                            @endif
                             @if ($pe->contact_location)
-                                · {{ $pe->contact_location }}
+                                {{ $pe->contact_location }}
+                            @endif
+                            @if (($pe->contact_time || $pe->contact_date || $pe->contact_location) && $pe->contact_text)
+                                ·
                             @endif
                             @if ($pe->contact_text)
-                                · {{ $pe->contact_text }}
+                                {{ $pe->contact_text }}
                             @endif
                         </td>
                         <td>{{ $pe->responsible }}</td>
