@@ -368,6 +368,51 @@ class ReportsController extends Controller
         return $pdf;
     }
 
+    public function banners()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $bannerProvisionIds = setting('reports_banners_provisions');
+
+        abort_if(! $bannerProvisionIds, '401');
+
+        $provisions = ProvisionElement::with(['recipient', 'recipient.category'])
+            ->where('edition_id', $edition->id)
+            ->whereIn('provision_id', $bannerProvisionIds)
+            ->get();
+
+        $provisions->each(function ($provision) {
+            $provisionOrder = $provision->status?->getLabel();
+            $provision->order = $provisionOrder;
+        });
+
+        $provisions = $provisions->sortBy([
+            ['order', 'asc'],
+            ['recipient.name', 'asc'],
+        ]);
+
+        if (request()->input('export')) {
+            $exportCollection = $this->flattenRelations($provisions, [
+                'provision',
+                'recipient.category',
+            ]);
+
+            return (new FastExcel($exportCollection))->download($edition?->year.'-banners-provisions.xlsx');
+        }
+
+        $view = View::make('pdf.banners', ['provisions' => $provisions, 'edition' => $edition]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-vip.pdf');
+
+        return $pdf;
+    }
+
     /**
      * Aplatit les attributs de relations spécifiées sur chaque élément d'une collection.
      * Gère les relations BelongsTo/HasOne et agrège les relations HasMany.
