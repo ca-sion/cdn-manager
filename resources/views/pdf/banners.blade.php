@@ -122,7 +122,7 @@
                         <td>{{ str($pe->recipient->name)->limit(24) }}</td>
                         <td><small>{{ $pe->recipient?->address }}</small></td>
                         <td><small>{{ $pe->recipient?->locality }}</small></td>
-                        <td>{{ $pe->provision->description }}</td>
+                        <td>{{ str($pe->provision->description)->limit(24, '.') }}</td>
                         <td>{{ $pe->numeric_indicator }}</td>
                         <td>{{ $pe->precision }}</td>
                         <td>

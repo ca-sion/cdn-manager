@@ -378,7 +378,7 @@ class ReportsController extends Controller
 
         abort_if(! $bannerProvisionIds, '401');
 
-        $provisions = ProvisionElement::with(['recipient', 'recipient.category'])
+        $provisions = ProvisionElement::with(['recipient', 'recipient.category', 'provision'])
             ->where('edition_id', $edition->id)
             ->whereIn('provision_id', $bannerProvisionIds)
             ->get();
