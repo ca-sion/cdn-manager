@@ -105,6 +105,7 @@
                     <td>Catégorie</td>
                     <td>Société</td>
                     <td>Adresse</td>
+                    <td>Localité</td>
                     <td>Type</td>
                     <td>Nb.</td>
                     <td>Précision</td>
@@ -118,9 +119,10 @@
                     <tr style="vertical-align: start;">
                         <td>{{ $pe->status?->getLabel() }}</td>
                         <td>{{ $pe->recipient?->category?->name }}</td>
-                        <td>{{ $pe->recipient->name }}</td>
-                        <td>{{ $pe->recipient?->address }} {{ $pe->recipient?->locality }}</td>
-                        <td>{{ str($pe->name)->limit(24) }}</td>
+                        <td>{{ str($pe->recipient->name)->limit(24) }}</td>
+                        <td>{{ $pe->recipient?->address }}</td>
+                        <td>{{ $pe->recipient?->locality }}</td>
+                        <td>{{ str($pe->name)->replace('Banderole ', '')->replace('(', '')->replace(')', '')->ucfirst() }}</td>
                         <td>{{ $pe->numeric_indicator }}</td>
                         <td>{{ $pe->precision }}</td>
                         <td>

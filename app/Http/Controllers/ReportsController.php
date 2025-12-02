@@ -390,6 +390,7 @@ class ReportsController extends Controller
 
         $provisions = $provisions->sortBy([
             ['order', 'asc'],
+            ['recipient.locality', 'asc'],
             ['recipient.name', 'asc'],
         ]);
 
@@ -408,7 +409,7 @@ class ReportsController extends Controller
         $pdf = Pdf::loadHTML($html)
             ->setPaper('A4', 'landscape')
             ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
-            ->stream(str($edition->year)->slug().'-vip.pdf');
+            ->stream(str($edition->year)->slug().'-banners.pdf');
 
         return $pdf;
     }
