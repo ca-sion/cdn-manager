@@ -118,18 +118,26 @@
                 @foreach ($provisions as $pe)
                     <tr style="vertical-align: start;">
                         <td>{{ $pe->status?->getLabel() }}</td>
-                        <td>{{ $pe->recipient?->category?->name }}</td>
+                        <td>{{ str($pe->recipient?->category?->name)->limit(4, '.') }}</td>
                         <td>{{ str($pe->recipient->name)->limit(24) }}</td>
-                        <td>{{ $pe->recipient?->address }}</td>
-                        <td>{{ $pe->recipient?->locality }}</td>
+                        <td><small>{{ $pe->recipient?->address }}</small></td>
+                        <td><small>{{ $pe->recipient?->locality }}</small></td>
                         <td>{{ str($pe->name)->replace('Banderole ', '')->replace('(', '')->replace(')', '')->ucfirst() }}</td>
                         <td>{{ $pe->numeric_indicator }}</td>
                         <td>{{ $pe->precision }}</td>
                         <td>
-                            {{ $pe->contact_text }}
-                            {{ $pe->contact_location }}
-                            {{ $pe->contact_date }}
-                            {{ $pe->contact_time }}
+                            @if ($pe->contact_date)
+                                {{ $pe->contact_date?->locale('fr_CH')->isoFormat('L') }}
+                            @endif
+                            @if ($pe->contact_time)
+                                {{ $pe->contact_time }}
+                            @endif
+                            @if ($pe->contact_location)
+                                · {{ $pe->contact_location }}
+                            @endif
+                            @if ($pe->contact_text)
+                                · {{ $pe->contact_text }}
+                            @endif
                         </td>
                         <td>{{ $pe->responsible }}</td>
                         <td>{{ str($pe->note)->limit(24) }}</td>
