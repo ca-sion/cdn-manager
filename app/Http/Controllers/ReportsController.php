@@ -414,6 +414,52 @@ class ReportsController extends Controller
         return $pdf;
     }
 
+    public function screens()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $bannerProvisionIds = setting('reports_screens_provisions');
+
+        abort_if(! $bannerProvisionIds, '401');
+
+        $provisions = ProvisionElement::with(['recipient', 'recipient.category', 'provision'])
+            ->where('edition_id', $edition->id)
+            ->whereIn('provision_id', $bannerProvisionIds)
+            ->get();
+
+        $provisions->each(function ($provision) {
+            $provisionOrder = $provision->status?->getLabel();
+            $provision->order = $provisionOrder;
+        });
+
+        $provisions = $provisions->sortBy([
+            ['order', 'asc'],
+            ['provision.name', 'asc'],
+            ['recipient.name', 'asc'],
+        ]);
+
+        if (request()->input('export')) {
+            $exportCollection = $this->flattenRelations($provisions, [
+                'provision',
+                'recipient.category',
+            ]);
+
+            return (new FastExcel($exportCollection))->download($edition?->year.'-screens-provisions.xlsx');
+        }
+
+        $view = View::make('pdf.screens', ['provisions' => $provisions, 'edition' => $edition]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-screens.pdf');
+
+        return $pdf;
+    }
+
     /**
      * Aplatit les attributs de relations spécifiées sur chaque élément d'une collection.
      * Gère les relations BelongsTo/HasOne et agrège les relations HasMany.

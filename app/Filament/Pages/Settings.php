@@ -66,6 +66,10 @@ class Settings extends BaseSettings
                         ->label('Prestations pour les banderoles')
                         ->options(Provision::all()->pluck('name', 'id'))
                         ->multiple(),
+                    Select::make('reports_screens_provisions')
+                        ->label('Prestations pour les écrans')
+                        ->options(Provision::all()->pluck('name', 'id'))
+                        ->multiple(),
                     Select::make('reports_advertisers_journal_provisions')
                         ->label('Prestations pour le journal')
                         ->options(Provision::all()->pluck('name', 'id'))

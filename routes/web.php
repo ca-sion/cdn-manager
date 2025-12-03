@@ -53,4 +53,5 @@ Route::prefix('reports')->middleware([SiteProtection::class])->group(function ()
     Route::get('provisions-comparison', [ReportsController::class, 'provisionsComparison'])->name('reports.provisions-comparison');
     Route::get('vip', [ReportsController::class, 'vip'])->name('reports.vip');
     Route::get('banners', [ReportsController::class, 'banners'])->name('reports.banners');
+    Route::get('screens', [ReportsController::class, 'screens'])->name('reports.screens');
 });

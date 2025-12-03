@@ -6,6 +6,7 @@
         <li><x-filament::link :href="route('reports.donors')" class="underline">Donateurs</x-filament::link></li>
         <li><x-filament::link :href="route('reports.vip')" class="underline">VIP</x-filament::link></li>
         <li><x-filament::link :href="route('reports.banners')" class="underline">Banderoles</x-filament::link></li>
+        <li><x-filament::link :href="route('reports.screens')" class="underline">Écrans</x-filament::link></li>
         <li><x-filament::link :href="route('reports.interclass-donors')" class="underline">Donateurs interclasses</x-filament::link></li>
         <li><x-filament::link :href="route('reports.client-provisions')" class="underline">Prestations</x-filament::link></li>
         <li><x-filament::link :href="route('reports.journal-provisions')" class="underline">Prestations pour le  journal</x-filament::link></li>
