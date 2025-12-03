@@ -31,18 +31,22 @@ class InvoiceController extends Controller
         }
 
         // qr
-        $displayOptions = new DisplayOptions;
-        $displayOptions
-            ->setPrintable(false)
-            ->setDisplayTextDownArrows(false)
-            ->setDisplayScissors(false)
-            ->setPositionScissorsAtBottom(false);
-        $qrBill = $this->generateQrBill($invoice->client, $invoice);
-        $qrBillHtmlOutput = new HtmlOutput($qrBill, 'fr');
-        $qrBillOutput = $qrBillHtmlOutput
-            ->setDisplayOptions($displayOptions)
-            ->setQrCodeImageFormat(QrCode::FILE_FORMAT_PNG)
-            ->getPaymentPart();
+        if ($invoice->is_pro_forma) {
+            $qrBillOutput = null;
+        } else {
+            $displayOptions = new DisplayOptions;
+            $displayOptions
+                ->setPrintable(false)
+                ->setDisplayTextDownArrows(false)
+                ->setDisplayScissors(false)
+                ->setPositionScissorsAtBottom(false);
+            $qrBill = $this->generateQrBill($invoice->client, $invoice);
+            $qrBillHtmlOutput = new HtmlOutput($qrBill, 'fr');
+            $qrBillOutput = $qrBillHtmlOutput
+                ->setDisplayOptions($displayOptions)
+                ->setQrCodeImageFormat(QrCode::FILE_FORMAT_PNG)
+                ->getPaymentPart();
+        }
 
         // pdf
         $view = View::make('pdf.invoice', ['invoice' => $invoice, 'qrBillOutput' => $qrBillOutput]);
