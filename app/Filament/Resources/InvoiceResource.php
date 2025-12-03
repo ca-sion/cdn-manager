@@ -276,6 +276,7 @@ class InvoiceResource extends Resource
                         ->requiresConfirmation(),
                 ]),
                 Tables\Actions\Action::make('pdf')
+                    ->label('PDF')
                     ->url(fn (Invoice $record): string => $record->link)
                     ->openUrlInNewTab()
                     ->icon('heroicon-o-document'),
