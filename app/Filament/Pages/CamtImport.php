@@ -73,50 +73,54 @@ class CamtImport extends Page implements HasForms
                 foreach ($notification->getEntries() as $entry) {
                     if ($entry->getCreditDebitIndicator() == 'CRDT') {
 
-                        $transaction = $entry->getTransactionDetail();
-                        $qrReference = $transaction?->getRemittanceInformation()?->getCreditorReferenceInformation()?->getRef();
-                        $bookingDate = Carbon::parse($entry->getBookingDate());
-                        $transactionReference = $transaction?->getReference()?->getAccountServicerReference();
-                        $transactionAmount = $transaction?->getAmount()?->getAmount() / 100;
-                        $debtor = $transaction?->getRelatedParty()?->getRelatedPartyType()?->getName();
+                        foreach ($entry->getTransactionDetails() as $transaction) {
 
-                        if ($qrReference) {
-                            $invoice = Invoice::where('qr_reference', $qrReference)->first();
+                            $qrReference = $transaction->getRemittanceInformation()?->getCreditorReferenceInformation()?->getRef();
+                            $bookingDate = Carbon::parse($entry->getBookingDate());
+                            $transactionReference = $transaction->getReference()?->getAccountServicerReference();
+                            $transactionAmount = $transaction->getAmount()?->getAmount() / 100;
+                            $debtor = $transaction->getRelatedParty()?->getRelatedPartyType()?->getName();
 
-                            if ($invoice) {
-                                if ($invoice->total != $transactionAmount) {
-                                    $invoiceStatus = InvoiceStatusEnum::ActionRequired->value;
+                            $invoice = null;
 
-                                    Notification::make()
-                                        ->title('Montant inexact')
-                                        ->body("Montant payé de la facture #{$invoice->number} inexact.")
-                                        ->warning()
-                                        ->persistent()
-                                        ->send();
+                            if ($qrReference) {
+                                $invoice = Invoice::where('qr_reference', $qrReference)->first();
+
+                                if ($invoice) {
+                                    if ($invoice->total != $transactionAmount) {
+                                        $invoiceStatus = InvoiceStatusEnum::ActionRequired->value;
+
+                                        Notification::make()
+                                            ->title('Montant inexact')
+                                            ->body("Montant payé de la facture #{$invoice->number} inexact (Attendu: {$invoice->total}, Reçu: {$transactionAmount}).")
+                                            ->warning()
+                                            ->persistent()
+                                            ->send();
+                                    } else {
+                                        $invoiceStatus = InvoiceStatusEnum::Paid->value;
+                                    }
+
+                                    $invoice->status = $invoiceStatus;
+                                    $invoice->paid_on = $bookingDate;
+                                    $invoice->reference = empty($invoice->reference) ? $transactionReference : $invoice->reference;
+                                    $invoice->save();
+
+                                    $reconciledCount++;
                                 } else {
-                                    $invoiceStatus = InvoiceStatusEnum::Paid->value;
+                                    $notFoundCount++;
                                 }
-
-                                $invoice->status = $invoiceStatus;
-                                $invoice->paid_on = $bookingDate;
-                                $invoice->reference = empty($invoice->reference) ? $transactionReference : $invoice->reference;
-                                $invoice->save();
-
-                                $reconciledCount++;
-                            } else {
-                                $notFoundCount++;
                             }
-                        }
 
-                        // For table
-                        $this->transactions->add((object) [
-                            'debtor'       => $debtor,
-                            'qr_reference' => $qrReference,
-                            'invoice'      => $invoice ?? null,
-                            'date'         => $bookingDate,
-                            'amount'       => $transactionAmount,
-                            'reference'    => $transactionReference,
-                        ]);
+                            // For table
+                            $this->transactions->add((object) [
+                                'debtor'       => $debtor,
+                                'qr_reference' => $qrReference,
+                                'invoice'      => $invoice ?? null,
+                                'date'         => $bookingDate,
+                                'amount'       => $transactionAmount,
+                                'reference'    => $transactionReference,
+                            ]);
+                        }
                     }
                 }
             }
