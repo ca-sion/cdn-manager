@@ -88,7 +88,7 @@ elite
 - **Quatre interfaces distinctes** basées sur le type d'inscription (URL dynamique).
 - **Accès sécurisé via liens signés** : Pas de compte utilisateur, envoi d'un email avec un lien permanent d'édition à la création.
 - **Grille de saisie "Excel-like"** :
-    - Saisie directe dans le tableau (Livewire + bibliothèque JS style Handsontable/Grid.js).
+    - Saisie directe dans le tableau (Livewire + bibliothèque JS avec Handsontable).
     - Navigation par flèches clavier.
     - Support du copier-coller.
     - Menus déroulants (Select) intégrés pour le choix des courses/blocs.
@@ -96,6 +96,7 @@ elite
 - **Indicateurs en temps réel** : Taux de remplissage des courses, gestion des codes vouchers (utilisés vs disponibles).
 
 ### Interface Administrateur (Filament)
+- **Gestion des courses** : Ajouter et éditer les courses.
 - **Gestion des inscriptions** : Tri par localité/nombre d'éléments, filtres par type.
 - **Association Client** : Possibilité de lier à un `client_id` existant ou d'en créer un à la volée.
 - **Facturation** : Boutons d'action (individuel et bulk) pour générer automatiquement les factures dans le système existant.

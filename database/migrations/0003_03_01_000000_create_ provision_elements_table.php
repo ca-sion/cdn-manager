@@ -52,7 +52,7 @@ return new class extends Migration
             $table->json('vip_guests')->nullable();
 
             $table->integer('order_column')->nullable();
-            $table->string('note', 40000)->nullable();
+            $table->text('note')->nullable();
             $table->json('content')->nullable();
             $table->json('meta')->nullable();
             $table->softDeletes();
