@@ -21,7 +21,7 @@ Ce plan détaille les étapes de création du système d'inscription, de la stru
 - [~] Task: Intégration de la Facturation Automatique
     - [ ] Write Tests: Tester la liaison entre une `RunRegistration` et la génération d'une `Invoice`.
     - [ ] Implement: Créer la logique de transformation d'une inscription en facture (liée au module existant).
-- [ ] Task: Système de Notifications (Emails et Liens Signés)
+- [~] Task: Système de Notifications (Emails et Liens Signés)
     - [ ] Write Tests: Tester la génération des URLs signées et l'envoi des emails de confirmation.
     - [ ] Implement: Créer les notifications pour l'envoi du lien d'édition permanent.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2 : Logique Métier et Services' (Protocol in workflow.md)
