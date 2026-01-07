@@ -3,9 +3,9 @@
 Ce plan détaille les étapes de création du système d'inscription, de la structure de données aux interfaces utilisateur avancées.
 
 ## Phase 1 : Fondations et Structure de Données
-- [ ] Task: Migration et Modèle pour les Courses (Runs)
-    - [ ] Write Tests: Créer les tests unitaires pour le modèle `Run`.
-    - [ ] Implement: Créer la migration, le modèle et la factory pour `Run`.
+- [x] Task: Migration et Modèle pour les Courses (Runs) [2aa1375]
+    - [x] Write Tests: Créer les tests unitaires pour le modèle `Run`.
+    - [x] Implement: Créer la migration, le modèle et la factory pour `Run`.
 - [ ] Task: Migration et Modèle pour les Inscriptions (RunRegistrations)
     - [ ] Write Tests: Créer les tests unitaires pour le modèle `RunRegistration` (incluant SoftDeletes).
     - [ ] Implement: Créer la migration, le modèle et la factory pour `RunRegistration`.
