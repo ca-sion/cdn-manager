@@ -9,8 +9,8 @@ Ce plan détaille les étapes de création du système d'inscription, de la stru
 - [x] Task: Migration et Modèle pour les Inscriptions (RunRegistrations)
     - [x] Write Tests: Créer les tests unitaires pour le modèle `RunRegistration` (incluant SoftDeletes).
     - [x] Implement: Créer la migration, le modèle et la factory pour `RunRegistration`.
-- [ ] Task: Migration et Modèle pour les Éléments d'Inscription (RunRegistrationElements)
-    - [ ] Write Tests: Créer les tests unitaires pour le modèle `RunRegistrationElement` (incluant la suppression en cascade).
+- [~] Task: Migration et Modèle pour les Éléments d'Inscription (RunRegistrationElements)
+    - [~] Write Tests: Créer les tests unitaires pour le modèle `RunRegistrationElement` (incluant la suppression en cascade).
     - [ ] Implement: Créer la migration, le modèle et la factory pour `RunRegistrationElement`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1 : Fondations et Structure de Données' (Protocol in workflow.md)
 
