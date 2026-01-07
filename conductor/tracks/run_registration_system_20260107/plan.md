@@ -15,16 +15,16 @@ Ce plan détaille les étapes de création du système d'inscription, de la stru
 - [~] Task: Conductor - User Manual Verification 'Phase 1 : Fondations et Structure de Données' (Protocol in workflow.md)
 
 ## Phase 2 : Logique Métier et Services
-- [~] Task: Service de Gestion des Inscriptions (RunRegistrationService)
-    - [~] Write Tests: Définir les tests pour la création, l'édition et la validation des inscriptions.
-    - [ ] Implement: Créer le service gérant la logique métier (calcul des totaux, vérification des délais, gestion des vouchers).
-- [~] Task: Intégration de la Facturation Automatique
-    - [ ] Write Tests: Tester la liaison entre une `RunRegistration` et la génération d'une `Invoice`.
-    - [ ] Implement: Créer la logique de transformation d'une inscription en facture (liée au module existant).
-- [~] Task: Système de Notifications (Emails et Liens Signés)
-    - [ ] Write Tests: Tester la génération des URLs signées et l'envoi des emails de confirmation.
-    - [ ] Implement: Créer les notifications pour l'envoi du lien d'édition permanent.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2 : Logique Métier et Services' (Protocol in workflow.md)
+- [x] Task: Service de Gestion des Inscriptions (RunRegistrationService) [362110b]
+    - [x] Write Tests: Définir les tests pour la création, l'édition et la validation des inscriptions.
+    - [x] Implement: Créer le service gérant la logique métier (calcul des totaux, vérification des délais, gestion des vouchers).
+- [x] Task: Intégration de la Facturation Automatique [0a88eaf]
+    - [x] Write Tests: Tester la liaison entre une `RunRegistration` et la génération d'une `Invoice`.
+    - [x] Implement: Créer la logique de transformation d'une inscription en facture (liée au module existant).
+- [x] Task: Système de Notifications (Emails et Liens Signés) [7ef87ad]
+    - [x] Write Tests: Tester la génération des URLs signées et l'envoi des emails de confirmation.
+    - [x] Implement: Créer les notifications pour l'envoi du lien d'édition permanent.
+- [~] Task: Conductor - User Manual Verification 'Phase 2 : Logique Métier et Services' (Protocol in workflow.md)
 
 ## Phase 3 : Interface Administrateur (Filament)
 - [ ] Task: Ressource Filament pour les Courses (Runs)
