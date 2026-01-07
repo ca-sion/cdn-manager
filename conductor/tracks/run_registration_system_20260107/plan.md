@@ -6,13 +6,13 @@ Ce plan détaille les étapes de création du système d'inscription, de la stru
 - [x] Task: Migration et Modèle pour les Courses (Runs) [2aa1375]
     - [x] Write Tests: Créer les tests unitaires pour le modèle `Run`.
     - [x] Implement: Créer la migration, le modèle et la factory pour `Run`.
-- [x] Task: Migration et Modèle pour les Inscriptions (RunRegistrations)
+- [x] Task: Migration et Modèle pour les Inscriptions (RunRegistrations) [5f9a1b3]
     - [x] Write Tests: Créer les tests unitaires pour le modèle `RunRegistration` (incluant SoftDeletes).
     - [x] Implement: Créer la migration, le modèle et la factory pour `RunRegistration`.
-- [~] Task: Migration et Modèle pour les Éléments d'Inscription (RunRegistrationElements)
-    - [~] Write Tests: Créer les tests unitaires pour le modèle `RunRegistrationElement` (incluant la suppression en cascade).
-    - [ ] Implement: Créer la migration, le modèle et la factory pour `RunRegistrationElement`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1 : Fondations et Structure de Données' (Protocol in workflow.md)
+- [x] Task: Migration et Modèle pour les Éléments d'Inscription (RunRegistrationElements) [379affd]
+    - [x] Write Tests: Créer les tests unitaires pour le modèle `RunRegistrationElement` (incluant la suppression en cascade).
+    - [x] Implement: Créer la migration, le modèle et la factory pour `RunRegistrationElement`.
+- [~] Task: Conductor - User Manual Verification 'Phase 1 : Fondations et Structure de Données' (Protocol in workflow.md)
 
 ## Phase 2 : Logique Métier et Services
 - [ ] Task: Service de Gestion des Inscriptions (RunRegistrationService)
