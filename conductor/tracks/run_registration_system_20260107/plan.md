@@ -18,7 +18,7 @@ Ce plan détaille les étapes de création du système d'inscription, de la stru
 - [~] Task: Service de Gestion des Inscriptions (RunRegistrationService)
     - [~] Write Tests: Définir les tests pour la création, l'édition et la validation des inscriptions.
     - [ ] Implement: Créer le service gérant la logique métier (calcul des totaux, vérification des délais, gestion des vouchers).
-- [ ] Task: Intégration de la Facturation Automatique
+- [~] Task: Intégration de la Facturation Automatique
     - [ ] Write Tests: Tester la liaison entre une `RunRegistration` et la génération d'une `Invoice`.
     - [ ] Implement: Créer la logique de transformation d'une inscription en facture (liée au module existant).
 - [ ] Task: Système de Notifications (Emails et Liens Signés)
