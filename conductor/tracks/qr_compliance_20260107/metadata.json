@@ -1,8 +1,0 @@
-{
-  "track_id": "qr_compliance_20260107",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2026-01-07T12:20:08Z",
-  "updated_at": "2026-01-07T12:20:08Z",
-  "description": "Verify and test Swiss QR-bill 2026 compliance implementation."
-}
