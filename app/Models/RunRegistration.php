@@ -47,4 +47,9 @@ class RunRegistration extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
+    public function runRegistrationElements()
+    {
+        return $this->hasMany(RunRegistrationElement::class);
+    }
 }
