@@ -6,10 +6,11 @@ use App\Enums\RunRegistrationTypesEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
 class RunRegistration extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Notifiable;
 
     protected $fillable = [
         'client_id',
@@ -51,5 +52,15 @@ class RunRegistration extends Model
     public function runRegistrationElements()
     {
         return $this->hasMany(RunRegistrationElement::class);
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     *
+     * @return string
+     */
+    public function routeNotificationForMail(): string
+    {
+        return $this->contact_email;
     }
 }
