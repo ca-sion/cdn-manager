@@ -27,12 +27,12 @@ Ce plan détaille les étapes de création du système d'inscription, de la stru
 - [~] Task: Conductor - User Manual Verification 'Phase 2 : Logique Métier et Services' (Protocol in workflow.md)
 
 ## Phase 3 : Interface Administrateur (Filament)
-- [ ] Task: Ressource Filament pour les Courses (Runs)
-    - [ ] Implement: Créer `RunResource` avec formulaires et tables.
-- [ ] Task: Ressource Filament pour les Inscriptions (RunRegistrations)
-    - [ ] Implement: Créer `RunRegistrationResource` avec filtres et tris personnalisés.
-- [ ] Task: Actions de Facturation et d'Export
-    - [ ] Implement: Ajouter les actions individuelles et groupées (BulkActions) pour la facturation et les exports Excel/CSV (Elite, Datasport).
+- [x] Task: Ressource Filament pour les Courses (Runs)
+    - [x] Implement: Créer `RunResource` avec formulaires et tables.
+- [x] Task: Ressource Filament pour les Inscriptions (RunRegistrations)
+    - [x] Implement: Créer `RunRegistrationResource` avec filtres et tris personnalisés.
+- [x] Task: Actions de Facturation et d'Export
+    - [x] Implement: Ajouter les actions individuelles et groupées (BulkActions) pour la facturation et les exports Excel/CSV (Elite, Datasport).
 - [ ] Task: Conductor - User Manual Verification 'Phase 3 : Interface Administrateur (Filament)' (Protocol in workflow.md)
 
 ## Phase 4 : Interface Client (Front-end Livewire)
