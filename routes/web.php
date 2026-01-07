@@ -15,9 +15,14 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\TrackingController;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
 
+use App\Livewire\FrontRunRegistration;
+
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('registrations/{type}', FrontRunRegistration::class)->name('front.run-registration.create');
+Route::get('registrations/{type}/{registration}', FrontRunRegistration::class)->middleware('signed')->name('front.run-registration.edit');
 
 Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('signed')->name('invoices.show');
 Route::get('/invoices/{invoice}/eml', [InvoiceController::class, 'eml'])->middleware('signed')->name('invoices.eml');
