@@ -119,10 +119,10 @@
             <td align="left" style="font-size: x-small;">
                 {{ $invoice->number }}<br>
                 @if ($invoice->date)
-                    {{ \Carbon\CArbon::parse($invoice->date)->locale('fr_CH')->isoFormat('L') }}<br>
+                    {{ $invoice->date->locale('fr_CH')->isoFormat('L') }}<br>
                 @endif
                 @if ($invoice->due_date)
-                    {{ \Carbon\CArbon::parse($invoice->due_date)->locale('fr_CH')->isoFormat('L') }}<br>
+                    {{ $invoice->due_date->locale('fr_CH')->isoFormat('L') }}<br>
                 @endif
                 {{ $invoice->reference ?? '-' }}<br>
                 Centre athlétique de Sion -<br>

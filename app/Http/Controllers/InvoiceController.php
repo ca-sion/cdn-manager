@@ -105,7 +105,7 @@ MAIL;
 
     public function emlRelaunch(Invoice $invoice)
     {
-        $date = Carbon::parse($invoice->date)->locale('fr_CH')->isoFormat('L');
+        $date = $invoice->date->locale('fr_CH')->isoFormat('L');
         $invoiceLink = quoted_printable_encode($invoice->link);
         $recipient = $invoice->client?->invoicingContactEmail;
         $nowDate = date('D, d M Y H:i:s O');

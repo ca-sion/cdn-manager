@@ -42,6 +42,9 @@ class Invoice extends Model
         return [
             'positions' => 'array',
             'status'    => InvoiceStatusEnum::class,
+            'date'      => 'date',
+            'due_date'  => 'date',
+            'paid_on'   => 'date',
         ];
     }
 

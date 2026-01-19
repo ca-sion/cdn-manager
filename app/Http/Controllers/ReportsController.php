@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\Contact;
 use App\Models\Edition;
 use Illuminate\Http\Request;
 use App\Models\ClientCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Enums\InvoiceStatusEnum;
 use App\Models\ProvisionElement;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
@@ -457,6 +459,105 @@ class ReportsController extends Controller
             ->setPaper('A4', 'landscape')
             ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
             ->stream(str($edition->year)->slug().'-screens.pdf');
+
+        return $pdf;
+    }
+
+    public function financialReport()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        // 1. Unpaid Invoices (Existing logic)
+        $unpaidStatuses = [
+            InvoiceStatusEnum::Sent,
+            InvoiceStatusEnum::Relaunched,
+            InvoiceStatusEnum::ActionRequired,
+            InvoiceStatusEnum::Overdue,
+            InvoiceStatusEnum::SentByPost,
+            InvoiceStatusEnum::ToModify,
+            InvoiceStatusEnum::ToRelaunch,
+        ];
+
+        $unpaidInvoices = Invoice::where('edition_id', $edition->id)
+            ->whereIn('status', $unpaidStatuses)
+            ->with(['client.category'])
+            ->get();
+
+        $groupedUnpaidInvoices = $unpaidInvoices->groupBy(function ($invoice) {
+            return $invoice->client->category->name ?? 'Sans catégorie';
+        })->sortKeys();
+
+        $unpaidTotal = $unpaidInvoices->sum(function ($invoice) {
+            return $invoice->total;
+        });
+
+        // 2. All Valid Invoices for Financial Reporting
+        // Exclude Draft and Cancelled
+        $validStatuses = collect(InvoiceStatusEnum::cases())
+            ->reject(fn ($status) => in_array($status, [InvoiceStatusEnum::Draft, InvoiceStatusEnum::Cancelled]))
+            ->pluck('value')
+            ->toArray();
+
+        $allInvoices = Invoice::where('edition_id', $edition->id)
+            ->whereIn('status', $validStatuses)
+            ->with(['client.category'])
+            ->get();
+
+        // 3. Invoiced by Client Category
+        $invoicedByCategory = $allInvoices->groupBy(function ($invoice) {
+            return $invoice->client->category->name ?? 'Sans catégorie';
+        })->map(function ($invoices) {
+            return $invoices->sum(fn ($i) => $i->total);
+        })->sortKeys();
+
+        $totalInvoiced = $allInvoices->sum(fn ($i) => $i->total);
+
+        // 4. Invoiced by Product (Provision Element)
+        // Parse 'items' from invoice positions
+        $invoicedByProduct = collect();
+
+        $allInvoices->each(function ($invoice) use (&$invoicedByProduct) {
+            foreach ($invoice->items as $item) {
+                // $item is an object with { name, cost, quantity, price: { amount ... } }
+                // Aggregate by name
+                $name = $item->name;
+                $amount = $item->price->amount ?? 0;
+                $quantity = $item->quantity ?? 0;
+
+                if (! $invoicedByProduct->has($name)) {
+                    $invoicedByProduct->put($name, [
+                        'name'     => $name,
+                        'quantity' => 0,
+                        'total'    => 0,
+                    ]);
+                }
+
+                $current = $invoicedByProduct->get($name);
+                $current['quantity'] += $quantity;
+                $current['total'] += $amount;
+                $invoicedByProduct->put($name, $current);
+            }
+        });
+
+        $invoicedByProduct = $invoicedByProduct->sortBy('name');
+
+        $view = View::make('pdf.financial-report', [
+            'groupedUnpaidInvoices' => $groupedUnpaidInvoices,
+            'unpaidTotal'           => $unpaidTotal,
+            'invoicedByCategory'    => $invoicedByCategory,
+            'totalInvoiced'         => $totalInvoiced,
+            'invoicedByProduct'     => $invoicedByProduct,
+            'edition'               => $edition,
+        ]);
+
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-rapport-financier.pdf');
 
         return $pdf;
     }
