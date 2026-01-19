@@ -2,6 +2,7 @@
     
 <div>
     <ul>
+        <li><x-filament::link :href="route('reports.financial')" class="underline">Rapport financier</x-filament::link></li>
         <li><x-filament::link :href="route('reports.advertisers')" class="underline">Annonceurs</x-filament::link></li>
         <li><x-filament::link :href="route('reports.donors')" class="underline">Donateurs</x-filament::link></li>
         <li><x-filament::link :href="route('reports.vip')" class="underline">VIP</x-filament::link></li>
