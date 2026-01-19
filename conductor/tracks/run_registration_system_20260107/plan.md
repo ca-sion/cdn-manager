@@ -36,14 +36,14 @@ Ce plan détaille les étapes de création du système d'inscription, de la stru
 - [ ] Task: Conductor - User Manual Verification 'Phase 3 : Interface Administrateur (Filament)' (Protocol in workflow.md)
 
 ## Phase 4 : Interface Client (Front-end Livewire)
-- [ ] Task: Composants Livewire de Base pour les Formulaires
-    - [ ] Write Tests: Tester le rendu des formulaires selon le type (Entreprise, École, etc.).
-    - [ ] Implement: Créer les composants Livewire pour les 4 types de formulaires publics.
-- [ ] Task: Sécurisation des Accès (Routes Signées)
-    - [ ] Implement: Configurer les routes et les middlewares pour l'accès aux formulaires via liens signés.
-- [ ] Task: Grille de Saisie Interactive (Style Excel)
-    - [ ] Implement: Intégrer une bibliothèque JS (ex: Handsontable ou Grid.js) dans le composant Livewire pour la saisie des coureurs.
-    - [ ] Implement: Gérer la synchronisation des données de la grille avec la base de données (ajout/suppression de lignes).
-- [ ] Task: Validation et Verrouillage (Délais)
-    - [ ] Implement: Mettre en place la logique de verrouillage du tableau une fois le délai passé.
+- [x] Task: Composants Livewire de Base pour les Formulaires
+    - [x] Write Tests: Tester le rendu des formulaires selon le type (Entreprise, École, etc.).
+    - [x] Implement: Créer les composants Livewire pour les 4 types de formulaires publics.
+- [x] Task: Sécurisation des Accès (Routes Signées)
+    - [x] Implement: Configurer les routes et les middlewares pour l'accès aux formulaires via liens signés.
+- [x] Task: Grille de Saisie Interactive (Style Excel)
+    - [x] Implement: Intégrer une bibliothèque JS (ex: Handsontable ou Grid.js) dans le composant Livewire pour la saisie des coureurs.
+    - [x] Implement: Gérer la synchronisation des données de la grille avec la base de données (ajout/suppression de lignes).
+- [x] Task: Validation et Verrouillage (Délais)
+    - [x] Implement: Mettre en place la logique de verrouillage du tableau une fois le délai passé.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4 : Interface Client (Front-end Livewire)' (Protocol in workflow.md)
