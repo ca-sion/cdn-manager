@@ -36,11 +36,7 @@ class ExportInvoicesPdfBulkAction extends BulkAction
                             $zip->addFromString($invoice->number.'.pdf', $pdf->output());
                             $successCount++;
                         } catch (InvalidQrBillDataException $e) {
-                            $violations = [];
-                            foreach ($e->getViolations() as $violation) {
-                                $violations[] = $violation->getMessage();
-                            }
-                            $errors[] = "Facture {$invoice->number}: " . implode(', ', $violations);
+                            $errors[] = "Facture {$invoice->number}: " . $e->getMessage();
                         } catch (\Exception $e) {
                             $errors[] = "Facture {$invoice->number}: " . $e->getMessage();
                         }
