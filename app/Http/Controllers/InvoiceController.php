@@ -8,15 +8,8 @@ use Illuminate\Support\Carbon;
 use Sprain\SwissQrBill\QrBill;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Enums\InvoiceStatusEnum;
+use App\Services\InvoiceService;
 use Illuminate\Support\Facades\View;
-use Sprain\SwissQrBill\QrCode\QrCode;
-use Sprain\SwissQrBill\PaymentPart\Output\DisplayOptions;
-use Sprain\SwissQrBill\DataGroup\Element\PaymentReference;
-use Sprain\SwissQrBill\DataGroup\Element\StructuredAddress;
-use Sprain\SwissQrBill\DataGroup\Element\CreditorInformation;
-use Sprain\SwissQrBill\DataGroup\Element\AdditionalInformation;
-use Sprain\SwissQrBill\PaymentPart\Output\HtmlOutput\HtmlOutput;
-use Sprain\SwissQrBill\DataGroup\Element\PaymentAmountInformation;
 
 class InvoiceController extends Controller
 {
@@ -30,34 +23,7 @@ class InvoiceController extends Controller
             $invoice->save();
         }
 
-        // qr
-        if ($invoice->is_pro_forma) {
-            $qrBillOutput = null;
-        } else {
-            $displayOptions = new DisplayOptions;
-            $displayOptions
-                ->setPrintable(false)
-                ->setDisplayTextDownArrows(false)
-                ->setDisplayScissors(false)
-                ->setPositionScissorsAtBottom(false);
-            $qrBill = $this->generateQrBill($invoice->client, $invoice);
-            $qrBillHtmlOutput = new HtmlOutput($qrBill, 'fr');
-            $qrBillOutput = $qrBillHtmlOutput
-                ->setDisplayOptions($displayOptions)
-                ->setQrCodeImageFormat(QrCode::FILE_FORMAT_PNG)
-                ->getPaymentPart();
-        }
-
-        // pdf
-        $view = View::make('pdf.invoice', ['invoice' => $invoice, 'qrBillOutput' => $qrBillOutput]);
-        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
-
-        $pdf = Pdf::loadHTML($html)
-            ->setPaper('A4', 'portrait')
-            ->setOption(['defaultFont' => 'sans-serif'])
-            ->stream($invoice->number.'.pdf');
-
-        return $pdf;
+        return InvoiceService::generatePdf($invoice)->stream($invoice->number.'.pdf');
     }
 
     public function eml(Invoice $invoice)

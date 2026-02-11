@@ -26,6 +26,7 @@ use App\Notifications\ClientSendInvoiceRelaunch;
 use App\Filament\Resources\InvoiceResource\Pages;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
+use App\Filament\Actions\ExportInvoicesPdfBulkAction;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 
 class InvoiceResource extends Resource
@@ -284,6 +285,7 @@ class InvoiceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    ExportInvoicesPdfBulkAction::make(),
                     BulkAction::make('ClientsSendInvoice')
                         ->label('Envoyer facture')
                         ->icon('heroicon-o-envelope')
