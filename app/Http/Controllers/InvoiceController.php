@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use Sprain\SwissQrBill\QrBill;
 use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
+use Sprain\SwissQrBill\Exception\InvalidQrBillDataException;
 
 class InvoiceController extends Controller
 {
@@ -21,7 +22,17 @@ class InvoiceController extends Controller
             $invoice->save();
         }
 
-        return InvoiceService::generatePdf($invoice)->stream($invoice->number.'.pdf');
+        try {
+            return InvoiceService::generatePdf($invoice)->stream($invoice->number.'.pdf');
+        } catch (InvalidQrBillDataException $e) {
+            $violations = [];
+            foreach ($e->getViolations() as $violation) {
+                $violations[] = $violation->getMessage();
+            }
+            abort(422, "Erreur lors de la génération du QR-code : " . implode(', ', $violations));
+        } catch (\Exception $e) {
+            abort(500, "Erreur lors de la génération de la facture : " . $e->getMessage());
+        }
     }
 
     public function eml(Invoice $invoice)
