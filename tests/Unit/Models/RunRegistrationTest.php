@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\Models;
 
+use Tests\TestCase;
 use App\Models\RunRegistration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 class RunRegistrationTest extends TestCase
 {
@@ -41,7 +41,7 @@ class RunRegistrationTest extends TestCase
             'contact_phone',
         ];
 
-        $runRegistration = new RunRegistration();
+        $runRegistration = new RunRegistration;
 
         // sort arrays to ensure order doesn't matter
         $expected = $fillable;
@@ -55,14 +55,14 @@ class RunRegistrationTest extends TestCase
     /** @test */
     public function it_casts_attributes_correctly()
     {
-        $runRegistration = new RunRegistration();
+        $runRegistration = new RunRegistration;
         $casts = $runRegistration->getCasts();
 
         // Enums and other casts
         // $this->assertEquals(RunRegistrationTypesEnum::class, $casts['type']); // We'll test this after implementing Enum
         $this->assertTrue(in_array('deleted_at', array_keys($casts)) || in_array('deleted_at', $runRegistration->getDates()));
     }
-    
+
     /** @test */
     public function it_uses_soft_deletes()
     {

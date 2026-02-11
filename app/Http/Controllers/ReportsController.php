@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use App\Models\Invoice;
 use App\Models\Contact;
 use App\Models\Edition;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
 use App\Models\ClientCategory;
 use Barryvdh\DomPDF\Facade\Pdf;

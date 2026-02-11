@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\Models;
 
+use App\Models\Run;
+use Tests\TestCase;
 use App\Models\RunRegistration;
 use App\Models\RunRegistrationElement;
-use App\Models\Run;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 class RunRegistrationElementTest extends TestCase
 {
@@ -49,7 +49,7 @@ class RunRegistrationElementTest extends TestCase
             'expense_reimbursement_precision',
         ];
 
-        $element = new RunRegistrationElement();
+        $element = new RunRegistrationElement;
         $actual = $element->getFillable();
         sort($fillable);
         sort($actual);
@@ -60,7 +60,7 @@ class RunRegistrationElementTest extends TestCase
     /** @test */
     public function it_casts_attributes_correctly()
     {
-        $element = new RunRegistrationElement();
+        $element = new RunRegistrationElement;
         $casts = $element->getCasts();
 
         $this->assertEquals('date', $casts['birthdate']);

@@ -3,11 +3,10 @@
 namespace App\Filament\Resources\RunRegistrationResource\RelationManagers;
 
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use App\Models\Run;
+use Filament\Resources\RelationManagers\RelationManager;
 
 class RunRegistrationElementsRelationManager extends RelationManager
 {

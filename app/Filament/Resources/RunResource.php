@@ -2,15 +2,15 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\RunResource\Pages;
 use App\Models\Run;
-use App\Enums\RunRegistrationTypesEnum;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use App\Enums\RunRegistrationTypesEnum;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\RunResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class RunResource extends Resource
@@ -148,9 +148,9 @@ class RunResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListRuns::route('/'),
+            'index'  => Pages\ListRuns::route('/'),
             'create' => Pages\CreateRun::route('/create'),
-            'edit' => Pages\EditRun::route('/{record}/edit'),
+            'edit'   => Pages\EditRun::route('/{record}/edit'),
         ];
     }
 

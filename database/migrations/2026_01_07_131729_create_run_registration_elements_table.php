@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -21,41 +21,41 @@ return new class extends Migration
             $table->string('nationality')->nullable();
             $table->string('email')->nullable();
             $table->string('team')->nullable();
-            
+
             $table->foreignId('run_id')->nullable()->constrained('runs')->nullOnDelete();
             $table->string('run_name')->nullable();
             $table->string('bloc')->nullable();
             $table->boolean('with_video')->default(false);
             $table->string('voucher_code')->nullable();
-            
+
             // Address details (Elite)
             $table->string('address')->nullable();
             $table->string('address_extension')->nullable();
             $table->string('postal_code')->nullable();
             $table->string('locality')->nullable();
             $table->string('country')->nullable();
-            
+
             // Payment (Elite)
             $table->string('iban')->nullable();
             $table->text('payment_note')->nullable();
-            
+
             // Fees & Bonuses
             $table->boolean('has_free_registration_fee')->default(false);
             $table->boolean('has_bonus_start')->default(false);
             $table->decimal('bonus_start_amount', 8, 2)->nullable();
             $table->decimal('bonus_ranking_amount', 8, 2)->nullable();
             $table->decimal('bonus_arrival_amount', 8, 2)->nullable();
-            
+
             // Accommodation
             $table->boolean('has_accommodation')->default(false);
             $table->boolean('accommodation_friday')->default(false);
             $table->boolean('accommodation_saturday')->default(false);
             $table->text('accommodation_precision')->nullable();
-            
+
             // Expenses
             $table->boolean('has_expense_reimbursement')->default(false);
             $table->text('expense_reimbursement_precision')->nullable();
-            
+
             $table->timestamps();
             $table->softDeletes();
         });

@@ -2,11 +2,11 @@
 
 namespace App\Notifications;
 
-use App\Models\RunRegistration;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
+use App\Models\RunRegistration;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 
 class RunRegistrationLink extends Notification
 {
@@ -29,11 +29,11 @@ class RunRegistrationLink extends Notification
     {
         // On génère une URL signée. La route sera définie en Phase 4.
         // On utilise un try catch ou on s'assure que la route existe pour le test.
-        $url = "Placeholder URL for " . $notifiable->type->value;
+        $url = 'Placeholder URL for '.$notifiable->type->value;
         try {
             $url = URL::signedRoute('front.run-registration.edit', [
                 'registration' => $notifiable->id,
-                'type' => $notifiable->type->value
+                'type'         => $notifiable->type->value,
             ]);
         } catch (\Exception $e) {
             // Fallback pour le test si la route n'existe pas encore
@@ -41,7 +41,7 @@ class RunRegistrationLink extends Notification
 
         return (new MailMessage)
             ->subject('Course de Noël - Lien d\'édition de votre inscription')
-            ->greeting('Bonjour ' . $notifiable->contact_first_name . ',')
+            ->greeting('Bonjour '.$notifiable->contact_first_name.',')
             ->line('Vous avez créé un dossier d\'inscription pour la Course de Noël.')
             ->line('Vous pouvez accéder à tout moment à votre dossier pour ajouter ou modifier des participants via le lien sécurisé ci-dessous.')
             ->action('Accéder à mon inscription', $url)

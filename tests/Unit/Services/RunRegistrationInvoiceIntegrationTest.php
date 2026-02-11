@@ -3,28 +3,29 @@
 namespace Tests\Unit\Services;
 
 use App\Models\Run;
-use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
-use App\Models\Invoice;
+use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Edition;
+use App\Models\Invoice;
+use App\Models\RunRegistration;
+use App\Models\RunRegistrationElement;
 use App\Services\RunRegistrationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 class RunRegistrationInvoiceIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
     private RunRegistrationService $service;
+
     private Edition $edition;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new RunRegistrationService();
+        $this->service = new RunRegistrationService;
         $this->edition = Edition::factory()->create(['year' => 2026]);
-        session(['edition_id' => (string)$this->edition->id]);
+        session(['edition_id' => (string) $this->edition->id]);
     }
 
     /** @test */
@@ -32,13 +33,13 @@ class RunRegistrationInvoiceIntegrationTest extends TestCase
     {
         $client = Client::factory()->create();
         $registration = RunRegistration::factory()->create(['client_id' => $client->id, 'company_name' => 'Ma Boite']);
-        
+
         $run = Run::factory()->create(['name' => 'Course 1', 'cost' => 50.00]);
-        
+
         RunRegistrationElement::factory()->create([
-            'run_registration_id' => $registration->id,
-            'run_id' => $run->id,
-            'run_name' => 'Course 1',
+            'run_registration_id'       => $registration->id,
+            'run_id'                    => $run->id,
+            'run_name'                  => 'Course 1',
             'has_free_registration_fee' => false,
         ]);
 

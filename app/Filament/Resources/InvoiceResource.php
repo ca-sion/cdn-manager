@@ -24,9 +24,9 @@ use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Columns\TextInputColumn;
 use App\Notifications\ClientSendInvoiceRelaunch;
 use App\Filament\Resources\InvoiceResource\Pages;
+use App\Filament\Actions\ExportInvoicesPdfBulkAction;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
-use App\Filament\Actions\ExportInvoicesPdfBulkAction;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 
 class InvoiceResource extends Resource

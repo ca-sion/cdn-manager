@@ -3,10 +3,9 @@
 namespace App\Services;
 
 use App\Models\Run;
-use App\Models\RunRegistration;
-
 use App\Models\Invoice;
 use App\Helpers\AppHelper;
+use App\Models\RunRegistration;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 
 class RunRegistrationService
@@ -30,7 +29,7 @@ class RunRegistrationService
      */
     public function isRegistrationOpen(Run $run): bool
     {
-        if (!$run->registrations_deadline) {
+        if (! $run->registrations_deadline) {
             return true;
         }
 

@@ -15,9 +15,9 @@ enum RunRegistrationTypesEnum: string implements HasLabel
     {
         return match ($this) {
             self::Company => 'Entreprise',
-            self::School => 'École',
-            self::Group => 'Groupe',
-            self::Elite => 'Élite',
+            self::School  => 'École',
+            self::Group   => 'Groupe',
+            self::Elite   => 'Élite',
         };
     }
 }

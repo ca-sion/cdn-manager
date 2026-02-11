@@ -6,10 +6,8 @@ use App\Models\Client;
 use App\Models\Invoice;
 use Illuminate\Support\Carbon;
 use Sprain\SwissQrBill\QrBill;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
-use Illuminate\Support\Facades\View;
 
 class InvoiceController extends Controller
 {

@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Livewire;
 
-use App\Livewire\FrontRunRegistration;
-use Livewire\Livewire;
 use Tests\TestCase;
+use Livewire\Livewire;
+use App\Livewire\FrontRunRegistration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class FrontRunRegistrationTest extends TestCase

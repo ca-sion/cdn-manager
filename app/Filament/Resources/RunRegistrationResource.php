@@ -2,21 +2,18 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\RunRegistrationResource\Pages;
-use App\Filament\Resources\RunRegistrationResource\RelationManagers;
-use App\Models\RunRegistration;
-use App\Enums\RunRegistrationTypesEnum;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Models\RunRegistration;
+use Filament\Resources\Resource;
+use Rap2hpoutre\FastExcel\FastExcel;
+use App\Services\RunRegistrationService;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-
-use Filament\Notifications\Notification;
-use App\Services\RunRegistrationService;
-use Rap2hpoutre\FastExcel\FastExcel;
+use App\Filament\Resources\RunRegistrationResource\Pages;
+use App\Filament\Resources\RunRegistrationResource\RelationManagers;
 
 class RunRegistrationResource extends Resource
 {
@@ -68,11 +65,15 @@ class RunRegistrationResource extends Resource
                                     try {
                                         app(RunRegistrationService::class)->createInvoice($record);
                                         $count++;
-                                    } catch (\Exception $e) { $errors++; }
-                                } else { $errors++; }
+                                    } catch (\Exception $e) {
+                                        $errors++;
+                                    }
+                                } else {
+                                    $errors++;
+                                }
                             }
                             Notification::make()
-                                ->title($count . ' factures générées' . ($errors > 0 ? ', ' . $errors . ' erreurs' : ''))
+                                ->title($count.' factures générées'.($errors > 0 ? ', '.$errors.' erreurs' : ''))
                                 ->success()
                                 ->send();
                         })
@@ -85,20 +86,21 @@ class RunRegistrationResource extends Resource
                             foreach ($records as $registration) {
                                 foreach ($registration->runRegistrationElements as $element) {
                                     $data->push([
-                                        'Nom' => $element->last_name,
-                                        'Prénom' => $element->first_name,
+                                        'Nom'            => $element->last_name,
+                                        'Prénom'         => $element->first_name,
                                         'Date naissance' => $element->birthdate?->format('d.m.Y'),
-                                        'Sexe' => $element->gender,
-                                        'Nationalité' => $element->nationality,
-                                        'Email' => $element->email,
-                                        'Course' => $element->run?->name ?? $element->run_name,
-                                        'Bloc' => $element->bloc,
-                                        'Équipe' => $element->team,
-                                        'Localité' => $element->locality ?? $registration->invoicing_locality,
+                                        'Sexe'           => $element->gender,
+                                        'Nationalité'    => $element->nationality,
+                                        'Email'          => $element->email,
+                                        'Course'         => $element->run?->name ?? $element->run_name,
+                                        'Bloc'           => $element->bloc,
+                                        'Équipe'         => $element->team,
+                                        'Localité'       => $element->locality ?? $registration->invoicing_locality,
                                     ]);
                                 }
                             }
-                            return (new FastExcel($data))->download('export_datasport_' . date('Ymd_His') . '.xlsx');
+
+                            return (new FastExcel($data))->download('export_datasport_'.date('Ymd_His').'.xlsx');
                         }),
                 ]),
             ]);
@@ -114,9 +116,9 @@ class RunRegistrationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListRunRegistrations::route('/'),
+            'index'  => Pages\ListRunRegistrations::route('/'),
             'create' => Pages\CreateRunRegistration::route('/create'),
-            'edit' => Pages\EditRunRegistration::route('/{record}/edit'),
+            'edit'   => Pages\EditRunRegistration::route('/{record}/edit'),
         ];
     }
 

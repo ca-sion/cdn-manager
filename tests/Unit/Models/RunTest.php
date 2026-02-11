@@ -3,8 +3,8 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Run;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class RunTest extends TestCase
 {
@@ -28,7 +28,7 @@ class RunTest extends TestCase
             'provision_id',
         ];
 
-        $run = new Run();
+        $run = new Run;
 
         $this->assertEquals($fillable, $run->getFillable());
     }
@@ -36,7 +36,7 @@ class RunTest extends TestCase
     /** @test */
     public function it_casts_attributes_correctly()
     {
-        $run = new Run();
+        $run = new Run;
         $casts = $run->getCasts();
 
         $this->assertEquals('array', $casts['available_for_types']);

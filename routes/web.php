@@ -8,14 +8,13 @@ use App\Livewire\FrontEditClient;
 use App\Livewire\FrontListClients;
 use App\Livewire\FrontListProvisions;
 use Illuminate\Support\Facades\Route;
+use App\Livewire\FrontRunRegistration;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\TrackingController;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
-
-use App\Livewire\FrontRunRegistration;
 
 Route::get('/', function () {
     return view('welcome');

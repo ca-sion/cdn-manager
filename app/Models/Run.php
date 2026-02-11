@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Run extends Model
 {
@@ -26,14 +26,14 @@ class Run extends Model
     ];
 
     protected $casts = [
-        'available_for_types' => 'array',
-        'start_blocs' => 'array',
+        'available_for_types'    => 'array',
+        'start_blocs'            => 'array',
         'registrations_deadline' => 'date',
-        'accepts_voucher' => 'boolean',
-        'registrations_limit' => 'integer',
-        'registrations_number' => 'integer',
-        'cost' => 'decimal:2',
-        'distance' => 'decimal:2',
+        'accepts_voucher'        => 'boolean',
+        'registrations_limit'    => 'integer',
+        'registrations_number'   => 'integer',
+        'cost'                   => 'decimal:2',
+        'distance'               => 'decimal:2',
     ];
 
     public function provision()

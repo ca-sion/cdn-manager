@@ -20,16 +20,16 @@ class RunRegistrationElementFactory extends Factory
     {
         return [
             'run_registration_id' => RunRegistration::factory(),
-            'first_name' => $this->faker->firstName,
-            'last_name' => $this->faker->lastName,
-            'birthdate' => $this->faker->date(),
-            'gender' => $this->faker->randomElement(['M', 'F']),
-            'nationality' => $this->faker->countryCode,
-            'email' => $this->faker->safeEmail,
-            'run_id' => Run::factory(),
-            'run_name' => $this->faker->word,
-            'bloc' => $this->faker->word,
-            'with_video' => $this->faker->boolean,
+            'first_name'          => $this->faker->firstName,
+            'last_name'           => $this->faker->lastName,
+            'birthdate'           => $this->faker->date(),
+            'gender'              => $this->faker->randomElement(['M', 'F']),
+            'nationality'         => $this->faker->countryCode,
+            'email'               => $this->faker->safeEmail,
+            'run_id'              => Run::factory(),
+            'run_name'            => $this->faker->word,
+            'bloc'                => $this->faker->word,
+            'with_video'          => $this->faker->boolean,
         ];
     }
 }

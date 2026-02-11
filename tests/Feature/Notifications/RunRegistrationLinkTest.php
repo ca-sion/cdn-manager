@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Notifications;
 
+use Tests\TestCase;
 use App\Models\RunRegistration;
 use App\Notifications\RunRegistrationLink;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class RunRegistrationLinkTest extends TestCase
 {
@@ -18,11 +18,11 @@ class RunRegistrationLinkTest extends TestCase
         Notification::fake();
 
         $registration = RunRegistration::factory()->create([
-            'contact_email' => 'test@example.com',
-            'contact_first_name' => 'Michael'
+            'contact_email'      => 'test@example.com',
+            'contact_first_name' => 'Michael',
         ]);
 
-        $registration->notify(new RunRegistrationLink());
+        $registration->notify(new RunRegistrationLink);
 
         Notification::assertSentTo(
             $registration,
