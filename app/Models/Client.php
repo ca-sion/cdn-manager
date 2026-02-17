@@ -76,7 +76,7 @@ class Client extends Model implements HasMedia
     protected function invoicingContactEmail(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->contacts()?->orderBy('order_column')->firstWhere('type', '=', 'invoicing')?->email ?? $this->invoicing_email ?? $this->email,
+            get: fn () => $this->invoicing_email ?? $this->contacts()?->orderBy('order_column')->firstWhere('type', '=', 'invoicing')?->email ?? $this->email,
         );
     }
 
