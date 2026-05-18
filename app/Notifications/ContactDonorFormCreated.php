@@ -49,7 +49,7 @@ class ContactDonorFormCreated extends Notification
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
             ->greeting($notifiable->name.',')
-            ->line('Vous venez de passer une commande pour une donation pour la Course de Noël. Nous vous remercions beaucoup pour votre soutien.')
+            ->line('Vous venez de passer une commande pour une donation pour la Course de Noël et le Trail des Châteaux. Nous vous remercions beaucoup pour votre soutien.')
             ->lineIf($cost, '**Montant** : '.$cost.' CHF')
             ->lineIf($mention, '**Mention** : '.$mention)
             ->lineIf($note, '**Note** : '.$note)
@@ -72,7 +72,7 @@ class ContactDonorFormCreated extends Notification
             BIC: UBSWCHZH19E'))
             ->line('**Info** : La mention dans l\'encarté sera effective dès que votre don aura été reçu.')
             ->line('Nous restons à disposition en cas de questions ou pour tout complément d\'information.')
-            ->salutation('Le Comité de la Course de Noël');
+            ->salutation('Le Comité d\'organisation');
     }
 
     /**

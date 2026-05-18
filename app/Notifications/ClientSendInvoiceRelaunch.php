@@ -57,7 +57,7 @@ class ClientSendInvoiceRelaunch extends Notification
         $invoiceNumber = $this->invoice->number;
 
         return (new MailMessage)
-            ->subject('Course de Noël '.$editionYear.' - Facture (F'.$invoiceNumber.') : rappel')
+            ->subject('Course de Noël et Trail des Châteaux '.$editionYear.' - Facture (F'.$invoiceNumber.') : rappel')
             ->replyTo('info@coursedenoel.ch')
             ->bcc('info@coursedenoel.ch')
             ->greeting('Bonjour,')

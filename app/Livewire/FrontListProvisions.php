@@ -57,7 +57,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
         return $table
             ->query(ProvisionElement::query()->with(['provision', 'recipient', 'client']))
             ->heading('Prestations')
-            ->description('Toutes les prestations de la Course de Noël')
+            ->description('Toutes les prestations')
             ->defaultSort('created_at', 'desc')
             ->persistSortInSession()
             ->paginated([10, 25, 50, 100, 'all'])

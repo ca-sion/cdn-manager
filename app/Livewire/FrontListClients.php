@@ -56,7 +56,7 @@ class FrontListClients extends Component implements HasForms, HasTable
         return $table
             ->query(Client::query()->with(['provisionElements']))
             ->heading('Clients')
-            ->description('Tous les clients de la Course de Noël')
+            ->description('Tous les clients')
             ->defaultSort('name', 'asc')
             ->persistSortInSession()
             ->paginated([10, 25, 50, 100, 'all'])

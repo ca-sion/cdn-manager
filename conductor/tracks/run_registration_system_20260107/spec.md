@@ -1,7 +1,7 @@
 # Spécification : Système d'Inscription aux Courses (Run Registrations)
 
 ## Présentation
-Ce module permet la gestion complète des inscriptions pour la Course de Noël, incluant des formulaires publics sécurisés par des liens signés et une interface d'administration avancée pour le suivi et la facturation.
+Ce module permet la gestion complète des inscriptions pour la Course de Noël et le Trail des Châteaux, incluant des formulaires publics sécurisés par des liens signés et une interface d'administration avancée pour le suivi et la facturation.
 
 ## Modèles et Données
 ### 1. Run (Courses)

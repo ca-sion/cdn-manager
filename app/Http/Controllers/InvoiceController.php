@@ -45,7 +45,7 @@ class InvoiceController extends Controller
         $body = <<<MAIL
 From: Course de =?utf-8?Q?No=C3=ABl?= <info@coursedenoel.ch>
 To: $recipient
-Subject: Course de Noël $editionYear - Facture (F$invoice->number)
+Subject: Course de Noël et Trail des Châteaux $editionYear - Facture (F$invoice->number)
 MIME-Version: 1.0
 Date: $nowDate
 Message-ID: <23307f2fd117e41de1a18a7a135e95f1@coursedenoel.ch>
@@ -66,7 +66,7 @@ Je reste à votre disposition pour toutes questions ou remarques.<br>
   <br>
 Meilleures salutations<br>
 Michael Ravedoni, Administration<br>
-Course de Noël<br>
+Course de Noël et Trail des Châteaux<br>
 MAIL;
 
         return response($body, 200, [
@@ -109,7 +109,7 @@ Je reste à votre disposition pour toutes questions ou remarques.<br>
 <br>
 Meilleures salutations<br>
 Michael Ravedoni, Administration<br>
-Course de Noël<br>
+Course de Noël et Trail des Châteaux<br>
 MAIL;
 
         return response($body, 200, [

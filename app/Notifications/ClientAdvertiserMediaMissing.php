@@ -64,7 +64,7 @@ class ClientAdvertiserMediaMissing extends Notification
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
             ->greeting('Bonjour,')
-            ->line('Sauf erreur de notre part, nous n\'avons pas encore reçu de visuel·s de votre part pour la Course de Noël. Seriez-vous d\'accord de me les faire parvenir selon les spécifications ci-après ?')
+            ->line('Sauf erreur de notre part, nous n\'avons pas encore reçu de visuel·s de votre part pour la Course de Noël et le Trail des Châteaux. Seriez-vous d\'accord de me les faire parvenir selon les spécifications ci-après ?')
             ->line([$provisionElements])
             ->line('Vous pouvez ajouter vos visuels en cliquant sur le lien ci-après :')
             ->action('Ajouter les visuels', $notifiable->frontEditLink)

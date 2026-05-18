@@ -52,7 +52,7 @@ class ClientSendInvoice extends Notification
         }
 
         return (new MailMessage)
-            ->subject('Course de Noël '.$editionYear.' - Facture (F'.$this->invoice->number.')')
+            ->subject('Course de Noël et Trail des Châteaux '.$editionYear.' - Facture (F'.$this->invoice->number.')')
             ->replyTo('info@coursedenoel.ch')
             ->bcc('info@coursedenoel.ch')
             ->greeting('Bonjour,')

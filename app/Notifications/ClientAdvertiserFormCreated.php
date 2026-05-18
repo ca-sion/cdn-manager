@@ -52,7 +52,7 @@ class ClientAdvertiserFormCreated extends Notification
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
             ->greeting($notifiable->name.',')
-            ->line('Vous venez de passer une commande pour une prestation en tant qu\'annonceur pour la Course de Noël. Nous vous remercions beaucoup pour votre soutien.')
+            ->line('Vous venez de passer une commande pour une prestation en tant qu\'annonceur pour la Course de Noël et le Trail des Châteaux. Nous vous remercions beaucoup pour votre soutien.')
             ->line('En cliquant sur le bouton ci-dessous, vous pouvez voir la commande passée.')
             ->action('Voir la commande', $notifiable->pdfLink)
             ->line('Vous pouvez déjà ajouter vos visuels ou modifier votre commande en cliquant sur le lien ci-après : **[Modifier votre commande]('.$notifiable->frontEditLink.')**')
@@ -60,7 +60,7 @@ class ClientAdvertiserFormCreated extends Notification
             ->line([$provisionElements])
             ->lineIf($notifiable->note, '**Note** : '.$notifiable->note)
             ->line('Nous restons à disposition en cas de questions ou pour tout complément d\'information.')
-            ->salutation('Le Comité de la Course de Noël');
+            ->salutation('Le Comité d\'organisation');
     }
 
     /**

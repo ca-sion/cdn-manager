@@ -49,16 +49,16 @@ class ClientAdvertiserFormLink extends Notification
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
             ->greeting('Cher Partenaire,')
-            ->line('Comme vous le savez, la Course de Noël est devenue un événement incontournable du 2ᵉ samedi de décembre à Sion. Cette année, nous organisons la 56ᵉ édition et nous sommes impatients d’accueillir plus de 6000 participant·e·s le 13 décembre 2025. Le 7ᵉ Trail des Châteaux se tiendra le même jour entre les châteaux de notre belle région.')
+            ->line('Comme vous le savez, la Course de Noël est devenue un événement incontournable du 2ᵉ samedi de décembre à Sion. Cette année, nous organisons la 57ᵉ édition et nous sommes impatients d’accueillir plus de 6000 participant·e·s le 12 décembre 2026. Le 8ᵉ Trail des Châteaux se tiendra le même jour entre les châteaux de notre belle région.')
             ->line('C\'est une opportunité d\'améliorer votre visibilité auprès d\'un large public. Comme les autres années, nous vous proposons :')
-            ->line('- Annonces dans l\'encarté du Nouvelliste (tiré à 40\'000 exemplaires) - Banderoles - Visuels sur écran - Packs entreprise - Dons')
+            ->line('- Banderoles - Visuels sur écran - Packs entreprise - Dons')
             ->line('Si vous souhaitez **soutenir** la Course de Noël et le Trail des Châteaux, nous vous invitons à **remplir le formulaire en ligne** suivant :')
             ->action('Formulaire de commande', $signedUrl)
             ->lineIf($this->previousOrderDetails, 'Détails de votre commande de l\'édition précédente :')
             ->lineIf($this->previousOrderDetails, $this->previousOrderDetails ? '- '.implode(', ', $this->previousOrderDetails) : '- Aucune commande trouvée pour l\'édition précédente.')
             ->line('Vous pouvez aussi nous retourner le formulaire papier au format PDF après l\'avoir rempli à l\'adresse pub@coursedenoel.ch. Vous pouvez le télécharger sous : https://coursedenoel.ch/assets/documents/fo-annonceurs.pdf')
             ->line('Nous restons à disposition en cas de questions ou pour tout complément d\'information.')
-            ->salutation('Le Comité de la Course de Noël')
+            ->salutation('Le Comité d\'organisation')
             ->line(new HtmlString('<img src="'.$notifiable->currentEngagement?->tracker.'" width="1" height="1" />'));
     }
 

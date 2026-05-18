@@ -170,7 +170,7 @@
 
     <script type="text/php">
         if (isset($pdf)) {
-            $text = html_entity_decode('Course de Noël · Rapport · État : '.now()->locale('fr_CH')->isoFormat('L'), ENT_QUOTES, 'UTF-8');
+            $text = html_entity_decode('Course de Noël et Trail des Châteaux · Rapport · État : '.now()->locale('fr_CH')->isoFormat('L'), ENT_QUOTES, 'UTF-8');
             $font = $fontMetrics->get_font("sans-serif", "normal");
             $size = 6;
             $y = 10;

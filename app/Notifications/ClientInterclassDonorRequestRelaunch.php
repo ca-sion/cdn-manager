@@ -49,8 +49,8 @@ class ClientInterclassDonorRequestRelaunch extends Notification
             ->replyTo('pub@coursedenoel.ch')
             ->bcc('pub@coursedenoel.ch')
             ->greeting('Madame, Monsieur,')
-            ->line('Pour rappel, le samedi 13 décembre 2025 marquera un événement exceptionnel à Sion : la **Course de Noël**, qui verra plus de 6\'000 coureurs s\'élancer au cœur de la ville de Sion.')
-            ->line('Dans ce cadre, le « **Concours interclasses** » fêtera son jubilé, sa 25e édition. Au cours des 24 éditions précédentes, 19’684 jeunes écolières et écoliers ont pris part à cette sympathique épreuve athlétique qui leur est spécialement destinée.')
+            ->line('Pour rappel, le samedi 12 décembre 2026 marquera un événement exceptionnel à Sion : la **Course de Noël**, qui verra plus de 6\'000 coureurs s\'élancer au cœur de la ville de Sion.')
+            ->line('Dans ce cadre, le « **Concours interclasses** » fêtera son jubilé, sa 26e édition. Au cours des 25 éditions précédentes, 19’684 jeunes écolières et écoliers ont pris part à cette sympathique épreuve athlétique qui leur est spécialement destinée.')
             ->line('Vous avez été un soutien fidèle par le passé ou partagez nos valeurs de promotion du sport jeunesse. C’est pourquoi nous nous permettons de vous solliciter afin de pouvoir primer les meilleures classes de chacune des 6 catégories.')
             ->line('Nous vous serions ainsi très reconnaissants si vous pouviez **offrir aux participant·e·s des bons/entrées** et ce jusqu\'à 25 élèves. Votre généreux geste permettrait à ces enfants et à leurs familles de passer ensemble un moment inoubliable.')
             ->line('En contrepartie, nous :')
@@ -62,7 +62,7 @@ class ClientInterclassDonorRequestRelaunch extends Notification
 
             ->line('Pour confirmer votre soutien ou si vous avez des questions, nous vous invitons à répondre par retour d\'email :')
             ->line('- Adresse : pub@coursedenoel.ch')
-            ->line('- Délai : 24 novembre 2025')
+            ->line('- Délai : 23 novembre 2026')
             ->line('Les lots physiques sont à envoyer à :')
             ->line(new HtmlString('<small>Christian Masserey<br>Chemin des Amandiers 108<br>1950 Sion<br>079 453 60 03<br>christian.masserey@bluewin.ch</small>'))
 

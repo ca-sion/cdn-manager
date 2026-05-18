@@ -113,7 +113,7 @@
                     Référence<br>
                     Adresse<br><br><br><br>
                     IBAN<br>
-                    Numéro de TVA
+                    N° de TVA
                 </div>
             </td>
             <td align="left" style="font-size: x-small;">
@@ -125,8 +125,8 @@
                     {{ $invoice->due_date->locale('fr_CH')->isoFormat('L') }}<br>
                 @endif
                 {{ $invoice->reference ?? '-' }}<br>
-                Centre athlétique de Sion -<br>
-                Course de Noël<br>
+                CA Sion - Course de Noël<br>
+                et Trail des Châteaux<br>
                 Case postale 4057<br>
                 1950 Sion<br>
                 CH63 0026 5265 6542 4140 D<br>
