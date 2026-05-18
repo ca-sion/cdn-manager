@@ -92,7 +92,7 @@ class DonorForm extends Component implements HasForms
                                 ->label('Email')
                                 ->required(),
                             Section::make('Don d\'honneur')
-                                ->description('Crédité dans l\'encarté du Nouvelliste')
+                                ->description('Crédité le jour de la course')
                                 ->columnSpanFull()
                                 ->columns(3)
                                 ->schema([
@@ -104,7 +104,7 @@ class DonorForm extends Component implements HasForms
                                         ->required()
                                         ->maxLength(255),
                                     TextInput::make('donnation_provision_mention')
-                                        ->label('Mention dans l\'encarté à côté du montant')
+                                        ->label('Mention à côté du montant')
                                         ->helperText('Mentionner si anynyme')
                                         ->required()
                                         ->maxLength(255)

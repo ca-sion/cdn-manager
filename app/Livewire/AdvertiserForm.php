@@ -150,7 +150,7 @@ class AdvertiserForm extends Component implements HasForms
                                 ]),
                             Section::make('Don d\'honneur')
                                 ->visible((bool) setting('advertiser_form_donation_provision'))
-                                ->description('Crédité dans l\'encarté du Nouvelliste')
+                                ->description('Crédité le jour de la course')
                                 ->columns(3)
                                 ->schema([
                                     TextInput::make('donnation_provision_amount')
@@ -160,7 +160,7 @@ class AdvertiserForm extends Component implements HasForms
                                         ->suffix('CHF')
                                         ->maxLength(255),
                                     TextInput::make('donnation_provision_mention')
-                                        ->label('Mention dans l\'encarté à côté du montant')
+                                        ->label('Mention à côté du montant')
                                         ->helperText('Mentionner si anynyme')
                                         ->maxLength(255)
                                         ->live(),
