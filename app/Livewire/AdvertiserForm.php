@@ -355,8 +355,11 @@ class AdvertiserForm extends Component implements HasForms
         }
 
         // Journal
-        foreach ($dataObject->journal_provisions as $journalProvision) {
+        foreach ($dataObject->journal_provisions ?? [] as $journalProvision) {
             $provision = Provision::find($journalProvision);
+            if (! $provision) {
+                continue;
+            }
             $journalProvisionElement = ProvisionElement::create([
                 'recipient_id'   => $client->id,
                 'recipient_type' => 'App\Models\Client',
@@ -372,8 +375,11 @@ class AdvertiserForm extends Component implements HasForms
         }
 
         // Banner
-        foreach ($dataObject->banner_provisions as $bannerProvision) {
+        foreach ($dataObject->banner_provisions ?? [] as $bannerProvision) {
             $provision = Provision::find($bannerProvision);
+            if (! $provision) {
+                continue;
+            }
             $bannerProvisionElement = ProvisionElement::create([
                 'recipient_id'   => $client->id,
                 'recipient_type' => 'App\Models\Client',
@@ -389,8 +395,11 @@ class AdvertiserForm extends Component implements HasForms
         }
 
         // Screen
-        foreach ($dataObject->screen_provisions as $screenProvision) {
+        foreach ($dataObject->screen_provisions ?? [] as $screenProvision) {
             $provision = Provision::find($screenProvision);
+            if (! $provision) {
+                continue;
+            }
             $screenProvisionElement = ProvisionElement::create([
                 'recipient_id'   => $client->id,
                 'recipient_type' => 'App\Models\Client',
@@ -406,8 +415,11 @@ class AdvertiserForm extends Component implements HasForms
         }
 
         // Pack
-        foreach ($dataObject->pack_provisions as $packProvision) {
+        foreach ($dataObject->pack_provisions ?? [] as $packProvision) {
             $provision = Provision::find($packProvision);
+            if (! $provision) {
+                continue;
+            }
             $packProvisionElement = ProvisionElement::create([
                 'recipient_id'   => $client->id,
                 'recipient_type' => 'App\Models\Client',
@@ -423,7 +435,6 @@ class AdvertiserForm extends Component implements HasForms
 
             // Subprovisions
             foreach ($provision->subProvisions as $subProvision) {
-                $provision = Provision::find($subProvision);
                 $subProvisionElement = ProvisionElement::create([
                     'recipient_id'   => $client->id,
                     'recipient_type' => 'App\Models\Client',
@@ -436,21 +447,23 @@ class AdvertiserForm extends Component implements HasForms
         }
 
         // Donation
-        if ($dataObject->donnation_provision_amount) {
+        if (! empty($dataObject->donnation_provision_amount)) {
             $provision = Provision::find(setting('advertiser_form_donation_provision'));
-            $donationProvisionElement = ProvisionElement::create([
-                'recipient_id'      => $client->id,
-                'recipient_type'    => 'App\Models\Client',
-                'provision_id'      => $provision->id,
-                'status'            => 'confirmed',
-                'has_product'       => true,
-                'quantity'          => 1,
-                'cost'              => $dataObject->donnation_provision_amount,
-                'tax_rate'          => $provision->product?->tax_rate ?? null,
-                'include_vat'       => $provision->product?->include_vat ?? true,
-                'textual_indicator' => $dataObject->donnation_provision_mention,
-            ]);
-            $client->provisionElements()->save($donationProvisionElement);
+            if ($provision) {
+                $donationProvisionElement = ProvisionElement::create([
+                    'recipient_id'      => $client->id,
+                    'recipient_type'    => 'App\Models\Client',
+                    'provision_id'      => $provision->id,
+                    'status'            => 'confirmed',
+                    'has_product'       => true,
+                    'quantity'          => 1,
+                    'cost'              => $dataObject->donnation_provision_amount,
+                    'tax_rate'          => $provision->product?->tax_rate ?? null,
+                    'include_vat'       => $provision->product?->include_vat ?? true,
+                    'textual_indicator' => $dataObject->donnation_provision_mention ?? null,
+                ]);
+                $client->provisionElements()->save($donationProvisionElement);
+            }
         }
 
         // Email
