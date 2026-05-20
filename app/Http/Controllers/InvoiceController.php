@@ -25,9 +25,9 @@ class InvoiceController extends Controller
         try {
             return InvoiceService::generatePdf($invoice)->stream($invoice->number.'.pdf');
         } catch (InvalidQrBillDataException $e) {
-            abort(422, "Erreur lors de la génération du QR-code : " . $e->getMessage());
+            abort(422, 'Erreur lors de la génération du QR-code : '.$e->getMessage());
         } catch (\Exception $e) {
-            abort(500, "Erreur lors de la génération de la facture : " . $e->getMessage());
+            abort(500, 'Erreur lors de la génération de la facture : '.$e->getMessage());
         }
     }
 

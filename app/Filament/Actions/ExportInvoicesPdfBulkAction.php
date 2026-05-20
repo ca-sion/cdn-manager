@@ -4,8 +4,8 @@ namespace App\Filament\Actions;
 
 use ZipArchive;
 use App\Services\InvoiceService;
-use Filament\Notifications\Notification;
 use Filament\Tables\Actions\BulkAction;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
 use Sprain\SwissQrBill\Exception\InvalidQrBillDataException;
 
@@ -36,9 +36,9 @@ class ExportInvoicesPdfBulkAction extends BulkAction
                             $zip->addFromString($invoice->number.'.pdf', $pdf->output());
                             $successCount++;
                         } catch (InvalidQrBillDataException $e) {
-                            $errors[] = "Facture {$invoice->number}: " . $e->getMessage();
+                            $errors[] = "Facture {$invoice->number}: ".$e->getMessage();
                         } catch (\Exception $e) {
-                            $errors[] = "Facture {$invoice->number}: " . $e->getMessage();
+                            $errors[] = "Facture {$invoice->number}: ".$e->getMessage();
                         }
                     }
                     $zip->close();
@@ -57,6 +57,7 @@ class ExportInvoicesPdfBulkAction extends BulkAction
                     if (file_exists($filePath)) {
                         unlink($filePath);
                     }
+
                     return;
                 }
 
