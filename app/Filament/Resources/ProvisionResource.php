@@ -165,7 +165,8 @@ class ProvisionResource extends Resource
                 Tables\Columns\TextColumn::make('contact_indicator')
                     ->label('Contact'),
                 Tables\Columns\ToggleColumn::make('is_active')
-                    ->label('Actif'),
+                    ->label('Actif')
+                    ->extraAttributes(['style' => 'padding-top: 0;padding-bottom: 0;']),
 
                 /*
                 Tables\Columns\TextInputColumn::make('numeric_indicator')

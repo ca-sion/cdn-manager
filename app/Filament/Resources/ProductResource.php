@@ -97,7 +97,8 @@ class ProductResource extends Resource
                 Tables\Columns\TextInputColumn::make('unit')
                     ->label('Unité'),
                 Tables\Columns\ToggleColumn::make('is_active')
-                    ->label('Actif'),
+                    ->label('Actif')
+                    ->extraAttributes(['style' => 'padding-top: 0;padding-bottom: 0;']),
             ])
             ->filters([
                 Tables\Filters\Filter::make('is_active')
