@@ -2,17 +2,18 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms;
-use Filament\Tables;
+use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
+use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Tables\Table;
 use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Model;
+use Filament\Tables;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\ReplicateAction;
-use App\Filament\Resources\ProductResource\Pages;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductResource extends Resource
 {
@@ -52,6 +53,9 @@ class ProductResource extends Resource
                     ->inline(false),
                 Forms\Components\TextInput::make('unit')
                     ->label('Unité'),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Actif')
+                    ->default(true),
             ]);
     }
 
@@ -67,9 +71,6 @@ class ProductResource extends Resource
                     ->label('Code')
                     ->searchable(),
                 */
-                Tables\Columns\TextInputColumn::make('code')
-                    ->label('Code')
-                    ->searchable(),
                 Tables\Columns\TextInputColumn::make('code')
                     ->label('Code')
                     ->searchable(),
@@ -95,9 +96,14 @@ class ProductResource extends Resource
                 */
                 Tables\Columns\TextInputColumn::make('unit')
                     ->label('Unité'),
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label('Actif'),
             ])
             ->filters([
-                //
+                Tables\Filters\Filter::make('is_active')
+                    ->label('Uniquement actifs')
+                    ->query(fn (Builder $query): Builder => $query->active())
+                    ->default(),
             ])
             ->actions([
                 ActionGroup::make([

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Spatie\EloquentSortable\Sortable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Spatie\EloquentSortable\SortableTrait;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,23 @@ class Provision extends Model implements Sortable
      * @var array
      */
     protected $guarded = [];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    /**
+     * Scope a query to only include active provisions.
+     */
+    public function scopeActive(Builder $query)
+    {
+        return $query->where('is_active', true);
+    }
 
     /**
      * Get the elements for the provisions.

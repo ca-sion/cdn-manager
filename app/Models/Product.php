@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Classes\Price;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -17,6 +18,23 @@ class Product extends Model
      * @var array
      */
     protected $guarded = [];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    /**
+     * Scope a query to only include active products.
+     */
+    public function scopeActive(Builder $query)
+    {
+        return $query->where('is_active', true);
+    }
 
     /**
      * Get the product's price.

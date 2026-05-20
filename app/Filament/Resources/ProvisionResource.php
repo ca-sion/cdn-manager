@@ -15,6 +15,9 @@ use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\ReplicateAction;
 use App\Filament\Resources\ProvisionResource\Pages;
+use Filament\Tables\Filters\BaseFilter;
+use Filament\Tables\Filters\Filter;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProvisionResource extends Resource
 {
@@ -49,6 +52,9 @@ class ProvisionResource extends Resource
                         Forms\Components\Select::make('category_id')
                             ->label('Catégorie')
                             ->relationship('category', 'name'),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Actif')
+                            ->default(true),
                     ]),
                 Section::make('Indications')
                     ->columns(2)
@@ -109,14 +115,22 @@ class ProvisionResource extends Resource
                     ]),
                 Forms\Components\Select::make('product_id')
                     ->label('Produit')
-                    ->relationship('product', 'name')
+                    ->relationship(
+                        name: 'product',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn (Builder $query) => $query->active(),
+                    )
                     ->searchable()
                     ->preload()
                     ->createOptionForm(fn (Form $form): Form => ProductResource::form($form))
                     ->visible(fn (Get $get) => $get('has_product')),
                 Forms\Components\Select::make('subProvisions')
                     ->label('Sous-provisions')
-                    ->relationship('subProvisions', 'name')
+                    ->relationship(
+                        name: 'subProvisions',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn (Builder $query) => $query->active(),
+                    )
                     ->multiple()
                     ->searchable()
                     ->preload()
@@ -151,6 +165,8 @@ class ProvisionResource extends Resource
                     ->label('Délai'),
                 Tables\Columns\TextColumn::make('contact_indicator')
                     ->label('Contact'),
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label('Actif'),
 
                 /*
                 Tables\Columns\TextInputColumn::make('numeric_indicator')
@@ -166,7 +182,10 @@ class ProvisionResource extends Resource
                 */
             ])
             ->filters([
-                //
+                Filter::make('is_active')
+                    ->label('Uniquement actifs')
+                    ->query(fn (Builder $query): Builder => $query->where('is_active', true))
+                    ->default(),
             ])
             ->actions([
                 ActionGroup::make([
