@@ -41,7 +41,7 @@
                     <div class="text-start mt-6">
                         <p>Par versement avec les coordonnées bancaires suivantes :</p>
                         <div class="ms-4 text-sm mt-4">
-                            CH63 0026 5265 6542 4140 D<br>UBS Switzerland AG<br>CA Sion - Course de Noël<br>Rue du Vieux-Moulin 33<br>1950 Sion<br>BIC: UBSWCHZH19E
+                            CH20 0026 5265 1556 7201 T<br>UBS Switzerland AG<br>Course de Noël et Trail des Châteaux<br>Rue du Vieux-Moulin 33<br>1950 Sion<br>BIC: UBSWCHZH80A
                         </div>
                     </div>
                 </div>

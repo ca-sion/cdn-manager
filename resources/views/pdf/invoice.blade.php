@@ -128,7 +128,7 @@
                 CA Sion<br>
                 Case postale 4057<br>
                 1950 Sion<br>
-                CH63 0026 5265 6542 4140 D<br>
+                CH20 0026 5265 1556 7201 T<br>
                 CHE-329.493.754 TVA
 
             </td>

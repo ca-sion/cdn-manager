@@ -64,12 +64,12 @@ class ContactDonorFormCreated extends Notification
             ->line(new HtmlString('<a href="https://qr-rechnung.net/#/b,fr,SPC,0200,1,CH043000526515567201T,S,CA%20Sion%20-%20Course%20de%20No%C3%ABl,Case%20postale,4057,1950,Sion,CH,,,,,,,,'.$cost.',CHF,,,,,,,,QRR,'.$qrReference.',Donation%20'.$notifiable->name.',EPD,%2F%2FS1%2F10%2F2023423%2F11%2F240506%2F30%2F329493754%2F31%2F240605?op=downloadpdf">Par bulletin de versement (Qr)</a>'))
             ->line('Par versement avec les coordonnées bancaires suivantes :')
             ->line(new HtmlString('
-            CH63 0026 5265 6542 4140 D
+            CH20 0026 5265 1556 7201 T
             UBS Switzerland AG
-            CA Sion - Course de Noël
+            Course de Noël et Trail des Châteaux
             Rue du Vieux-Moulin 33
             1950 Sion
-            BIC: UBSWCHZH19E'))
+            BIC: UBSWCHZH80A'))
             ->line('**Info** : La mention dans l\'encarté sera effective dès que votre don aura été reçu.')
             ->line('Nous restons à disposition en cas de questions ou pour tout complément d\'information.')
             ->salutation('Le Comité d\'organisation');
