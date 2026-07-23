@@ -56,7 +56,7 @@ class InvoiceService
 
         $qrBill->setCreditor(
             StructuredAddress::createWithStreet(
-                'CA Sion - Course de Noël',
+                'Course de Noël et Trail des Châteaux',
                 'Case postale',
                 '4057',
                 '1950',
