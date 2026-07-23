@@ -111,7 +111,6 @@
                     Échéance<br>
                     @endif
                     Référence<br>
-                    Adresse<br><br><br><br>
                     IBAN<br>
                     N° de TVA
                 </div>
@@ -125,9 +124,6 @@
                     {{ $invoice->due_date->locale('fr_CH')->isoFormat('L') }}<br>
                 @endif
                 {{ $invoice->reference ?? '-' }}<br>
-                CA Sion<br>
-                Case postale 4057<br>
-                1950 Sion<br>
                 CH20 0026 5265 1556 7201 T<br>
                 CHE-329.493.754 TVA
 
@@ -176,8 +172,7 @@
 
         @if (! $invoice->content)
         <div style="font-size: x-small;">
-            <p>Nous vous remercions chaleureusement pour votre généreux soutien, et vous prions d’agréer nos salutations les meilleures.</p>
-            <p>Le Comité de la Course de Noël</p>
+            <p>Nous vous remercions chaleureusement pour votre généreux soutien, et vous prions d’agréer nos salutations les meilleures.<br>Le Comité d’organisation</p>
         </div>
         @endif
 
