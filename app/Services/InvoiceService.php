@@ -67,7 +67,7 @@ class InvoiceService
 
         $qrBill->setCreditorInformation(
             CreditorInformation::create(
-                'CH473000526565424140D' // This is a special QR-IBAN. Classic IBANs will not be valid here.
+                'CH043000526515567201T' // This is a special QR-IBAN. Classic IBANs will not be valid here.
             )
         );
 

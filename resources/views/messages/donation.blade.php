@@ -31,7 +31,7 @@
                     @endif
 
                     <div class="mt-6">
-                        <a href="https://qr-rechnung.net/#/b,fr,SPC,0200,1,CH473000526565424140D,S,CA%20Sion%20-%20Course%20de%20No%C3%ABl,Case%20postale,4057,1950,Sion,CH,,,,,,,,{{ $cost }},CHF,,,,,,,,QRR,{{ $qrReference }},Donation%20{{ $contact->name }},EPD,%2F%2FS1%2F10%2F2023423%2F11%2F240506%2F30%2F329493754%2F31%2F240605?op=downloadpdf" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" target="_blank">
+                        <a href="https://qr-rechnung.net/#/b,fr,SPC,0200,1,CH043000526515567201T,S,CA%20Sion%20-%20Course%20de%20No%C3%ABl,Case%20postale,4057,1950,Sion,CH,,,,,,,,{{ $cost }},CHF,,,,,,,,QRR,{{ $qrReference }},Donation%20{{ $contact->name }},EPD,%2F%2FS1%2F10%2F2023423%2F11%2F240506%2F30%2F329493754%2F31%2F240605?op=downloadpdf" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" target="_blank">
                             <span class="me-2">📄</span>
                         Faire votre don par bulletin de versement
                         </a>

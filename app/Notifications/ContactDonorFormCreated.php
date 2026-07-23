@@ -61,7 +61,7 @@ class ContactDonorFormCreated extends Notification
                 'amount.values'              => $this->donationProvisionElement->cost,
                 'amount.custom'              => true,
             ]))
-            ->line(new HtmlString('<a href="https://qr-rechnung.net/#/b,fr,SPC,0200,1,CH473000526565424140D,S,CA%20Sion%20-%20Course%20de%20No%C3%ABl,Case%20postale,4057,1950,Sion,CH,,,,,,,,'.$cost.',CHF,,,,,,,,QRR,'.$qrReference.',Donation%20'.$notifiable->name.',EPD,%2F%2FS1%2F10%2F2023423%2F11%2F240506%2F30%2F329493754%2F31%2F240605?op=downloadpdf">Par bulletin de versement (Qr)</a>'))
+            ->line(new HtmlString('<a href="https://qr-rechnung.net/#/b,fr,SPC,0200,1,CH043000526515567201T,S,CA%20Sion%20-%20Course%20de%20No%C3%ABl,Case%20postale,4057,1950,Sion,CH,,,,,,,,'.$cost.',CHF,,,,,,,,QRR,'.$qrReference.',Donation%20'.$notifiable->name.',EPD,%2F%2FS1%2F10%2F2023423%2F11%2F240506%2F30%2F329493754%2F31%2F240605?op=downloadpdf">Par bulletin de versement (Qr)</a>'))
             ->line('Par versement avec les coordonnées bancaires suivantes :')
             ->line(new HtmlString('
             CH63 0026 5265 6542 4140 D

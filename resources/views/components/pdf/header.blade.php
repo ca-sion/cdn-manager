@@ -17,7 +17,7 @@
             </table>
         </td>
         <td style="font-size: xx-small">
-            Association Course de Noël et Trail des Châteaux<br>
+            Course de Noël et Trail des Châteaux<br>
             c/o Centre athlétique de Sion<br>
             Case postale 4057<br>
             1950 Sion<br>

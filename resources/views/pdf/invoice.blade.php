@@ -125,8 +125,7 @@
                     {{ $invoice->due_date->locale('fr_CH')->isoFormat('L') }}<br>
                 @endif
                 {{ $invoice->reference ?? '-' }}<br>
-                CA Sion - Course de Noël<br>
-                et Trail des Châteaux<br>
+                CA Sion<br>
                 Case postale 4057<br>
                 1950 Sion<br>
                 CH63 0026 5265 6542 4140 D<br>
