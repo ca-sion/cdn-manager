@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ae38234ce50d2aa3a0e439112a05d59a",
+    "content-hash": "26afce97581e0a6fc3a35e391aa2ff65",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -9366,6 +9366,84 @@
             "time": "2025-12-02T11:56:42+00:00"
         },
         {
+            "name": "unnathianalytics/laragrid",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/laragrid",
+                "reference": "f315aa7c3669e9c34f955dead51f5f80501a3554"
+            },
+            "require": {
+                "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/validation": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/view": "^10.0|^11.0|^12.0|^13.0",
+                "livewire/livewire": "^3.0|^4.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "larastan/larastan": "^2.9|^3.0",
+                "laravel/pint": "^1.13",
+                "orchestra/testbench": "^8.21|^9.0|^10.0|^11.0",
+                "pestphp/pest": "^2.34|^3.0|^4.0",
+                "pestphp/pest-plugin-laravel": "^2.4|^3.0|^4.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "LaraGrid\\LaraGridServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "LaraGrid\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "LaraGrid\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "pest"
+                ],
+                "lint": [
+                    "pint --parallel"
+                ],
+                "types": [
+                    "phpstan analyse"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Unnathi",
+                    "email": "unnathianalytics@gmail.com"
+                }
+            ],
+            "description": "Excel-style, keyboard-first datagrid for Laravel + Livewire — display, server-side readonly, and editable grids, fully configured from the component class with zero blade wiring and zero consumer build tooling.",
+            "keywords": [
+                "alpine",
+                "datagrid",
+                "excel",
+                "grid",
+                "laravel",
+                "livewire",
+                "spreadsheet",
+                "table"
+            ],
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "vlucas/phpdotenv",
             "version": "v5.6.3",
             "source": {
@@ -14980,7 +15058,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "unnathianalytics/laragrid": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

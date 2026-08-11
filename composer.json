@@ -16,7 +16,8 @@
         "outerweb/filament-settings": "^1.2",
         "rap2hpoutre/fast-excel": "^5.6",
         "spatie/eloquent-sortable": "^4.4",
-        "sprain/swiss-qr-bill": "^4.12"
+        "sprain/swiss-qr-bill": "^4.12",
+        "unnathianalytics/laragrid": "@dev"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -75,5 +76,14 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/laragrid",
+            "options": {
+                "symlink": true
+            }
+        }
+    ]
 }
