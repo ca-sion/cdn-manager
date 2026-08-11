@@ -1,4 +1,10 @@
 @import "tailwindcss";
+@import "../../vendor/filament/filament/resources/css/theme.css";
+
+@source "../../app/**/*";
+@source "../../resources/views/**/*";
+@source "../../packages/**/*";
+@source "../../vendor/filament/**/*";
 
 @media print {
     /* ----- Réinitialisation de la mise en page de l'application ----- */

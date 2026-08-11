@@ -469,6 +469,14 @@ class ProvisionElementResource extends Resource
                         ->toggleable(),
                     TextColumn::make('vip_guests')
                         ->label('Invités')
+                        ->badge()
+                        ->separator(',')
+                        ->formatStateUsing(function ($state) {
+                            if (is_array($state)) {
+                                return $state['name'] ?? $state['label'] ?? (count($state) ? implode(', ', array_map(fn($item) => is_array($item) ? ($item['name'] ?? $item['label'] ?? json_encode($item)) : $item, $state)) : null);
+                            }
+                            return $state;
+                        })
                         ->toggleable(),
                 ]),
                 TextColumn::make('note')

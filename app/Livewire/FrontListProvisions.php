@@ -228,6 +228,14 @@ class FrontListProvisions extends Component implements HasForms, HasTable, HasAc
                     ->visible($this->isFieldInUrl('vip_response_status')),
                 TextColumn::make('vip_guests')
                     ->label('Invités')
+                    ->badge()
+                    ->separator(',')
+                    ->formatStateUsing(function ($state) {
+                        if (is_array($state)) {
+                            return $state['name'] ?? $state['label'] ?? (count($state) ? implode(', ', array_map(fn($item) => is_array($item) ? ($item['name'] ?? $item['label'] ?? json_encode($item)) : $item, $state)) : null);
+                        }
+                        return $state;
+                    })
                     ->visible($this->isFieldInUrl('vip_guests')),
                 TextColumn::make('note')
                     ->label('Note')

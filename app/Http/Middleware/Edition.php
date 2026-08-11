@@ -21,6 +21,10 @@ class Edition
             $editionId = setting('edition_id', config('cdn.default_edition_id'));
         }
 
+        if (is_array($editionId)) {
+            $editionId = $editionId['edition_id'] ?? current($editionId) ?? config('cdn.default_edition_id');
+        }
+
         $request->session()->put('edition_id', $editionId);
 
         return $next($request);
