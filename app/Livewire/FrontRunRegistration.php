@@ -2,74 +2,39 @@
 
 namespace App\Livewire;
 
-use Throwable;
 use App\Models\Run;
 use Livewire\Component;
 use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
 use App\Notifications\RunRegistrationLink;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Carbon;
-use LaraGrid\Grid;
+use LaraGrid\Grid as LaraGrid;
 use LaraGrid\Livewire\WithLaraGrid;
 use LaraGrid\Columns\{SerialColumn, TextColumn, DateColumn, SelectColumn, CheckboxColumn, DecimalColumn};
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Placeholder;
+use Illuminate\Contracts\View\View;
 
-class FrontRunRegistration extends Component
+class FrontRunRegistration extends Component implements HasForms, HasActions
 {
+    use InteractsWithForms;
+    use InteractsWithActions;
     use WithLaraGrid;
 
+    public ?array $data = [];
     public string $type = 'company';
     public $registration = null;
 
-    // Company & School specific
-    public $company_name;
-    public $school_name;
-    public $school_postal_code;
-    public $school_locality;
-    public $school_country = 'SUI';
-    public $school_class_level;
-    public $school_class_holder_first_name;
-    public $school_class_holder_last_name;
-    public $school_class_holder_email;
-    public $school_class_holder_phone;
-
-    // Contact person
-    public $contact_first_name;
-    public $contact_last_name;
-    public $contact_email;
-    public $contact_phone;
-
-    // Invoicing & Payment
-    public $invoicing_company_name;
-    public $invoicing_address;
-    public $invoicing_address_extension;
-    public $invoicing_postal_code;
-    public $invoicing_locality;
-    public $invoicing_email;
-    public $invoicing_note;
-    public $payment_iban;
-    public $payment_note;
-
     // Grid elements array for LaraGrid
     public array $elements = [];
-
-    protected function rules(): array
-    {
-        $rules = [
-            'contact_first_name' => 'required|string|max:255',
-            'contact_last_name'  => 'required|string|max:255',
-            'contact_email'      => 'required|email|max:255',
-            'contact_phone'      => 'nullable|string|max:255',
-        ];
-
-        if ($this->type === 'company') {
-            $rules['company_name'] = 'required|string|max:255';
-        } elseif ($this->type === 'school') {
-            $rules['school_name'] = 'required|string|max:255';
-        }
-
-        return $rules;
-    }
 
     public function mount($type = null, $registration = null): void
     {
@@ -89,12 +54,15 @@ class FrontRunRegistration extends Component
                 ? RunRegistration::findOrFail($registration)
                 : $registration;
 
-            $this->fill($this->registration->toArray());
-
+            $registrationData = $this->registration->toArray();
             $registrationType = $this->registration->run_registration_type?->value ?? $this->registration->type;
             if ($registrationType) {
                 $type = is_object($registrationType) ? $registrationType->value : (string) $registrationType;
             }
+
+            $this->form->fill($registrationData);
+        } else {
+            $this->form->fill();
         }
 
         $this->type = in_array($type, ['company', 'school', 'group', 'elite']) ? $type : 'company';
@@ -119,6 +87,152 @@ class FrontRunRegistration extends Component
         } else {
             $this->elements = $this->gridMountRows('elements');
         }
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Informations sur la course & Remplissage')
+                    ->icon('heroicon-m-flag')
+                    ->collapsible()
+                    ->schema([
+                        Placeholder::make('metrics')
+                            ->label('')
+                            ->content(function (FrontRunRegistration $livewire) {
+                                $runs = Run::where(function ($query) use ($livewire) {
+                                    $query->whereJsonContains('available_for_types', $livewire->type)
+                                        ->orWhereNull('available_for_types');
+                                })->get();
+
+                                $deadline = setting('registrations_deadline');
+
+                                return view('livewire.front-run-registration-metrics', [
+                                    'runs'     => $runs,
+                                    'deadline' => $deadline ? Carbon::parse($deadline)->format('d.m.Y à H:i') : null,
+                                    'isLocked' => $livewire->isGridLocked(),
+                                ]);
+                            }),
+                    ]),
+
+                Section::make('Coordonnées de l\'organisation')
+                    ->icon('heroicon-m-building-office')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('company_name')
+                            ->label('Nom de l\'entreprise')
+                            ->required(fn (FrontRunRegistration $livewire) => $livewire->type === 'company')
+                            ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'company')
+                            ->columnSpanFull(),
+
+                        TextInput::make('school_name')
+                            ->label('Nom de l\'école / établissement')
+                            ->required(fn (FrontRunRegistration $livewire) => $livewire->type === 'school')
+                            ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school')
+                            ->columnSpanFull(),
+
+                        TextInput::make('school_postal_code')
+                            ->label('Code postal école')
+                            ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school'),
+
+                        TextInput::make('school_locality')
+                            ->label('Localité école')
+                            ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school'),
+
+                        Select::make('school_class_level')
+                            ->label('Degré / Classe')
+                            ->options([
+                                '3H' => '3H',
+                                '4H' => '4H',
+                                '5H' => '5H',
+                                '6H' => '6H',
+                                '7H' => '7H',
+                                '8H' => '8H',
+                            ])
+                            ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school'),
+
+                        TextInput::make('school_class_holder_first_name')
+                            ->label('Prénom du titulaire de classe')
+                            ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school'),
+
+                        TextInput::make('school_class_holder_last_name')
+                            ->label('Nom du titulaire de classe')
+                            ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school'),
+
+                        TextInput::make('school_class_holder_email')
+                            ->label('Email du titulaire de classe')
+                            ->email()
+                            ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school'),
+                    ]),
+
+                Section::make('Personne responsable / Contact')
+                    ->icon('heroicon-m-user')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('contact_first_name')
+                            ->label('Prénom du responsable')
+                            ->required(),
+
+                        TextInput::make('contact_last_name')
+                            ->label('Nom du responsable')
+                            ->required(),
+
+                        TextInput::make('contact_email')
+                            ->label('Adresse email du responsable')
+                            ->email()
+                            ->required(),
+
+                        TextInput::make('contact_phone')
+                            ->label('Numéro de téléphone')
+                            ->tel(),
+                    ]),
+
+                Section::make('Facturation & Règlement')
+                    ->icon('heroicon-m-credit-card')
+                    ->columns(2)
+                    ->collapsible()
+                    ->schema([
+                        TextInput::make('invoicing_company_name')
+                            ->label('Raison sociale de facturation')
+                            ->columnSpanFull(),
+
+                        TextInput::make('invoicing_address')
+                            ->label('Adresse de facturation'),
+
+                        TextInput::make('invoicing_address_extension')
+                            ->label('Complément d\'adresse'),
+
+                        TextInput::make('invoicing_postal_code')
+                            ->label('Code postal'),
+
+                        TextInput::make('invoicing_locality')
+                            ->label('Localité'),
+
+                        TextInput::make('invoicing_email')
+                            ->label('Email d\'envoi de la facture')
+                            ->email()
+                            ->columnSpanFull(),
+
+                        TextInput::make('payment_iban')
+                            ->label('IBAN de remboursement (pour Élite/Groupes)')
+                            ->visible(fn (FrontRunRegistration $livewire) => in_array($livewire->type, ['elite', 'group', 'company']))
+                            ->columnSpanFull(),
+
+                        Textarea::make('invoicing_note')
+                            ->label('Remarque facturation')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Participants à inscrire (Grille interactive)')
+                    ->icon('heroicon-m-table-cells')
+                    ->description('Remplissez les informations de chaque coureur dans le tableau interactif ci-dessous.')
+                    ->schema([
+                        Placeholder::make('laragrid_table')
+                            ->label('')
+                            ->content(fn () => view('livewire.front-run-registration-grid-field')),
+                    ]),
+            ])
+            ->statePath('data');
     }
 
     private function emptyElement(): array
@@ -176,27 +290,13 @@ class FrontRunRegistration extends Component
             TextColumn::make('last_name')->label('Nom')->grow(),
             DateColumn::make('birthdate')->label('Date de naissance')->width(130),
             SelectColumn::make('gender')->label('Sexe')->options(['M' => 'M', 'F' => 'F'])->width(80),
+            TextColumn::make('nationality')->label('Nationalité')->width(100),
+            TextColumn::make('email')->label('Email')->grow(),
+            SelectColumn::make('run_id')->label('Course')->options($runOptions)->grow(),
+            TextColumn::make('bloc')->label('Bloc')->width(100),
+            CheckboxColumn::make('with_video')->label('Vidéo')->width(80),
+            TextColumn::make('voucher_code')->label('Voucher')->width(120),
         ];
-
-        if ($this->type === 'group') {
-            $columns = array_merge($columns, [
-                TextColumn::make('nationality')->label('Nationalité')->width(100),
-                TextColumn::make('email')->label('Email')->grow(),
-                TextColumn::make('team')->label('Club')->grow(),
-                SelectColumn::make('run_id')->label('Course')->options($runOptions)->grow(),
-                CheckboxColumn::make('with_video')->label('Vidéo')->width(80),
-            ]);
-        }
-
-        if ($this->type === 'company') {
-            $columns = array_merge($columns, [
-                TextColumn::make('nationality')->label('Nationalité')->width(100),
-                TextColumn::make('email')->label('Email')->grow(),
-                TextColumn::make('bloc')->label('Bloc')->width(100),
-                CheckboxColumn::make('with_video')->label('Vidéo')->width(80),
-                TextColumn::make('voucher_code')->label('Voucher')->width(120),
-            ]);
-        }
 
         if ($this->type === 'elite') {
             $columns = array_merge($columns, [
@@ -219,7 +319,7 @@ class FrontRunRegistration extends Component
             ]);
         }
 
-        $grid = Grid::make('elements')
+        $grid = LaraGrid::make('elements')
             ->rowsFrom('elements')
             ->authorize(fn () => true);
 
@@ -266,7 +366,7 @@ class FrontRunRegistration extends Component
 
     public function save()
     {
-        $this->validate();
+        $formData = $this->form->getState();
 
         $isNew = ! $this->registration || ! $this->registration->exists;
 
@@ -274,37 +374,16 @@ class FrontRunRegistration extends Component
             $this->registration = new RunRegistration();
         }
 
-        $this->registration->fill([
-            'run_registration_type'          => $this->type,
-            'company_name'                   => $this->company_name,
-            'school_name'                    => $this->school_name,
-            'school_postal_code'             => $this->school_postal_code,
-            'school_locality'                => $this->school_locality,
-            'school_country'                 => $this->school_country,
-            'school_class_level'             => $this->school_class_level,
-            'school_class_holder_first_name' => $this->school_class_holder_first_name,
-            'school_class_holder_last_name'  => $this->school_class_holder_last_name,
-            'school_class_holder_email'      => $this->school_class_holder_email,
-            'school_class_holder_phone'      => $this->school_class_holder_phone,
-            'contact_first_name'             => $this->contact_first_name,
-            'contact_last_name'              => $this->contact_last_name,
-            'contact_email'                  => $this->contact_email,
-            'contact_phone'                  => $this->contact_phone,
-            'invoicing_company_name'         => $this->invoicing_company_name,
-            'invoicing_address'              => $this->invoicing_address,
-            'invoicing_address_extension'    => $this->invoicing_address_extension,
-            'invoicing_postal_code'          => $this->invoicing_postal_code,
-            'invoicing_locality'             => $this->invoicing_locality,
-            'invoicing_email'                => $this->invoicing_email,
-            'invoicing_note'                 => $this->invoicing_note,
-            'payment_iban'                   => $this->payment_iban,
-            'payment_note'                   => $this->payment_note,
-        ]);
+        $this->registration->fill(array_merge($formData, [
+            'run_registration_type' => $this->type,
+        ]));
 
         $this->registration->save();
 
         if (! $this->isGridLocked()) {
-            $teamName = $this->company_name ?: ($this->school_name ?: ($this->contact_first_name . ' ' . $this->contact_last_name));
+            $teamName = ($formData['company_name'] ?? null)
+                ?: (($formData['school_name'] ?? null)
+                ?: (($formData['contact_first_name'] ?? '') . ' ' . ($formData['contact_last_name'] ?? '')));
 
             $cleanRows = $this->gridRows('elements');
             $keptIds = [];
@@ -348,7 +427,7 @@ class FrontRunRegistration extends Component
         if ($isNew) {
             try {
                 $this->registration->notify(new RunRegistrationLink());
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 // Ignore mail dispatch errors
             }
 
@@ -362,19 +441,8 @@ class FrontRunRegistration extends Component
             : 'Inscription enregistrée avec succès.');
     }
 
-    public function render()
+    public function render(): View
     {
-        $runs = Run::where(function ($query) {
-            $query->whereJsonContains('available_for_types', $this->type)
-                ->orWhereNull('available_for_types');
-        })->get();
-
-        $deadline = setting('registrations_deadline');
-
-        return view('livewire.front-run-registration', [
-            'runs'     => $runs,
-            'deadline' => $deadline ? Carbon::parse($deadline)->format('d.m.Y à H:i') : null,
-            'isLocked' => $this->isGridLocked(),
-        ])->layout('layouts.app');
+        return view('livewire.front-run-registration');
     }
 }

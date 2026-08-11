@@ -42,15 +42,15 @@ class RunRegistrationSystemTest extends TestCase
         $run = Run::factory()->create(['name' => 'Course 10km', 'cost' => 35.00]);
 
         Livewire::test(FrontRunRegistration::class, ['type' => 'company'])
-            ->set('company_name', 'Acme Corp')
-            ->set('contact_first_name', 'Jean')
-            ->set('contact_last_name', 'Dupont')
-            ->set('contact_email', 'jean.dupont@acme.test')
-            ->set('contact_phone', '0791234567')
-            ->set('invoicing_company_name', 'Acme Corp Holding')
-            ->set('invoicing_address', 'Rue de la Gare 1')
-            ->set('invoicing_postal_code', '1950')
-            ->set('invoicing_locality', 'Sion')
+            ->set('data.company_name', 'Acme Corp')
+            ->set('data.contact_first_name', 'Jean')
+            ->set('data.contact_last_name', 'Dupont')
+            ->set('data.contact_email', 'jean.dupont@acme.test')
+            ->set('data.contact_phone', '0791234567')
+            ->set('data.invoicing_company_name', 'Acme Corp Holding')
+            ->set('data.invoicing_address', 'Rue de la Gare 1')
+            ->set('data.invoicing_postal_code', '1950')
+            ->set('data.invoicing_locality', 'Sion')
             ->set('elements', [
                 [
                     '_k'         => 'l1',
@@ -96,8 +96,8 @@ class RunRegistrationSystemTest extends TestCase
         $response->assertStatus(200);
 
         Livewire::test(FrontRunRegistration::class, ['registration' => $registration->id])
-            ->assertSet('company_name', null)
-            ->assertSet('contact_first_name', 'Jean')
+            ->assertSet('data.company_name', null)
+            ->assertSet('data.contact_first_name', 'Jean')
             ->assertCount('elements', 1);
     }
 
