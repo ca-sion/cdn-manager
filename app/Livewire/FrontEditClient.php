@@ -2,12 +2,14 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use App\Models\Client;
 use Livewire\Component;
-use Filament\Forms\Form;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\View\View;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Repeater;
 use Illuminate\Database\Eloquent\Model;
@@ -17,8 +19,9 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 
-class FrontEditClient extends Component implements HasForms
+class FrontEditClient extends Component implements HasForms, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public ?array $data = [];
@@ -30,10 +33,10 @@ class FrontEditClient extends Component implements HasForms
         $this->form->fill($this->record->attributesToArray());
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Prestations')
                     ->extraAttributes(['class' => '!bg-primary-50'])
                     ->schema([

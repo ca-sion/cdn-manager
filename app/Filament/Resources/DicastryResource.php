@@ -2,10 +2,18 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\DicastryResource\Pages\ListDicastries;
+use App\Filament\Resources\DicastryResource\Pages\CreateDicastry;
+use App\Filament\Resources\DicastryResource\Pages\EditDicastry;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Dicastry;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Filament\Resources\DicastryResource\Pages;
@@ -14,21 +22,21 @@ class DicastryResource extends Resource
 {
     protected static ?string $model = Dicastry::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $pluralModelLabel = 'Dicastères';
 
     protected static ?string $modelLabel = 'Dicastère';
 
-    protected static ?string $navigationGroup = 'Collections';
+    protected static string | \UnitEnum | null $navigationGroup = 'Collections';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->label('Nom'),
-                Forms\Components\TextInput::make('description')
+                TextInput::make('description')
                     ->label('Description'),
             ]);
     }
@@ -37,21 +45,21 @@ class DicastryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nom')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label('Description'),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -66,9 +74,9 @@ class DicastryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListDicastries::route('/'),
-            'create' => Pages\CreateDicastry::route('/create'),
-            'edit'   => Pages\EditDicastry::route('/{record}/edit'),
+            'index'  => ListDicastries::route('/'),
+            'create' => CreateDicastry::route('/create'),
+            'edit'   => EditDicastry::route('/{record}/edit'),
         ];
     }
 }

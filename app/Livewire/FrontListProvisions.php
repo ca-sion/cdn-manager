@@ -2,6 +2,9 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Carbon\Carbon;
 use App\Classes\Price;
 use Livewire\Component;
 use Filament\Tables\Table;
@@ -20,8 +23,9 @@ use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
-class FrontListProvisions extends Component implements HasForms, HasTable
+class FrontListProvisions extends Component implements HasForms, HasTable, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
     use InteractsWithTable;
 
@@ -260,7 +264,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                         '<a href="'.$record->documents?->where('id', $state)->first()?->getFirstMediaUrl('*').'">'.
                         '📄 '.
                         $record->documents?->where('id', $state)->first()?->name.' ('.
-                        \Carbon\Carbon::parse($record->documents?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
+                        Carbon::parse($record->documents?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'
                     ))
                     ->verticallyAlignStart()
@@ -275,7 +279,7 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                         '<a href="'.$record->recipient?->invoices?->where('id', $state)->first()?->link.'" target="_blank">'.
                         '🧾 '.
                         $record->invoices?->where('id', $state)->first()?->number.' ('.
-                        \Carbon\Carbon::parse($record->recipient?->invoices?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
+                        Carbon::parse($record->recipient?->invoices?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'.
                         ($record->recipient?->invoices?->where('id', $state)->first()?->status->value == 'paid' ? ' ✓' : null)
                     ))
@@ -294,10 +298,10 @@ class FrontListProvisions extends Component implements HasForms, HasTable
                     ->relationship('edition', 'year'),
             ])
             ->filtersFormColumns(3)
-            ->actions([
+            ->recordActions([
                 // ...
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // ...
             ]);
     }

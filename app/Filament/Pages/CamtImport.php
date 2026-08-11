@@ -2,10 +2,11 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Schemas\Schema;
+use Exception;
 use App\Models\Invoice;
 use Genkgo\Camt\Config;
 use Genkgo\Camt\Reader;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Illuminate\Support\Carbon;
 use App\Enums\InvoiceStatusEnum;
@@ -20,9 +21,9 @@ class CamtImport extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.pages.camt-import';
+    protected string $view = 'filament.pages.camt-import';
 
     protected static bool $shouldRegisterNavigation = false;
 
@@ -35,10 +36,10 @@ class CamtImport extends Page implements HasForms
         $this->form->fill();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 FileUpload::make('camt_file')
                     ->label('Fichier CAMT.054 (XML)')
                     ->acceptedFileTypes(['application/xml', 'text/xml'])
@@ -134,7 +135,7 @@ class CamtImport extends Page implements HasForms
                 ->success()
                 ->send();
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
 
             Notification::make()

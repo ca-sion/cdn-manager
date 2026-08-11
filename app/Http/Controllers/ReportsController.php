@@ -566,7 +566,7 @@ class ReportsController extends Controller
      * Aplatit les attributs de relations spécifiées sur chaque élément d'une collection.
      * Gère les relations BelongsTo/HasOne et agrège les relations HasMany.
      *
-     * @param  \Illuminate\Support\Collection  $collection  La collection Eloquent à transformer.
+     * @param Collection $collection La collection Eloquent à transformer.
      * @param  array  $relations  Les relations à aplatir (ex: ['provision', 'items']).
      */
     protected function flattenRelations(Collection $collection, array $relations): Collection

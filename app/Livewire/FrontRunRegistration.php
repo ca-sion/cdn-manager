@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Throwable;
 use App\Models\Run;
 use Livewire\Component;
 use App\Models\RunRegistration;
@@ -347,7 +348,7 @@ class FrontRunRegistration extends Component
         if ($isNew) {
             try {
                 $this->registration->notify(new RunRegistrationLink());
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 // Ignore mail dispatch errors
             }
 

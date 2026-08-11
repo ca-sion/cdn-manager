@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProvisionResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\ProvisionResource;
@@ -13,7 +14,7 @@ class EditProvision extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
             $this->getSaveFormAction()->formId('form'),
         ];
     }

@@ -2,45 +2,61 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TextInputColumn;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Columns\CheckboxColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\ReplicateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ProductResource\Pages\ListProducts;
+use App\Filament\Resources\ProductResource\Pages\CreateProduct;
+use App\Filament\Resources\ProductResource\Pages\EditProduct;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Product;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\DeleteAction;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Actions\ReplicateAction;
 use App\Filament\Resources\ProductResource\Pages;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $pluralModelLabel = 'Produits';
 
     protected static ?string $modelLabel = 'Produit';
 
-    protected static ?string $navigationGroup = 'Collections';
+    protected static string | \UnitEnum | null $navigationGroup = 'Collections';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->label('Nom'),
-                Forms\Components\TextInput::make('code')
+                TextInput::make('code')
                     ->label('Code'),
-                Forms\Components\TextInput::make('cost')
+                TextInput::make('cost')
                     ->label('Prix')
                     ->numeric()
                     ->inputMode('decimal')
                     ->prefix('CHF'),
-                Forms\Components\Select::make('tax_rate')
+                Select::make('tax_rate')
                     ->label('TVA')
                     ->options([
                         '8.1' => '8.1',
@@ -48,12 +64,12 @@ class ProductResource extends Resource
                         '2.6' => '2.1',
                     ])
                     ->suffix('%'),
-                Forms\Components\Checkbox::make('include_vat')
+                Checkbox::make('include_vat')
                     ->label('Inclure TVA')
                     ->inline(false),
-                Forms\Components\TextInput::make('unit')
+                TextInput::make('unit')
                     ->label('Unité'),
-                Forms\Components\Toggle::make('is_active')
+                Toggle::make('is_active')
                     ->label('Actif')
                     ->default(true),
             ]);
@@ -63,7 +79,7 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nom')
                     ->searchable(),
                 /*
@@ -71,16 +87,16 @@ class ProductResource extends Resource
                     ->label('Code')
                     ->searchable(),
                 */
-                Tables\Columns\TextInputColumn::make('code')
+                TextInputColumn::make('code')
                     ->label('Code')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('cost')
+                TextColumn::make('cost')
                     ->label('Prix')
                     ->money('CHF', locale: 'fr_CH'),
-                Tables\Columns\TextColumn::make('tax_rate')
+                TextColumn::make('tax_rate')
                     ->label('TVA')
                     ->numeric(),
-                Tables\Columns\SelectColumn::make('tax_rate')
+                SelectColumn::make('tax_rate')
                     ->label('TVA')
                     ->options([
                         '8.1' => '8.1',
@@ -88,36 +104,36 @@ class ProductResource extends Resource
                         '2.6' => '2.1',
                     ]),
 
-                Tables\Columns\CheckboxColumn::make('include_vat')
+                CheckboxColumn::make('include_vat')
                     ->label('Inclure TVA'),
                 /*
                 Tables\Columns\TextColumn::make('unit')
                     ->label('Unité'),
                 */
-                Tables\Columns\TextInputColumn::make('unit')
+                TextInputColumn::make('unit')
                     ->label('Unité'),
-                Tables\Columns\ToggleColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     ->label('Actif')
                     ->extraAttributes(['style' => 'padding-top: 0;padding-bottom: 0;']),
             ])
             ->filters([
-                Tables\Filters\Filter::make('is_active')
+                Filter::make('is_active')
                     ->label('Uniquement actifs')
                     ->query(fn (Builder $query): Builder => $query->active())
                     ->default(),
             ])
-            ->actions([
+            ->recordActions([
                 ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
+                    EditAction::make(),
                     ReplicateAction::make()->successRedirectUrl(fn (Model $replica): string => route('filament.admin.resources.products.edit', [
                         'record' => $replica,
                     ])),
                     DeleteAction::make(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -132,9 +148,9 @@ class ProductResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProducts::route('/'),
-            'create' => Pages\CreateProduct::route('/create'),
-            'edit'   => Pages\EditProduct::route('/{record}/edit'),
+            'index'  => ListProducts::route('/'),
+            'create' => CreateProduct::route('/create'),
+            'edit'   => EditProduct::route('/{record}/edit'),
         ];
     }
 }

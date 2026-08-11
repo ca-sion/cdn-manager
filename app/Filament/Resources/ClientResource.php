@@ -2,12 +2,32 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\BulkAction;
+use Exception;
+use Filament\Support\Enums\Width;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ExportAction;
+use App\Filament\Resources\ClientResource\Pages\ListClients;
+use App\Filament\Resources\ClientResource\Pages\CreateClient;
+use App\Filament\Resources\ClientResource\Pages\EditClient;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Client;
 use App\Models\Edition;
 use Livewire\Component;
-use Filament\Forms\Form;
 use App\Models\Provision;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
@@ -16,21 +36,15 @@ use App\Models\ClientEngagement;
 use Filament\Resources\Resource;
 use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
-use Filament\Forms\Components\Tabs;
-use Filament\Tables\Actions\Action;
 use Illuminate\Contracts\View\View;
 use App\Services\ClientMergeService;
 use Filament\Forms\Components\Radio;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Forms\Components\Select;
-use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
 use App\Filament\Exports\ClientExporter;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Tables\Actions\ActionGroup;
 use App\Enums\ProvisionElementStatusEnum;
-use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\TextInputColumn;
@@ -54,7 +68,7 @@ class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-home-modern';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-home-modern';
 
     protected static ?string $pluralModelLabel = 'Clients';
 
@@ -67,55 +81,55 @@ class ClientResource extends Resource
         return ['name', 'email', 'long_name', 'note'];
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema([
+            ->components([
                 Tabs::make('Tabs')
                     ->persistTabInQueryString()
                     ->tabs([
-                        Tabs\Tab::make('Base')
+                        Tab::make('Base')
                             ->columns(2)
                             ->schema([
-                                Forms\Components\TextInput::make('name')
+                                TextInput::make('name')
                                     ->label('Nom')
                                     ->required(),
-                                Forms\Components\TextInput::make('long_name')
+                                TextInput::make('long_name')
                                     ->label('Nom long'),
-                                Forms\Components\Select::make('category_id')
+                                Select::make('category_id')
                                     ->label('Catégorie')
                                     ->required()
                                     ->relationship('category', 'name'),
-                                Forms\Components\Textarea::make('note')
+                                Textarea::make('note')
                                     ->label('Note'),
                             ]),
-                        Tabs\Tab::make('Contact')
+                        Tab::make('Contact')
                             ->columns(12)
                             ->schema([
-                                Forms\Components\TextInput::make('email')
+                                TextInput::make('email')
                                     ->label('Email')
                                     ->email()
                                     ->columnSpan(4),
-                                Forms\Components\TextInput::make('phone')
+                                TextInput::make('phone')
                                     ->label('Téléphone')
                                     ->tel()
                                     ->columnSpan(4),
-                                Forms\Components\TextInput::make('website')
+                                TextInput::make('website')
                                     ->label('Site web')
                                     ->columnSpan(4),
-                                Forms\Components\TextInput::make('address')
+                                TextInput::make('address')
                                     ->label('Adresse')
                                     ->required()
                                     ->columnSpan(4),
-                                Forms\Components\TextInput::make('address_extension')
+                                TextInput::make('address_extension')
                                     ->label('Adresse (complément)')
                                     ->columnSpan(3),
-                                Forms\Components\TextInput::make('postal_code')
+                                TextInput::make('postal_code')
                                     ->label('Code postal')
                                     ->required()
                                     ->columnSpan(2),
-                                Forms\Components\TextInput::make('locality')
+                                TextInput::make('locality')
                                     ->label('Localité')
                                     ->required()
                                     ->columnSpan(3),
@@ -124,48 +138,48 @@ class ClientResource extends Resource
                                 ->label('Pays'),
                             */
                             ]),
-                        Tabs\Tab::make('Facturation')
+                        Tab::make('Facturation')
                             ->columns(2)
                             ->schema([
-                                Forms\Components\Fieldset::make('Contact et adresse de facturation')
+                                Fieldset::make('Contact et adresse de facturation')
                                     // ->description('Laisser vide si pas de changement par rapport à l\'adresse de base')
                                     ->columns(12)
                                     ->schema([
-                                        Forms\Components\TextInput::make('invoicing_name')
+                                        TextInput::make('invoicing_name')
                                             ->label('Nom')
                                             ->columnSpan(6),
-                                        Forms\Components\TextInput::make('invoicing_email')
+                                        TextInput::make('invoicing_email')
                                             ->label('Email')
                                             ->columnSpan(6),
-                                        Forms\Components\TextInput::make('invoicing_address')
+                                        TextInput::make('invoicing_address')
                                             ->label('Adresse')
                                             ->columnSpan(4),
-                                        Forms\Components\TextInput::make('invoicing_address_extension')
+                                        TextInput::make('invoicing_address_extension')
                                             ->label('Adresse (complément)')
                                             ->columnSpan(3),
-                                        Forms\Components\TextInput::make('invoicing_postal_code')
+                                        TextInput::make('invoicing_postal_code')
                                             ->label('Code postal')
                                             ->columnSpan(2),
-                                        Forms\Components\TextInput::make('invoicing_locality')
+                                        TextInput::make('invoicing_locality')
                                             ->label('Localité')
                                             ->columnSpan(3),
                                     ]),
-                                Forms\Components\Fieldset::make('Relation bancaire')
+                                Fieldset::make('Relation bancaire')
                                     ->columns(3)
                                     ->schema([
-                                        Forms\Components\TextInput::make('ide')
+                                        TextInput::make('ide')
                                             ->label('CH-IDE'),
-                                        Forms\Components\TextInput::make('iban')
+                                        TextInput::make('iban')
                                             ->label('IBAN'),
-                                        Forms\Components\TextInput::make('iban_qr')
+                                        TextInput::make('iban_qr')
                                             ->label('QR IBAN'),
                                     ]),
-                                Forms\Components\Textarea::make('invoicing_note')
+                                Textarea::make('invoicing_note')
                                     ->label('Note pour la facturation')
                                     ->autosize()
                                     ->columnSpanFull(),
                             ]),
-                        Tabs\Tab::make('Style')
+                        Tab::make('Style')
                             ->schema([
                                 SpatieMediaLibraryFileUpload::make('logo')
                                     ->label('Logo')
@@ -183,73 +197,73 @@ class ClientResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('category.name')
+                TextColumn::make('category.name')
                     ->badge()
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('currentEngagement.stage')
+                TextColumn::make('currentEngagement.stage')
                     ->label('Progression')
                     ->badge()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('currentEngagement.status')
+                TextColumn::make('currentEngagement.status')
                     ->label('Statut')
                     ->badge()
                     ->toggleable(),
                 TextInputColumn::make('currentEngagement.responsible')
                     ->label('Responsable')
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('long_name')
+                TextColumn::make('long_name')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 SpatieMediaLibraryImageColumn::make('logo')
                     ->collection('logos'),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
+                TextColumn::make('phone')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('address')
+                TextColumn::make('address')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('address_extension')
+                TextColumn::make('address_extension')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('locality')
+                TextColumn::make('locality')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('postal_code')
+                TextColumn::make('postal_code')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('currentEngagement.sent_at')
+                TextColumn::make('currentEngagement.sent_at')
                     ->label('Env. le')
                     ->date('d.m.y')
                     ->dateTimeTooltip('d.m.Y H:i:s')
                     ->toggleable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('currentEngagement.viewed_at')
+                TextColumn::make('currentEngagement.viewed_at')
                     ->label('Vu le')
                     ->date('d.m.y')
                     ->dateTimeTooltip('d.m.Y H:i:s')
                     ->toggleable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('currentEngagement.relaunched_at')
+                TextColumn::make('currentEngagement.relaunched_at')
                     ->label('Rel. le')
                     ->date('d.m.y')
                     ->dateTimeTooltip('d.m.Y H:i:s')
                     ->toggleable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('currentInvoices.number')
+                TextColumn::make('currentInvoices.number')
                     ->label('Factures')
                     ->toggleable()
                     ->formatStateUsing(fn (Model $record): View => view(
@@ -258,7 +272,7 @@ class ClientResource extends Resource
                     )),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
                 SelectFilter::make('category')
                     ->label('Catégorie')
                     ->multiple()
@@ -320,18 +334,18 @@ class ClientResource extends Resource
                         });
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('pdf')
+                    EditAction::make(),
+                    Action::make('pdf')
                         ->label('Fiche')
                         ->url(fn (Model $record): string => $record->pdfLink)
                         ->openUrlInNewTab()
                         ->icon('heroicon-o-document'),
                 ])->iconButton(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     BulkAction::make('send_advertiser_form')
                         ->label('Envoyer le formulaire annonceur')
                         ->icon('heroicon-o-envelope')
@@ -593,7 +607,7 @@ class ClientResource extends Resource
                                         $clientB->id => $clientB->name,
                                     ])
                                     ->required(),
-                                Forms\Components\Fieldset::make('Données à conserver')
+                                Fieldset::make('Données à conserver')
                                     ->columns(2)
                                     ->schema(function () use ($clientA, $clientB) {
                                         $fields = ['name', 'long_name', 'email', 'phone', 'website', 'address', 'address_extension', 'postal_code', 'locality', 'invoicing_name', 'invoicing_email', 'invoicing_address', 'invoicing_address_extension', 'invoicing_postal_code', 'invoicing_locality', 'ide', 'iban', 'iban_qr'];
@@ -609,11 +623,11 @@ class ClientResource extends Resource
                                                     ->default('A');
                                             }
                                         }
-                                        $radioFields[] = Forms\Components\Textarea::make('note')
+                                        $radioFields[] = Textarea::make('note')
                                             ->label('Note')
                                             ->default(trim($clientA->note."\n---\n".$clientB->note))
                                             ->helperText('Les notes des deux clients seront fusionnées par défaut.');
-                                        $radioFields[] = Forms\Components\Textarea::make('invoicing_note')
+                                        $radioFields[] = Textarea::make('invoicing_note')
                                             ->label('Note de facturation')
                                             ->default(trim($clientA->invoicing_note."\n---\n".$clientB->invoicing_note))
                                             ->helperText('Les notes de facturation des deux clients seront fusionnées par défaut.');
@@ -642,7 +656,7 @@ class ClientResource extends Resource
                                     ->success()
                                     ->send();
 
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 Notification::make()
                                     ->title('Erreur lors de la fusion')
                                     ->body($e->getMessage())
@@ -650,18 +664,18 @@ class ClientResource extends Resource
                                     ->send();
                             }
                         })
-                        ->modalWidth(MaxWidth::FourExtraLarge),
+                        ->modalWidth(Width::FourExtraLarge),
 
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                ])->dropdownWidth(MaxWidth::Large),
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                ])->dropdownWidth(Width::Large),
             ])
             ->headerActions([
                 Action::make('provisions_comparison_report')
                     ->label('Rapport comparatif des prestations')
                     ->icon('heroicon-o-chart-bar-square')
-                    ->form(function () {
+                    ->schema(function () {
                         $editions = Edition::orderBy('year', 'desc')->pluck('year', 'id');
                         $currentEdition = Edition::find(AppHelper::getCurrentEditionId());
                         $previousEdition = Edition::where('year', '<', $currentEdition?->year)->orderBy('year', 'desc')->first();
@@ -715,9 +729,9 @@ class ClientResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListClients::route('/'),
-            'create' => Pages\CreateClient::route('/create'),
-            'edit'   => Pages\EditClient::route('/{record}/edit'),
+            'index'  => ListClients::route('/'),
+            'create' => CreateClient::route('/create'),
+            'edit'   => EditClient::route('/{record}/edit'),
         ];
     }
 }

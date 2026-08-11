@@ -2,9 +2,28 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Exception;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use Illuminate\Support\Collection;
+use App\Filament\Resources\RunRegistrationResource\RelationManagers\RunRegistrationElementsRelationManager;
+use App\Filament\Resources\RunRegistrationResource\Pages\ListRunRegistrations;
+use App\Filament\Resources\RunRegistrationResource\Pages\CreateRunRegistration;
+use App\Filament\Resources\RunRegistrationResource\Pages\EditRunRegistration;
 use Filament\Forms;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Models\Client;
 use App\Models\RunRegistration;
@@ -23,102 +42,102 @@ class RunRegistrationResource extends Resource
 {
     protected static ?string $model = RunRegistration::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static ?string $navigationGroup = 'Courses';
+    protected static string | \UnitEnum | null $navigationGroup = 'Courses';
 
     protected static ?string $modelLabel = 'Inscription course';
 
     protected static ?string $pluralModelLabel = 'Inscriptions courses';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Tabs::make('Details')
+        return $schema
+            ->components([
+                Tabs::make('Details')
                     ->tabs([
-                        Forms\Components\Tabs\Tab::make('Général')
+                        Tab::make('Général')
                             ->schema([
-                                Forms\Components\Select::make('run_registration_type')
+                                Select::make('run_registration_type')
                                     ->label('Type d\'inscription')
                                     ->options(RunRegistrationType::class)
                                     ->required()
                                     ->reactive(),
-                                Forms\Components\Select::make('client_id')
+                                Select::make('client_id')
                                     ->label('Client associé')
                                     ->relationship('client', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->nullable(),
-                                Forms\Components\TextInput::make('company_name')
+                                TextInput::make('company_name')
                                     ->label('Nom de l\'entreprise')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['company', RunRegistrationType::Company->value, RunRegistrationType::Company])),
-                                Forms\Components\TextInput::make('school_name')
+                                TextInput::make('school_name')
                                     ->label('Nom de l\'école')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                Forms\Components\TextInput::make('school_postal_code')
+                                TextInput::make('school_postal_code')
                                     ->label('N° Postal École')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                Forms\Components\TextInput::make('school_locality')
+                                TextInput::make('school_locality')
                                     ->label('Localité École')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                Forms\Components\TextInput::make('school_country')
+                                TextInput::make('school_country')
                                     ->label('Pays École')
                                     ->default('SUI')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                Forms\Components\TextInput::make('school_class_level')
+                                TextInput::make('school_class_level')
                                     ->label('Niveau / Classe')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                Forms\Components\TextInput::make('school_class_holder_first_name')
+                                TextInput::make('school_class_holder_first_name')
                                     ->label('Prénom titulaire classe')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                Forms\Components\TextInput::make('school_class_holder_last_name')
+                                TextInput::make('school_class_holder_last_name')
                                     ->label('Nom titulaire classe')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                Forms\Components\TextInput::make('school_class_holder_email')
+                                TextInput::make('school_class_holder_email')
                                     ->label('Email titulaire classe')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                Forms\Components\TextInput::make('school_class_holder_phone')
+                                TextInput::make('school_class_holder_phone')
                                     ->label('Tél titulaire classe')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
                             ])->columns(2),
 
-                        Forms\Components\Tabs\Tab::make('Personne de contact')
+                        Tab::make('Personne de contact')
                             ->schema([
-                                Forms\Components\TextInput::make('contact_first_name')
+                                TextInput::make('contact_first_name')
                                     ->label('Prénom contact')
                                     ->required(),
-                                Forms\Components\TextInput::make('contact_last_name')
+                                TextInput::make('contact_last_name')
                                     ->label('Nom contact')
                                     ->required(),
-                                Forms\Components\TextInput::make('contact_email')
+                                TextInput::make('contact_email')
                                     ->label('Email contact')
                                     ->email()
                                     ->required(),
-                                Forms\Components\TextInput::make('contact_phone')
+                                TextInput::make('contact_phone')
                                     ->label('Téléphone contact'),
                             ])->columns(2),
 
-                        Forms\Components\Tabs\Tab::make('Facturation & Paiement')
+                        Tab::make('Facturation & Paiement')
                             ->schema([
-                                Forms\Components\TextInput::make('invoicing_company_name')
+                                TextInput::make('invoicing_company_name')
                                     ->label('Raison sociale facturation'),
-                                Forms\Components\TextInput::make('invoicing_address')
+                                TextInput::make('invoicing_address')
                                     ->label('Adresse facturation'),
-                                Forms\Components\TextInput::make('invoicing_address_extension')
+                                TextInput::make('invoicing_address_extension')
                                     ->label('Complément adresse'),
-                                Forms\Components\TextInput::make('invoicing_postal_code')
+                                TextInput::make('invoicing_postal_code')
                                     ->label('Code postal'),
-                                Forms\Components\TextInput::make('invoicing_locality')
+                                TextInput::make('invoicing_locality')
                                     ->label('Localité facturation'),
-                                Forms\Components\TextInput::make('invoicing_email')
+                                TextInput::make('invoicing_email')
                                     ->label('Email facturation')
                                     ->email(),
-                                Forms\Components\TextInput::make('payment_iban')
+                                TextInput::make('payment_iban')
                                     ->label('IBAN de paiement'),
-                                Forms\Components\Textarea::make('invoicing_note')
+                                Textarea::make('invoicing_note')
                                     ->label('Note de facturation'),
-                                Forms\Components\Textarea::make('payment_note')
+                                Textarea::make('payment_note')
                                     ->label('Note de paiement'),
                             ])->columns(2),
                     ])->columnSpanFull(),
@@ -129,14 +148,14 @@ class RunRegistrationResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')
+                TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('run_registration_type')
+                TextColumn::make('run_registration_type')
                     ->label('Type')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('organism')
+                TextColumn::make('organism')
                     ->label('Organisme / Nom')
                     ->getStateUsing(fn ($record) => $record->company_name ?: ($record->school_name ?: ($record->contact_first_name.' '.$record->contact_last_name)))
                     ->searchable(query: function (Builder $query, string $search) {
@@ -145,7 +164,7 @@ class RunRegistrationResource extends Resource
                             ->orWhere('contact_first_name', 'like', "%{$search}%")
                             ->orWhere('contact_last_name', 'like', "%{$search}%");
                     }),
-                Tables\Columns\TextColumn::make('contact_name')
+                TextColumn::make('contact_name')
                     ->label('Personne de contact')
                     ->getStateUsing(fn ($record) => $record->contact_first_name.' '.$record->contact_last_name)
                     ->description(fn ($record) => $record->contact_email)
@@ -154,11 +173,11 @@ class RunRegistrationResource extends Resource
                             ->orWhere('contact_last_name', 'like', "%{$search}%")
                             ->orWhere('contact_email', 'like', "%{$search}%");
                     }),
-                Tables\Columns\TextColumn::make('run_registration_elements_count')
+                TextColumn::make('run_registration_elements_count')
                     ->label('Participants')
                     ->counts('runRegistrationElements')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('locality')
+                TextColumn::make('locality')
                     ->label('Localité')
                     ->getStateUsing(fn ($record) => $record->invoicing_locality ?: $record->school_locality)
                     ->sortable(query: function (Builder $query, string $direction) {
@@ -168,30 +187,30 @@ class RunRegistrationResource extends Resource
                         return $query->where('invoicing_locality', 'like', "%{$search}%")
                             ->orWhere('school_locality', 'like', "%{$search}%");
                     }),
-                Tables\Columns\TextColumn::make('client.name')
+                TextColumn::make('client.name')
                     ->label('Client')
                     ->placeholder('Non associé')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Créé le')
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('run_registration_type')
+                SelectFilter::make('run_registration_type')
                     ->label('Type d\'inscription')
                     ->options(RunRegistrationType::class),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
 
                     // Fast Client Association
-                    Tables\Actions\Action::make('associateClient')
+                    Action::make('associateClient')
                         ->label('Associer à un client')
                         ->icon('heroicon-o-user-group')
-                        ->form([
-                            Forms\Components\Select::make('client_id')
+                        ->schema([
+                            Select::make('client_id')
                                 ->label('Sélectionner le client')
                                 ->options(fn () => Client::orderBy('name')->pluck('name', 'id'))
                                 ->searchable()
@@ -204,7 +223,7 @@ class RunRegistrationResource extends Resource
                         }),
 
                     // Quick Client Creation
-                    Tables\Actions\Action::make('createClient')
+                    Action::make('createClient')
                         ->label('Créer client rapide')
                         ->icon('heroicon-o-user-plus')
                         ->requiresConfirmation()
@@ -229,14 +248,14 @@ class RunRegistrationResource extends Resource
                         ->visible(fn ($record) => $record->client_id === null),
 
                     // Automatic Invoice Generation
-                    Tables\Actions\Action::make('generateInvoice')
+                    Action::make('generateInvoice')
                         ->label('Générer facture')
                         ->icon('heroicon-o-document-currency-dollar')
                         ->action(function (RunRegistration $record) {
                             try {
                                 app(RunRegistrationService::class)->createInvoice($record);
                                 Notification::make()->title('Facture générée !')->success()->send();
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 Notification::make()->title('Erreur')->body($e->getMessage())->danger()->send();
                             }
                         })
@@ -244,7 +263,7 @@ class RunRegistrationResource extends Resource
                         ->visible(fn ($record) => $record->client_id !== null),
 
                     // Open Public Signed Form
-                    Tables\Actions\Action::make('openPublicForm')
+                    Action::make('openPublicForm')
                         ->label('Ouvrir l\'interface publique')
                         ->icon('heroicon-o-arrow-top-right-on-square')
                         ->url(fn (RunRegistration $record) => URL::signedRoute('front.run-registration.edit', [
@@ -255,7 +274,7 @@ class RunRegistrationResource extends Resource
             ])
             ->headerActions([
                 // Export Elite
-                Tables\Actions\Action::make('exportElite')
+                Action::make('exportElite')
                     ->label('Export Élite')
                     ->icon('heroicon-o-sparkles')
                     ->color('warning')
@@ -298,7 +317,7 @@ class RunRegistrationResource extends Resource
                     }),
 
                 // Export Datasport
-                Tables\Actions\Action::make('exportDatasportAll')
+                Action::make('exportDatasportAll')
                     ->label('Export Datasport')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->action(function () {
@@ -328,7 +347,7 @@ class RunRegistrationResource extends Resource
                     }),
 
                 // Export Aggregated Data
-                Tables\Actions\Action::make('exportAggregatedData')
+                Action::make('exportAggregatedData')
                     ->label('Export Données & Agrégations')
                     ->icon('heroicon-o-chart-bar')
                     ->color('success')
@@ -359,13 +378,13 @@ class RunRegistrationResource extends Resource
                         return (new FastExcel($data))->download('export_inscriptions_agrégées_'.date('Ymd_His').'.xlsx');
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('generateInvoices')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    BulkAction::make('generateInvoices')
                         ->label('Générer factures')
                         ->icon('heroicon-o-document-currency-dollar')
-                        ->action(function (\Illuminate\Support\Collection $records) {
+                        ->action(function (Collection $records) {
                             $count = 0;
                             $errors = 0;
                             foreach ($records as $record) {
@@ -373,7 +392,7 @@ class RunRegistrationResource extends Resource
                                     try {
                                         app(RunRegistrationService::class)->createInvoice($record);
                                         $count++;
-                                    } catch (\Exception $e) {
+                                    } catch (Exception $e) {
                                         $errors++;
                                     }
                                 } else {
@@ -386,10 +405,10 @@ class RunRegistrationResource extends Resource
                                 ->send();
                         })
                         ->requiresConfirmation(),
-                    Tables\Actions\BulkAction::make('exportDatasport')
+                    BulkAction::make('exportDatasport')
                         ->label('Export Datasport Sélection')
                         ->icon('heroicon-o-arrow-down-tray')
-                        ->action(function (\Illuminate\Support\Collection $records) {
+                        ->action(function (Collection $records) {
                             $data = collect();
                             foreach ($records as $registration) {
                                 foreach ($registration->runRegistrationElements as $element) {
@@ -417,16 +436,16 @@ class RunRegistrationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\RunRegistrationElementsRelationManager::class,
+            RunRegistrationElementsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListRunRegistrations::route('/'),
-            'create' => Pages\CreateRunRegistration::route('/create'),
-            'edit'   => Pages\EditRunRegistration::route('/{record}/edit'),
+            'index'  => ListRunRegistrations::route('/'),
+            'create' => CreateRunRegistration::route('/create'),
+            'edit'   => EditRunRegistration::route('/{record}/edit'),
         ];
     }
 

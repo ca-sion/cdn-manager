@@ -2,8 +2,14 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Filament\Resources\DocumentResource;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -12,9 +18,9 @@ class DocumentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'documents';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return DocumentResource::form($form);
+        return DocumentResource::form($schema);
     }
 
     public function table(Table $table): Table
@@ -22,15 +28,15 @@ class DocumentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('edition.year')
+                TextColumn::make('edition.year')
                     ->label('Edition')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nom')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->label('Type'),
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->date('d.m.Y')
                     ->sortable(),
             ])
@@ -38,15 +44,15 @@ class DocumentsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

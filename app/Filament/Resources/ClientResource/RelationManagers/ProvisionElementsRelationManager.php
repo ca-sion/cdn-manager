@@ -2,9 +2,22 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Tables;
 use App\Models\Edition;
-use Filament\Forms\Form;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
@@ -24,9 +37,9 @@ class ProvisionElementsRelationManager extends RelationManager
 
     protected static ?string $title = 'Prestations';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return ProvisionElementResource::form($form);
+        return ProvisionElementResource::form($schema);
     }
 
     public function table(Table $table): Table
@@ -42,7 +55,7 @@ class ProvisionElementsRelationManager extends RelationManager
                     ->badge()
                     ->sortable(['status'])
                     ->state(fn (Model $record) => $record->status),
-                Tables\Columns\SelectColumn::make('status')
+                SelectColumn::make('status')
                     ->label('')
                     ->options(ProvisionElementStatusEnum::class),
                 TextColumn::make('precision')
@@ -67,11 +80,11 @@ class ProvisionElementsRelationManager extends RelationManager
                     ->toggleable(),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()->icon('heroicon-o-plus'),
-                Tables\Actions\Action::make('copy_previous')
+                CreateAction::make()->icon('heroicon-o-plus'),
+                Action::make('copy_previous')
                     ->label("Reprendre de l'édition précédente")
                     ->icon('heroicon-o-clipboard-document-list')
                     ->requiresConfirmation()
@@ -121,19 +134,19 @@ class ProvisionElementsRelationManager extends RelationManager
                         Notification::make()->title('Prestations copiées')->body("{$provisionsToCopy->count()} prestations ont été copiées depuis l'édition {$previousEdition->year}.")->success()->send();
                     }),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\ForceDeleteAction::make(),
-                    Tables\Actions\RestoreAction::make(),
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    ForceDeleteAction::make(),
+                    RestoreAction::make(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
                 ]),

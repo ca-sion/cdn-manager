@@ -2,20 +2,23 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Contact;
-use Filament\Forms\Get;
 use Livewire\Component;
-use Filament\Forms\Form;
 use App\Models\Provision;
 use App\Models\ProvisionElement;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\URL;
-use Filament\Forms\Components\Wizard;
 use Illuminate\Support\Facades\Blade;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -24,8 +27,9 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Concerns\InteractsWithForms;
 use App\Notifications\ClientAdvertiserFormCreated;
 
-class AdvertiserForm extends Component implements HasForms
+class AdvertiserForm extends Component implements HasForms, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public ?array $data = [];
@@ -76,12 +80,12 @@ class AdvertiserForm extends Component implements HasForms
         }
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Wizard::make([
-                    Wizard\Step::make('Informations')
+                    Step::make('Informations')
                         ->visible(fn (AdvertiserForm $livewire) => $livewire->client !== null)
                         ->schema([
                             Placeholder::make('client_name')
@@ -101,7 +105,7 @@ class AdvertiserForm extends Component implements HasForms
                                     return new HtmlString('<ul style="list-style: disc;margin-left: 2rem;}"><li>'.implode('</li><li>', $livewire->client->getPreviousEditionProvisionElementsDetails()).'</li></ul>');
                                 }),
                         ]),
-                    Wizard\Step::make('Prestations')
+                    Step::make('Prestations')
                         ->schema([
                             Placeholder::make('Prestations description')
                                 ->label('')
@@ -166,7 +170,7 @@ class AdvertiserForm extends Component implements HasForms
                                         ->live(),
                                 ]),
                         ]),
-                    Wizard\Step::make('Données de base')
+                    Step::make('Données de base')
                         ->schema([
                             Section::make('Annonceur')
                                 ->columns(12)
@@ -238,7 +242,7 @@ class AdvertiserForm extends Component implements HasForms
                                         ->columnSpan(['md' => 4]),
                                 ]),
                         ]),
-                    Wizard\Step::make('Récapitulatif')
+                    Step::make('Récapitulatif')
                         ->schema([
                             Textarea::make('note')
                                 ->label('Remarque ou ajout que vous aimeriez communiquer'),

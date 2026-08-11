@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ClientCategoryResource\Pages;
 
+use Filament\Actions\CreateAction;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use App\Filament\Resources\ClientCategoryResource;
@@ -13,7 +14,7 @@ class ListClientCategories extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

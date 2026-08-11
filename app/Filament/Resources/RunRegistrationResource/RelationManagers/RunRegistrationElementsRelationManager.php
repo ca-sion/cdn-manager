@@ -2,9 +2,22 @@
 
 namespace App\Filament\Resources\RunRegistrationResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Enums\Gender;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -15,53 +28,53 @@ class RunRegistrationElementsRelationManager extends RelationManager
 
     protected static ?string $title = 'Participants';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Informations personnelles')
+        return $schema
+            ->components([
+                Section::make('Informations personnelles')
                     ->schema([
-                        Forms\Components\TextInput::make('first_name')->label('Prénom')->required(),
-                        Forms\Components\TextInput::make('last_name')->label('Nom')->required(),
-                        Forms\Components\DatePicker::make('birthdate')->label('Date de naissance'),
-                        Forms\Components\Select::make('gender')
+                        TextInput::make('first_name')->label('Prénom')->required(),
+                        TextInput::make('last_name')->label('Nom')->required(),
+                        DatePicker::make('birthdate')->label('Date de naissance'),
+                        Select::make('gender')
                             ->label('Sexe')
                             ->options([
                                 'M' => 'Masculin (M)',
                                 'F' => 'Féminin (F)',
                             ]),
-                        Forms\Components\TextInput::make('nationality')->label('Nationalité')->default('SUI'),
-                        Forms\Components\TextInput::make('email')->label('Email')->email(),
-                        Forms\Components\Select::make('run_id')
+                        TextInput::make('nationality')->label('Nationalité')->default('SUI'),
+                        TextInput::make('email')->label('Email')->email(),
+                        Select::make('run_id')
                             ->label('Course')
                             ->relationship('run', 'name'),
-                        Forms\Components\TextInput::make('bloc')->label('Bloc'),
-                        Forms\Components\TextInput::make('team')->label('Équipe'),
-                        Forms\Components\TextInput::make('voucher_code')->label('Code Voucher'),
-                        Forms\Components\Toggle::make('with_video')->label('Vidéo HD')->default(false),
+                        TextInput::make('bloc')->label('Bloc'),
+                        TextInput::make('team')->label('Équipe'),
+                        TextInput::make('voucher_code')->label('Code Voucher'),
+                        Toggle::make('with_video')->label('Vidéo HD')->default(false),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Spécificités Élite')
+                Section::make('Spécificités Élite')
                     ->collapsible()
                     ->schema([
-                        Forms\Components\TextInput::make('address')->label('Adresse'),
-                        Forms\Components\TextInput::make('address_extension')->label('Complément'),
-                        Forms\Components\TextInput::make('postal_code')->label('Code Postal'),
-                        Forms\Components\TextInput::make('locality')->label('Localité'),
-                        Forms\Components\TextInput::make('country')->label('Pays'),
-                        Forms\Components\TextInput::make('iban')->label('IBAN'),
-                        Forms\Components\Textarea::make('payment_note')->label('Note de paiement'),
-                        Forms\Components\Toggle::make('has_free_registration_fee')->label('Frais d\'inscription offerts'),
-                        Forms\Components\Toggle::make('has_bonus_start')->label('Prime au départ'),
-                        Forms\Components\TextInput::make('bonus_start_amount')->label('Montant départ')->numeric()->prefix('CHF'),
-                        Forms\Components\TextInput::make('bonus_ranking_amount')->label('Montant classement')->numeric()->prefix('CHF'),
-                        Forms\Components\TextInput::make('bonus_arrival_amount')->label('Montant arrivée')->numeric()->prefix('CHF'),
-                        Forms\Components\Toggle::make('has_accommodation')->label('Hébergement'),
-                        Forms\Components\Toggle::make('accommodation_friday')->label('Logement Vendredi'),
-                        Forms\Components\Toggle::make('accommodation_saturday')->label('Logement Samedi'),
-                        Forms\Components\Textarea::make('accommodation_precision')->label('Précisions logement'),
-                        Forms\Components\Toggle::make('has_expense_reimbursement')->label('Remboursement de frais'),
-                        Forms\Components\Textarea::make('expense_reimbursement_precision')->label('Précisions remboursement'),
+                        TextInput::make('address')->label('Adresse'),
+                        TextInput::make('address_extension')->label('Complément'),
+                        TextInput::make('postal_code')->label('Code Postal'),
+                        TextInput::make('locality')->label('Localité'),
+                        TextInput::make('country')->label('Pays'),
+                        TextInput::make('iban')->label('IBAN'),
+                        Textarea::make('payment_note')->label('Note de paiement'),
+                        Toggle::make('has_free_registration_fee')->label('Frais d\'inscription offerts'),
+                        Toggle::make('has_bonus_start')->label('Prime au départ'),
+                        TextInput::make('bonus_start_amount')->label('Montant départ')->numeric()->prefix('CHF'),
+                        TextInput::make('bonus_ranking_amount')->label('Montant classement')->numeric()->prefix('CHF'),
+                        TextInput::make('bonus_arrival_amount')->label('Montant arrivée')->numeric()->prefix('CHF'),
+                        Toggle::make('has_accommodation')->label('Hébergement'),
+                        Toggle::make('accommodation_friday')->label('Logement Vendredi'),
+                        Toggle::make('accommodation_saturday')->label('Logement Samedi'),
+                        Textarea::make('accommodation_precision')->label('Précisions logement'),
+                        Toggle::make('has_expense_reimbursement')->label('Remboursement de frais'),
+                        Textarea::make('expense_reimbursement_precision')->label('Précisions remboursement'),
                     ])->columns(3),
             ]);
     }
@@ -71,28 +84,28 @@ class RunRegistrationElementsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('first_name')
             ->columns([
-                Tables\Columns\TextColumn::make('first_name')->label('Prénom')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('last_name')->label('Nom')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('birthdate')->label('Né le')->date('d.m.Y')->sortable(),
-                Tables\Columns\TextColumn::make('gender')->label('Sexe'),
-                Tables\Columns\TextColumn::make('run.name')->label('Course')->sortable(),
-                Tables\Columns\TextColumn::make('team')->label('Équipe')->searchable(),
-                Tables\Columns\IconColumn::make('with_video')->label('Vidéo')->boolean(),
-                Tables\Columns\IconColumn::make('has_free_registration_fee')->label('Gratuit')->boolean(),
+                TextColumn::make('first_name')->label('Prénom')->searchable()->sortable(),
+                TextColumn::make('last_name')->label('Nom')->searchable()->sortable(),
+                TextColumn::make('birthdate')->label('Né le')->date('d.m.Y')->sortable(),
+                TextColumn::make('gender')->label('Sexe'),
+                TextColumn::make('run.name')->label('Course')->sortable(),
+                TextColumn::make('team')->label('Équipe')->searchable(),
+                IconColumn::make('with_video')->label('Vidéo')->boolean(),
+                IconColumn::make('has_free_registration_fee')->label('Gratuit')->boolean(),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

@@ -2,12 +2,36 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use App\Filament\Resources\InvoiceResource\Pages\ListInvoices;
+use App\Filament\Resources\InvoiceResource\Pages\CreateInvoice;
+use App\Filament\Resources\InvoiceResource\Pages\EditInvoice;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Invoice;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Support\Number;
 use App\Enums\InvoiceStatusEnum;
@@ -16,16 +40,13 @@ use App\Services\PricingService;
 use Filament\Resources\Resource;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
-use Filament\Tables\Actions\BulkAction;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Columns\TextInputColumn;
 use App\Notifications\ClientSendInvoiceRelaunch;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Filament\Actions\ExportInvoicesPdfBulkAction;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 
@@ -33,7 +54,7 @@ class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
 
     protected static ?string $pluralModelLabel = 'Factures';
 
@@ -46,31 +67,31 @@ class InvoiceResource extends Resource
         return ['title', 'number', 'qr_reference', 'reference', 'client_reference'];
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('client_id')
+        return $schema
+            ->components([
+                Select::make('client_id')
                     ->label('Client')
                     ->relationship('client', 'name')
                     ->searchable()
                     ->preload()
                     ->hiddenOn(InvoicesRelationManager::class),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->label('Statut')
                     ->default('draft')
                     ->options(InvoiceStatusEnum::class)
                     ->live()
                     ->required(),
-                Forms\Components\TextInput::make('title')
+                TextInput::make('title')
                     ->label('Titre')
                     ->default(fn () => InvoiceService::generateInvoiceTitle())
                     ->maxLength(255),
-                Forms\Components\TextInput::make('number')
+                TextInput::make('number')
                     ->label('Numéro de facture')
                     ->default(fn () => InvoiceService::generateInvoiceNumber())
                     ->hintAction(
-                        Forms\Components\Actions\Action::make('syncQrReference')
+                        Action::make('syncQrReference')
                             ->label('Générer')
                             ->icon('heroicon-m-arrow-path')
                             ->action(function (Set $set) {
@@ -78,19 +99,19 @@ class InvoiceResource extends Resource
                             })
                     )
                     ->maxLength(255),
-                Forms\Components\DatePicker::make('date')->label('Date'),
-                Forms\Components\DatePicker::make('due_date')->label('Echéance'),
-                Forms\Components\DatePicker::make('paid_on')->label('Payé le'),
-                Forms\Components\TextInput::make('reference')
+                DatePicker::make('date')->label('Date'),
+                DatePicker::make('due_date')->label('Echéance'),
+                DatePicker::make('paid_on')->label('Payé le'),
+                TextInput::make('reference')
                     ->label('Référence')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('client_reference')
+                TextInput::make('client_reference')
                     ->label('Référence pour le client')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('qr_reference')
+                TextInput::make('qr_reference')
                     ->label('Référence QR')
                     ->hintAction(
-                        Forms\Components\Actions\Action::make('syncQrReference')
+                        Action::make('syncQrReference')
                             ->label('Générer')
                             ->icon('heroicon-m-arrow-path')
                             ->action(function (Get $get, Set $set) {
@@ -101,10 +122,10 @@ class InvoiceResource extends Resource
                     )
                     ->live()
                     ->maxLength(255),
-                Forms\Components\Toggle::make('is_pro_forma')
+                Toggle::make('is_pro_forma')
                     ->label('Facture proforma ?')
                     ->default(false),
-                Forms\Components\Repeater::make('positions')
+                Repeater::make('positions')
                     ->label('Positions')
                     ->addActionLabel('Ajouter une position')
                     ->columnSpanFull()
@@ -114,22 +135,22 @@ class InvoiceResource extends Resource
                         self::updateTotals($get, $set);
                     })
                     ->deleteAction(
-                        fn (Forms\Components\Actions\Action $action) => $action->after(fn (Get $get, Set $set) => self::updateTotals($get, $set)),
+                        fn (Action $action) => $action->after(fn (Get $get, Set $set) => self::updateTotals($get, $set)),
                     )
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Nom'),
-                        Forms\Components\TextInput::make('quantity')
+                        TextInput::make('quantity')
                             ->label('Quantité')
                             ->numeric()
                             ->default(1)
                             ->live(),
-                        Forms\Components\TextInput::make('cost')
+                        TextInput::make('cost')
                             ->label('Prix')
                             ->numeric()
                             ->prefix('CHF')
                             ->live(),
-                        Forms\Components\Select::make('tax_rate')
+                        Select::make('tax_rate')
                             ->label('TVA')
                             ->default(null)
                             ->options([
@@ -139,11 +160,11 @@ class InvoiceResource extends Resource
                             ])
                             ->suffix('%')
                             ->live(),
-                        Forms\Components\Checkbox::make('include_vat')
+                        Checkbox::make('include_vat')
                             ->label('Inclure TVA')
                             ->inline(false)
                             ->live(),
-                        Forms\Components\Placeholder::make('product_price')
+                        Placeholder::make('product_price')
                             ->label('Total')
                             ->content(function (Get $get): string {
                                 $price = PricingService::calculateCostPrice($get('cost'), $get('tax_rate'), $get('include_vat'));
@@ -152,16 +173,16 @@ class InvoiceResource extends Resource
                                 return Number::currency($amount, in: 'CHF', locale: 'fr_CH');
                             }),
                     ]),
-                Forms\Components\TextInput::make('total')
+                TextInput::make('total')
                     ->label('Total')
                     ->numeric()
                     ->readOnly()
                     ->prefix('CHF')
                     ->dehydrated(false)
                     ->formatStateUsing(fn (?Model $record): string => $record ? $record->total : 0),
-                Forms\Components\RichEditor::make('content')->label('Contenu'),
-                Forms\Components\Textarea::make('footer')->label('Pied de page'),
-                Forms\Components\Textarea::make('note')->label('Note'),
+                RichEditor::make('content')->label('Contenu'),
+                Textarea::make('footer')->label('Pied de page'),
+                Textarea::make('note')->label('Note'),
             ]);
     }
 
@@ -169,42 +190,42 @@ class InvoiceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('status_view')
+                TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
                     ->sortable(['status'])
                     ->state(fn (Model $record) => $record->status),
-                Tables\Columns\SelectColumn::make('status')
+                SelectColumn::make('status')
                     ->label('')
                     ->options(InvoiceStatusEnum::class),
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->label('Date')
                     ->date('d.m.Y')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('viewed_at')
+                TextColumn::make('viewed_at')
                     ->label('Vu à')
                     ->since()
                     ->dateTimeTooltip('d.m.y H:i')
                     ->timezone('Europe/Zurich')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('client.name')
+                TextColumn::make('client.name')
                     ->label('Client')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('number')
+                TextColumn::make('number')
                     ->label('Numéro')
                     ->copyable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('qr_reference')
+                TextColumn::make('qr_reference')
                     ->label('QR')
                     ->copyable()
                     ->searchable()
                     ->sortable()
                     ->formatStateUsing(fn (string $state) => '…'.substr($state, -9))
-                    ->size(TextColumnSize::ExtraSmall)
+                    ->size(TextSize::ExtraSmall)
                     ->toggleable(),
-                Tables\Columns\IconColumn::make('is_pro_forma')
+                IconColumn::make('is_pro_forma')
                     ->label('Pro forma')
                     ->boolean()
                     ->trueColor('info')
@@ -212,13 +233,13 @@ class InvoiceResource extends Resource
                     ->falseIcon('')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->label('Montant')
                     ->money('CHF', 0, 'fr_CH'),
-                Tables\Columns\TextColumn::make('totalTax')
+                TextColumn::make('totalTax')
                     ->label('Taxes')
                     ->money('CHF', 0, 'fr_CH'),
-                Tables\Columns\TextColumn::make('paid_on_view')
+                TextColumn::make('paid_on_view')
                     ->label('Payé le')
                     ->date('d.m.Y')
                     ->sortable(['paid_on'])
@@ -226,20 +247,20 @@ class InvoiceResource extends Resource
                 TextInputColumn::make('paid_on')
                     ->label('Payé le')
                     ->rules(['date', 'nullable']),
-                Tables\Columns\TextColumn::make('client.invoicingContactEmail')
+                TextColumn::make('client.invoicingContactEmail')
                     ->label('Email')
                     ->toggleable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->label('Statut')
                     ->multiple()
                     ->options(InvoiceStatusEnum::class),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\Action::make('ClientSendInvoice')
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    Action::make('ClientSendInvoice')
                         ->label('Envoyer')
                         ->icon('heroicon-o-envelope')
                         ->action(function (Model $record) {
@@ -248,7 +269,7 @@ class InvoiceResource extends Resource
                             $record->save();
                         })
                         ->requiresConfirmation(),
-                    Tables\Actions\Action::make('ClientSendInvoiceRelauch')
+                    Action::make('ClientSendInvoiceRelauch')
                         ->label('Relancer')
                         ->icon('heroicon-o-envelope')
                         ->action(function (Model $record) {
@@ -257,17 +278,17 @@ class InvoiceResource extends Resource
                             $record->save();
                         })
                         ->requiresConfirmation(),
-                    Tables\Actions\Action::make('ClientDownloadInvoice')
+                    Action::make('ClientDownloadInvoice')
                         ->label('Télécharger')
                         ->icon('heroicon-o-document-arrow-down')
                         ->url(fn (Invoice $record): string => URL::signedRoute('invoices.eml', ['invoice' => $record]))
                         ->openUrlInNewTab(),
-                    Tables\Actions\Action::make('ClientDownloadInvoiceRelauch')
+                    Action::make('ClientDownloadInvoiceRelauch')
                         ->label('Relancer')
                         ->icon('heroicon-o-document-arrow-down')
                         ->url(fn (Invoice $record): string => URL::signedRoute('invoices.emlRelaunch', ['invoice' => $record]))
                         ->openUrlInNewTab(),
-                    Tables\Actions\Action::make('ResetViewedAt')
+                    Action::make('ResetViewedAt')
                         ->label('Réinitialiser « Vu à »')
                         ->icon('heroicon-o-arrow-path')
                         ->action(function (Model $record) {
@@ -276,15 +297,15 @@ class InvoiceResource extends Resource
                         })
                         ->requiresConfirmation(),
                 ]),
-                Tables\Actions\Action::make('pdf')
+                Action::make('pdf')
                     ->label('PDF')
                     ->url(fn (Invoice $record): string => $record->link)
                     ->openUrlInNewTab()
                     ->icon('heroicon-o-document'),
-            ], position: ActionsPosition::BeforeColumns)
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ], position: RecordActionsPosition::BeforeColumns)
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                     ExportInvoicesPdfBulkAction::make(),
                     BulkAction::make('ClientsSendInvoice')
                         ->label('Envoyer facture')
@@ -323,9 +344,9 @@ class InvoiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListInvoices::route('/'),
-            'create' => Pages\CreateInvoice::route('/create'),
-            'edit'   => Pages\EditInvoice::route('/{record}/edit'),
+            'index'  => ListInvoices::route('/'),
+            'create' => CreateInvoice::route('/create'),
+            'edit'   => EditInvoice::route('/{record}/edit'),
         ];
     }
 

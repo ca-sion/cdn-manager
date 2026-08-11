@@ -2,20 +2,23 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Section;
 use App\Classes\Price;
 use App\Models\Contact;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Livewire\Component;
-use Filament\Forms\Form;
 use App\Models\Provision;
 use App\Models\ProvisionElement;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\URL;
-use Filament\Forms\Components\Wizard;
 use Illuminate\Support\Facades\Blade;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -23,8 +26,9 @@ use Filament\Forms\Components\Placeholder;
 use App\Notifications\ContactDonorFormCreated;
 use Filament\Forms\Concerns\InteractsWithForms;
 
-class DonorForm extends Component implements HasForms
+class DonorForm extends Component implements HasForms, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public ?array $data = [];
@@ -52,12 +56,12 @@ class DonorForm extends Component implements HasForms
         }
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Wizard::make([
-                    Wizard\Step::make('Formulaire')
+                    Step::make('Formulaire')
                         ->columns(2)
                         ->schema([
                             TextInput::make('first_name')
@@ -111,7 +115,7 @@ class DonorForm extends Component implements HasForms
                                         ->live(),
                                 ]),
                         ]),
-                    Wizard\Step::make('Récapitulatif')
+                    Step::make('Récapitulatif')
                         ->schema([
                             Placeholder::make('details')
                                 ->label(new HtmlString('<div class="format"><h2>Détails de la commande</h2></div>'))

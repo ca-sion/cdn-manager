@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ClientResource\Pages;
 
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions;
 use App\Helpers\AppHelper;
 use App\Enums\EngagementStageEnum;
@@ -21,23 +23,23 @@ class EditClient extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('pdf')
+            Action::make('pdf')
                 ->label('Fiche')
                 ->color('gray')
                 ->url(fn (Model $record): string => $record->pdfLink)
                 ->openUrlInNewTab()
                 ->icon('heroicon-o-document'),
-            Actions\Action::make('ClientAdvertiserFormCreated')
+            Action::make('ClientAdvertiserFormCreated')
                 ->label('Envoyer commande')
                 ->icon('heroicon-o-envelope')
                 ->color('gray')
                 ->requiresConfirmation()
                 ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated)),
-            Actions\Action::make('ClientMofidyStageStatus')
+            Action::make('ClientMofidyStageStatus')
                 ->label('Modifier le statut')
                 ->icon('heroicon-o-briefcase')
                 ->color('gray')
-                ->form(function (Model $record) {
+                ->schema(function (Model $record) {
                     $engagement = $record->currentEngagement;
 
                     return [
@@ -72,7 +74,7 @@ class EditClient extends EditRecord
                         ->success()
                         ->send();
                 }),
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
             $this->getSaveFormAction()->formId('form'),
         ];
     }

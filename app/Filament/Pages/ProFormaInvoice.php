@@ -2,19 +2,20 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Grid;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Actions;
 use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Invoice;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Filament\Forms\Components\Grid;
 use Illuminate\Support\Facades\View;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Actions;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Repeater;
@@ -22,7 +23,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -30,13 +30,13 @@ class ProFormaInvoice extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.pages.pro-forma-invoice';
+    protected string $view = 'filament.pages.pro-forma-invoice';
 
     protected ?string $heading = 'Générer une facture proforma';
 
-    protected static ?string $navigationGroup = 'Facturation';
+    protected static string | \UnitEnum | null $navigationGroup = 'Facturation';
 
     protected static ?string $navigationLabel = 'Facture proforma';
 
@@ -59,10 +59,10 @@ class ProFormaInvoice extends Page implements HasForms
         return 'data';
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make('Client')
                     ->columns(2)
                     ->schema([

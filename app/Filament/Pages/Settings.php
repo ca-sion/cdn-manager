@@ -2,14 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Schemas\Components\Section;
 use Closure;
 use App\Models\Edition;
 use App\Models\Provision;
 use App\Models\ClientCategory;
 use App\Models\ProvisionCategory;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Section;
-use Outerweb\FilamentSettings\Filament\Pages\Settings as BaseSettings;
+use Outerweb\FilamentSettings\Pages\Settings as BaseSettings;
 
 class Settings extends BaseSettings
 {

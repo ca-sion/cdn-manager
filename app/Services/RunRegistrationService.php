@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use App\Models\Run;
 use App\Models\Invoice;
 use App\Helpers\AppHelper;
@@ -44,7 +45,7 @@ class RunRegistrationService
         $clientId = $registration->client_id;
 
         if (! $clientId) {
-            throw new \Exception('L\'inscription doit être liée à un client pour générer une facture.');
+            throw new Exception('L\'inscription doit être liée à un client pour générer une facture.');
         }
 
         $invoiceNumber = InvoiceService::generateInvoiceNumber();

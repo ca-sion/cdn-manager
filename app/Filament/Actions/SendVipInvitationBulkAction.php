@@ -2,7 +2,7 @@
 
 namespace App\Filament\Actions;
 
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\BulkAction;
 use App\Enums\ProvisionElementStatusEnum;
 use Illuminate\Database\Eloquent\Collection;
 use App\Notifications\RecipientSendVipInvitation;

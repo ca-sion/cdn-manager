@@ -2,11 +2,21 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\DocumentResource\Pages\ListDocuments;
+use App\Filament\Resources\DocumentResource\Pages\CreateDocument;
+use App\Filament\Resources\DocumentResource\Pages\EditDocument;
 use Filament\Forms;
 use Filament\Tables;
-use Filament\Forms\Get;
 use App\Models\Document;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Filament\Resources\DocumentResource\Pages;
@@ -17,27 +27,27 @@ class DocumentResource extends Resource
 {
     protected static ?string $model = Document::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-duplicate';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-duplicate';
 
     protected static ?string $pluralModelLabel = 'Documents';
 
     protected static ?string $modelLabel = 'Document';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('edition_id')
+        return $schema
+            ->components([
+                Select::make('edition_id')
                     ->relationship('edition', 'year')
                     ->default(session('edition_id'))
                     ->required(),
-                Forms\Components\Select::make('client_id')
+                Select::make('client_id')
                     ->relationship('client', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
                     ->hiddenOn(DocumentsRelationManager::class),
-                Forms\Components\Select::make('type')
+                Select::make('type')
                     ->default('contract')
                     ->options([
                         'contract' => 'Contrat',
@@ -57,22 +67,22 @@ class DocumentResource extends Resource
                     ->downloadable()
                     ->imagePreviewHeight('50')
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->label('Nom ou titre')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('status')
+                TextInput::make('status')
                     ->label('Statut')
                     ->maxLength(255),
-                Forms\Components\DatePicker::make('date')
+                DatePicker::make('date')
                     ->label('Date')
                     ->default(now()),
-                Forms\Components\TextInput::make('validity_year_start')
+                TextInput::make('validity_year_start')
                     ->label('Année de début')
                     ->maxLength(4),
-                Forms\Components\TextInput::make('validity_year_end')
+                TextInput::make('validity_year_end')
                     ->label('Année de fin')
                     ->maxLength(4),
-                Forms\Components\TextInput::make('note')
+                TextInput::make('note')
                     ->label('Note')
                     ->maxLength(255),
             ]);
@@ -82,33 +92,33 @@ class DocumentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('edition.year')
+                TextColumn::make('edition.year')
                     ->label('Edition')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('client.name')
+                TextColumn::make('client.name')
                     ->label('Client')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nom')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->label('Type'),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label('Statut'),
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->date('d.m.Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('validity_year_start')
+                TextColumn::make('validity_year_start')
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('validity_year_end')
+                TextColumn::make('validity_year_end')
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('note')
+                TextColumn::make('note')
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -116,12 +126,12 @@ class DocumentResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -136,9 +146,9 @@ class DocumentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListDocuments::route('/'),
-            'create' => Pages\CreateDocument::route('/create'),
-            'edit'   => Pages\EditDocument::route('/{record}/edit'),
+            'index'  => ListDocuments::route('/'),
+            'create' => CreateDocument::route('/create'),
+            'edit'   => EditDocument::route('/{record}/edit'),
         ];
     }
 }

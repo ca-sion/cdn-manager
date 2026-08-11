@@ -2,15 +2,41 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Group;
+use Filament\Forms\Components\MorphToSelect;
+use Filament\Forms\Components\MorphToSelect\Type;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\Toggle;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\TagsInput;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\ReplicateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use Filament\Actions\ExportAction;
+use App\Filament\Resources\ProvisionElementResource\Pages\ListProvisionElements;
+use App\Filament\Resources\ProvisionElementResource\Pages\CreateProvisionElement;
+use App\Filament\Resources\ProvisionElementResource\Pages\EditProvisionElement;
 use Filament\Forms;
 use Filament\Tables;
 use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Contact;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Livewire\Component;
-use Filament\Forms\Form;
 use App\Models\Provision;
 use Filament\Tables\Table;
 use App\Enums\MediaStatusEnum;
@@ -19,20 +45,13 @@ use App\Models\ProvisionElement;
 use App\Services\PricingService;
 use Filament\Resources\Resource;
 use Illuminate\Support\HtmlString;
-use Filament\Tables\Actions\Action;
-use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Fieldset;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Columns\ColumnGroup;
 use App\Enums\ProvisionElementStatusEnum;
-use Filament\Tables\Actions\ExportAction;
 use Filament\Tables\Columns\SelectColumn;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Actions\ExportMediaBulkAction;
@@ -48,7 +67,7 @@ class ProvisionElementResource extends Resource
 {
     protected static ?string $model = ProvisionElement::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-queue-list';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-queue-list';
 
     protected static ?string $modelLabel = 'Élément de prestations';
 
@@ -56,35 +75,35 @@ class ProvisionElementResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema([
+            ->components([
                 Group::make([
-                    Forms\Components\Select::make('edition_id')
+                    Select::make('edition_id')
                         ->label('Edition')
                         ->relationship('edition', 'year')
                         ->default(session('edition_id'))
                         ->required(),
-                    Forms\Components\Select::make('provision_id')
+                    Select::make('provision_id')
                         ->label('Prestation')
                         ->relationship('provision', 'name')
                         ->searchable()
                         ->preload()
                         ->live()
                         ->required(),
-                    Forms\Components\MorphToSelect::make('recipient')
+                    MorphToSelect::make('recipient')
                         ->label('Bénéficiaire')
                         ->types([
-                            Forms\Components\MorphToSelect\Type::make(Contact::class)
+                            Type::make(Contact::class)
                                 ->titleAttribute('name'),
-                            Forms\Components\MorphToSelect\Type::make(Client::class)
+                            Type::make(Client::class)
                                 ->titleAttribute('name'),
                         ])
                         ->required()
                         ->hiddenOn(ProvisionElementsRelationManager::class),
-                    Forms\Components\Select::make('status')
+                    Select::make('status')
                         ->label('Statut')
                         ->default(ProvisionElementStatusEnum::Confirmed)
                         ->options(ProvisionElementStatusEnum::class),
@@ -93,47 +112,47 @@ class ProvisionElementResource extends Resource
                     ->columns(3)
                     ->live()
                     ->schema([
-                        Forms\Components\DatePicker::make('due_date')
+                        DatePicker::make('due_date')
                             ->label('Echéance')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_due_date : false),
-                        Forms\Components\TextInput::make('precision')
+                        TextInput::make('precision')
                             ->label('Précision')
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_precision : false),
-                        Forms\Components\TextInput::make('numeric_indicator')
+                        TextInput::make('numeric_indicator')
                             ->label('Indicateur numérique')
                             ->numeric()
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_numeric_indicator : false),
-                        Forms\Components\TextInput::make('textual_indicator')
+                        TextInput::make('textual_indicator')
                             ->label('Indicateur textuel')
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_textual_indicator : false),
-                        Forms\Components\TextInput::make('goods_to_be_delivered')
+                        TextInput::make('goods_to_be_delivered')
                             ->label('Marchandise prévue')
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_goods_to_be_delivered : false),
-                        Forms\Components\Select::make('contact_id')
+                        Select::make('contact_id')
                             ->label('Contact')
                             ->relationship('contact', 'name')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
-                        Forms\Components\TextInput::make('contact_text')
+                        TextInput::make('contact_text')
                             ->label('Contact')
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
-                        Forms\Components\TextInput::make('contact_location')
+                        TextInput::make('contact_location')
                             ->label('Lieu du contact')
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
-                        Forms\Components\DatePicker::make('contact_date')
+                        DatePicker::make('contact_date')
                             ->label('Date du contact')
                             ->native(false)
                             ->displayFormat('d.m.Y')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
-                        Forms\Components\TimePicker::make('contact_time')
+                        TimePicker::make('contact_time')
                             ->label('Heure du contact')
                             ->seconds(false)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
-                        Forms\Components\Select::make('media_status')
+                        Select::make('media_status')
                             ->label('Statut du média')
                             ->options(MediaStatusEnum::class)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_media : false),
@@ -146,15 +165,15 @@ class ProvisionElementResource extends Resource
                             ->downloadable()
                             ->imagePreviewHeight('50')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_media : false),
-                        Forms\Components\TextInput::make('responsible')
+                        TextInput::make('responsible')
                             ->label('Responsable')
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_responsible : false),
-                        Forms\Components\Select::make('dicastry_id')
+                        Select::make('dicastry_id')
                             ->label('Dicastère')
                             ->relationship('dicastry', 'name')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_responsible : false),
-                        Forms\Components\Select::make('tracking_status')
+                        Select::make('tracking_status')
                             ->label('Statut du média')
                             ->default('to_transmit')
                             ->options([
@@ -163,10 +182,10 @@ class ProvisionElementResource extends Resource
                                 'suspended'   => 'suspendu',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_tracking : false),
-                        Forms\Components\DatePicker::make('tracking_date')
+                        DatePicker::make('tracking_date')
                             ->label('Suivi le')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_tracking : false),
-                        Forms\Components\Select::make('accreditation_type')
+                        Select::make('accreditation_type')
                             ->label('Type d\'accréditation du média')
                             ->default('media')
                             ->options([
@@ -180,24 +199,24 @@ class ProvisionElementResource extends Resource
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_product : false)
                             ->columns(5)
                             ->schema([
-                                Forms\Components\Toggle::make('has_product')
+                                Toggle::make('has_product')
                                     ->label('Produit')
                                     ->inline(false)
                                     ->live()
                                     ->default(true)
                                     ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_product : false),
-                                Forms\Components\TextInput::make('quantity')
+                                TextInput::make('quantity')
                                     ->label('Quantité')
                                     ->numeric()
                                     ->default(1)
                                     ->live()
                                     ->visible(fn (Get $get) => $get('has_product')),
-                                Forms\Components\TextInput::make('cost')
+                                TextInput::make('cost')
                                     ->label('Prix')
                                     ->numeric()
                                     ->prefix('CHF')
                                     ->hintAction(
-                                        Forms\Components\Actions\Action::make('syncCostFromProduct')
+                                        Action::make('syncCostFromProduct')
                                             ->label('Sync.')
                                             ->icon('heroicon-m-arrow-path')
                                             ->action(function (Set $set, Get $get) {
@@ -206,7 +225,7 @@ class ProvisionElementResource extends Resource
                                     )
                                     ->live()
                                     ->visible(fn (Get $get) => $get('has_product')),
-                                Forms\Components\Select::make('tax_rate')
+                                Select::make('tax_rate')
                                     ->label('TVA')
                                     ->options([
                                         '8.1' => '8.1',
@@ -215,7 +234,7 @@ class ProvisionElementResource extends Resource
                                     ])
                                     ->suffix('%')
                                     ->hintAction(
-                                        Forms\Components\Actions\Action::make('syncTaxRateFromProduct')
+                                        Action::make('syncTaxRateFromProduct')
                                             ->label('Sync.')
                                             ->icon('heroicon-m-arrow-path')
                                             ->action(function (Set $set, Get $get) {
@@ -224,11 +243,11 @@ class ProvisionElementResource extends Resource
                                     )
                                     ->live()
                                     ->visible(fn (Get $get) => $get('has_product')),
-                                Forms\Components\Checkbox::make('include_vat')
+                                Checkbox::make('include_vat')
                                     ->label('Inclure TVA')
                                     ->inline(false)
                                     ->hintAction(
-                                        Forms\Components\Actions\Action::make('syncIncludeVatFromProduct')
+                                        Action::make('syncIncludeVatFromProduct')
                                             ->label('')
                                             ->icon('heroicon-m-arrow-path')
                                             ->action(function (Set $set, Get $get) {
@@ -237,7 +256,7 @@ class ProvisionElementResource extends Resource
                                     )
                                     ->live()
                                     ->visible(fn (Get $get) => $get('has_product')),
-                                Forms\Components\Placeholder::make('product_price')
+                                Placeholder::make('product_price')
                                     ->label('Prix à facturer')
                                     ->content(function (Get $get): string {
                                         $price = PricingService::calculateCostPrice($get('cost'), $get('tax_rate'), $get('include_vat'));
@@ -246,7 +265,7 @@ class ProvisionElementResource extends Resource
                                         return Number::currency($amount, in: 'CHF', locale: 'fr_CH');
                                     })
                                     ->visible(fn (Get $get) => $get('has_product')),
-                                Forms\Components\Placeholder::make('product_tax')
+                                Placeholder::make('product_tax')
                                     ->label('TVA à facturer')
                                     ->content(function (Get $get): string {
                                         $tax = PricingService::calculateCostTax($get('cost'), $get('tax_rate'));
@@ -255,7 +274,7 @@ class ProvisionElementResource extends Resource
                                         return Number::currency($amount, in: 'CHF', locale: 'fr_CH');
                                     })
                                     ->visible(fn (Get $get) => $get('has_product')),
-                                Forms\Components\Placeholder::make('product_net_price')
+                                Placeholder::make('product_net_price')
                                     ->label('Prix net')
                                     ->content(function (Get $get): string {
                                         $price = PricingService::calculateCostNetPrice($get('cost'), $get('tax_rate'), $get('include_vat'));
@@ -265,7 +284,7 @@ class ProvisionElementResource extends Resource
                                     })
                                     ->visible(fn (Get $get) => $get('has_product')),
                             ]),
-                        Forms\Components\Select::make('vip_category')
+                        Select::make('vip_category')
                             ->label('Catégorie VIP')
                             ->options([
                                 'individual'        => 'Individu',
@@ -283,12 +302,12 @@ class ProvisionElementResource extends Resource
                                 'swisslife'         => 'Swisslife',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
-                        Forms\Components\TextInput::make('vip_invitation_number')
+                        TextInput::make('vip_invitation_number')
                             ->label('Nombre d\'invitation VIP')
                             ->numeric()
                             ->default(1)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
-                        Forms\Components\Select::make('vip_response_status')
+                        Select::make('vip_response_status')
                             ->label('Réponse VIP')
                             ->placeholder('Sans réponse')
                             ->default(null)
@@ -297,7 +316,7 @@ class ProvisionElementResource extends Resource
                                 false => 'Excusé',
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
-                        Forms\Components\TagsInput::make('vip_guests')
+                        TagsInput::make('vip_guests')
                             ->label('Liste invités')
                             ->splitKeys([',', 'Tab'])
                             ->reorderable()
@@ -307,7 +326,7 @@ class ProvisionElementResource extends Resource
                             ])
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_vip : false),
                     ]),
-                Forms\Components\TextInput::make('note')
+                TextInput::make('note')
                     ->maxLength(255)
                     ->default(null),
             ]);
@@ -497,35 +516,35 @@ class ProvisionElementResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->label('Statut')
                     ->multiple()
                     ->options(ProvisionElementStatusEnum::class),
-                Tables\Filters\SelectFilter::make('provision')
+                SelectFilter::make('provision')
                     ->label('Prestation')
                     ->multiple()
                     ->preload()
                     ->relationship('provision', 'name'),
-                Tables\Filters\SelectFilter::make('media_status')
+                SelectFilter::make('media_status')
                     ->label('Statut (média)')
                     ->multiple()
                     ->options(MediaStatusEnum::class),
-                Tables\Filters\SelectFilter::make('client')
+                SelectFilter::make('client')
                     ->label('Client')
                     ->multiple()
                     ->preload()
                     ->relationship('client', 'name'),
-                Tables\Filters\SelectFilter::make('edition')
+                SelectFilter::make('edition')
                     ->label('Édition')
                     ->multiple()
                     ->preload()
                     ->relationship('edition', 'year'),
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\ReplicateAction::make(),
-                    Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    ReplicateAction::make(),
+                    DeleteAction::make(),
                     Action::make('frontEditLink')
                         ->label('Lien d\'édition client')
                         ->icon('heroicon-o-pencil-square')
@@ -541,10 +560,10 @@ class ProvisionElementResource extends Resource
                         ->icon('heroicon-o-envelope')
                         ->action(fn (Model $record) => $record->client?->notify(new ClientAdvertiserMediaMissing)),
                 ]),
-            ], position: ActionsPosition::BeforeColumns)
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ], position: RecordActionsPosition::BeforeColumns)
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                     BulkAction::make('copyEmail')
                         ->label('Copier emails')
                         ->icon('heroicon-m-clipboard-document-list')
@@ -605,9 +624,9 @@ class ProvisionElementResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProvisionElements::route('/'),
-            'create' => Pages\CreateProvisionElement::route('/create'),
-            'edit'   => Pages\EditProvisionElement::route('/{record}/edit'),
+            'index'  => ListProvisionElements::route('/'),
+            'create' => CreateProvisionElement::route('/create'),
+            'edit'   => EditProvisionElement::route('/{record}/edit'),
         ];
     }
 }

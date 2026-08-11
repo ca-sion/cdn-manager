@@ -2,27 +2,38 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\BulkAction;
+use Filament\Schemas\Components\Fieldset;
+use Exception;
+use Filament\Support\Enums\Width;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ExportAction;
+use App\Filament\Resources\ContactResource\Pages\ListContacts;
+use App\Filament\Resources\ContactResource\Pages\CreateContact;
+use App\Filament\Resources\ContactResource\Pages\EditContact;
 use Filament\Tables;
 use App\Models\Contact;
 use App\Models\Edition;
 use Livewire\Component;
-use Filament\Forms\Form;
 use App\Models\Provision;
 use Filament\Tables\Table;
 use App\Models\ProvisionElement;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Radio;
-use Filament\Support\Enums\MaxWidth;
 use App\Services\ContactMergeService;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Fieldset;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use App\Enums\ProvisionElementStatusEnum;
 use App\Filament\Exports\ContactExporter;
-use Filament\Tables\Actions\ExportAction;
 use Illuminate\Database\Eloquent\Builder;
 use App\Notifications\ContactDonorFormLink;
 use Illuminate\Database\Eloquent\Collection;
@@ -35,7 +46,7 @@ class ContactResource extends Resource
 {
     protected static ?string $model = Contact::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $pluralModelLabel = 'Contacts';
 
@@ -48,11 +59,11 @@ class ContactResource extends Resource
         return ['first_name', 'last_name', 'email', 'phone'];
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(3)
-            ->schema([
+            ->components([
                 TextInput::make('first_name')
                     ->label('Prénom')
                     ->required(),
@@ -158,18 +169,18 @@ class ContactResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\SelectFilter::make('category_id')
+                TrashedFilter::make(),
+                SelectFilter::make('category_id')
                     ->label('Catégorie')
                     ->multiple()
                     ->preload()
                     ->relationship('category', 'name'),
-                Tables\Filters\SelectFilter::make('clients')
+                SelectFilter::make('clients')
                     ->label('Clients')
                     ->multiple()
                     ->preload()
                     ->relationship('clients', 'name'),
-                Tables\Filters\SelectFilter::make('provision_in')
+                SelectFilter::make('provision_in')
                     ->label('Prestations')
                     ->multiple()
                     ->options(Provision::all()->pluck('name', 'id'))
@@ -184,7 +195,7 @@ class ContactResource extends Resource
                                 ->where('edition_id', session('edition_id'));
                         });
                     }),
-                Tables\Filters\SelectFilter::make('provision_not_in')
+                SelectFilter::make('provision_not_in')
                     ->label('N\'a pas les prestations')
                     ->multiple()
                     ->options(Provision::all()->pluck('name', 'id'))
@@ -200,11 +211,11 @@ class ContactResource extends Resource
                         });
                     }),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     BulkAction::make('send_donor_form')
                         ->label('Envoyer formulaire donateur')
                         ->icon('heroicon-o-envelope')
@@ -372,7 +383,7 @@ class ContactResource extends Resource
                                     ->success()
                                     ->send();
 
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 Notification::make()
                                     ->title('Erreur lors de la fusion')
                                     ->body($e->getMessage())
@@ -380,7 +391,7 @@ class ContactResource extends Resource
                                     ->send();
                             }
                         })
-                        ->modalWidth(MaxWidth::FourExtraLarge),
+                        ->modalWidth(Width::FourExtraLarge),
                     BulkAction::make('copyEmail')
                         ->label('Copier emails')
                         ->icon('heroicon-m-clipboard-document-list')
@@ -416,10 +427,10 @@ class ContactResource extends Resource
                                 $record->save();
                             }
                         }),
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                ])->dropdownWidth(MaxWidth::Large),
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                ])->dropdownWidth(Width::Large),
             ])
             ->headerActions([
                 ExportAction::make()
@@ -438,9 +449,9 @@ class ContactResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListContacts::route('/'),
-            'create' => Pages\CreateContact::route('/create'),
-            'edit'   => Pages\EditContact::route('/{record}/edit'),
+            'index'  => ListContacts::route('/'),
+            'create' => CreateContact::route('/create'),
+            'edit'   => EditContact::route('/{record}/edit'),
         ];
     }
 

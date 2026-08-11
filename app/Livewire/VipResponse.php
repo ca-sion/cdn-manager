@@ -2,13 +2,15 @@
 
 namespace App\Livewire;
 
-use Filament\Forms\Get;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Livewire\Component;
-use Filament\Forms\Form;
 use App\Models\ProvisionElement;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\View\View;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TagsInput;
@@ -17,8 +19,9 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Concerns\InteractsWithForms;
 
-class VipResponse extends Component implements HasForms
+class VipResponse extends Component implements HasForms, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public ProvisionElement $provisionElement;
@@ -31,10 +34,10 @@ class VipResponse extends Component implements HasForms
         $this->form->fill($provisionElement->toArray());
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make()
                     ->description(new HtmlString(''))
                     ->columns(3)

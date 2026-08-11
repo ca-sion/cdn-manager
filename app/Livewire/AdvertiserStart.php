@@ -2,10 +2,12 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
 use App\Models\Client;
-use Filament\Forms\Get;
 use Livewire\Component;
-use Filament\Forms\Form;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\URL;
 use Filament\Forms\Components\Select;
@@ -13,8 +15,9 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Concerns\InteractsWithForms;
 
-class AdvertiserStart extends Component implements HasForms
+class AdvertiserStart extends Component implements HasForms, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public ?array $data = [];
@@ -24,10 +27,10 @@ class AdvertiserStart extends Component implements HasForms
         $this->form->fill();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 ToggleButtons::make('choice')
                     ->label('')
                     ->inline()

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\Client;
 use App\Models\Invoice;
 use Illuminate\Support\Carbon;
@@ -26,7 +27,7 @@ class InvoiceController extends Controller
             return InvoiceService::generatePdf($invoice)->stream($invoice->number.'.pdf');
         } catch (InvalidQrBillDataException $e) {
             abort(422, 'Erreur lors de la génération du QR-code : '.$e->getMessage());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             abort(500, 'Erreur lors de la génération de la facture : '.$e->getMessage());
         }
     }

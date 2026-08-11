@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ClientResource\Pages;
 
+use Filament\Actions\CreateAction;
 use Filament\Actions;
 use Filament\Actions\ExportAction;
 use Filament\Actions\ImportAction;
@@ -17,7 +18,7 @@ class ListClients extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
             ImportAction::make()
                 ->label('Importer')
                 ->importer(ClientImporter::class),

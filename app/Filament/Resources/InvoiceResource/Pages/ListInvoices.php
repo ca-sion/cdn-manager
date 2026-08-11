@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Actions\ImportAction;
+use Filament\Actions\Action;
 use Filament\Actions;
 use App\Filament\Pages\CamtImport;
 use Filament\Actions\ExportAction;
@@ -17,15 +20,15 @@ class ListInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
-            Actions\ImportAction::make()
+            CreateAction::make(),
+            ImportAction::make()
                 ->importer(ReconcileInvoiceImporter::class)
                 ->label('Rapprocher')
                 ->tooltip('UBS: Fortune et placement > Comptes > Transactions > CSV'),
             ExportAction::make()
                 ->label('Exporter')
                 ->exporter(InvoiceExporter::class),
-            Actions\Action::make('camtImport')
+            Action::make('camtImport')
                 ->label('Rapprocher CAMT 054')
                 ->url(CamtImport::getUrl()),
         ];

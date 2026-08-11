@@ -2,9 +2,15 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\EditionResource\Pages\ListEditions;
+use App\Filament\Resources\EditionResource\Pages\CreateEdition;
+use App\Filament\Resources\EditionResource\Pages\EditEdition;
 use Filament\Tables;
 use App\Models\Edition;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -15,18 +21,18 @@ class EditionResource extends Resource
 {
     protected static ?string $model = Edition::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $pluralModelLabel = 'Éditions';
 
     protected static ?string $modelLabel = 'Édition';
 
-    protected static ?string $navigationGroup = 'Collections';
+    protected static string | \UnitEnum | null $navigationGroup = 'Collections';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextInput::make('name')
                     ->label('Nom')
                     ->required(),
@@ -48,12 +54,12 @@ class EditionResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -68,9 +74,9 @@ class EditionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListEditions::route('/'),
-            'create' => Pages\CreateEdition::route('/create'),
-            'edit'   => Pages\EditEdition::route('/{record}/edit'),
+            'index'  => ListEditions::route('/'),
+            'create' => CreateEdition::route('/create'),
+            'edit'   => EditEdition::route('/{record}/edit'),
         ];
     }
 }

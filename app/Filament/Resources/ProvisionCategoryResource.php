@@ -2,9 +2,19 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ColorColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ProvisionCategoryResource\Pages\ListProvisionCategories;
+use App\Filament\Resources\ProvisionCategoryResource\Pages\CreateProvisionCategory;
+use App\Filament\Resources\ProvisionCategoryResource\Pages\EditProvisionCategory;
 use Filament\Forms;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Models\ProvisionCategory;
@@ -14,7 +24,7 @@ class ProvisionCategoryResource extends Resource
 {
     protected static ?string $model = ProvisionCategory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $modelLabel = 'Catégorie de prestation';
 
@@ -22,16 +32,16 @@ class ProvisionCategoryResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static ?string $navigationGroup = 'Collections';
+    protected static string | \UnitEnum | null $navigationGroup = 'Collections';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->label('Nom')
                     ->maxLength(255),
-                Forms\Components\ColorPicker::make('color')
+                ColorPicker::make('color')
                     ->label('Couleur'),
             ]);
     }
@@ -40,17 +50,17 @@ class ProvisionCategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nom')
                     ->searchable(),
-                Tables\Columns\ColorColumn::make('color')
+                ColorColumn::make('color')
                     ->label('Couleur')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -58,12 +68,12 @@ class ProvisionCategoryResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -78,9 +88,9 @@ class ProvisionCategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProvisionCategories::route('/'),
-            'create' => Pages\CreateProvisionCategory::route('/create'),
-            'edit'   => Pages\EditProvisionCategory::route('/{record}/edit'),
+            'index'  => ListProvisionCategories::route('/'),
+            'create' => CreateProvisionCategory::route('/create'),
+            'edit'   => EditProvisionCategory::route('/{record}/edit'),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProvisionResource\Pages;
 
+use Filament\Actions\CreateAction;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use App\Filament\Resources\ProvisionResource;
@@ -13,7 +14,7 @@ class ListProvisions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

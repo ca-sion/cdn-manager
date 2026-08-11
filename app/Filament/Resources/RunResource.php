@@ -2,10 +2,27 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\RunResource\Pages\ListRuns;
+use App\Filament\Resources\RunResource\Pages\CreateRun;
+use App\Filament\Resources\RunResource\Pages\EditRun;
 use App\Models\Run;
 use Filament\Forms;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Enums\RunRegistrationType;
@@ -17,54 +34,54 @@ class RunResource extends Resource
 {
     protected static ?string $model = Run::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-flag';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-flag';
 
-    protected static ?string $navigationGroup = 'Courses';
+    protected static string | \UnitEnum | null $navigationGroup = 'Courses';
 
     protected static ?string $modelLabel = 'Course';
 
     protected static ?string $pluralModelLabel = 'Courses';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Informations de base')
+        return $schema
+            ->components([
+                Section::make('Informations de base')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Nom')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('distance')
+                        TextInput::make('distance')
                             ->label('Distance')
                             ->numeric()
                             ->suffix('km'),
-                        Forms\Components\TextInput::make('cost')
+                        TextInput::make('cost')
                             ->label('Coût')
                             ->numeric()
                             ->prefix('CHF'),
-                        Forms\Components\Select::make('available_for_types')
+                        Select::make('available_for_types')
                             ->label('Disponible pour')
                             ->multiple()
                             ->options(RunRegistrationType::class)
                             ->preload(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Logistique et Limites')
+                Section::make('Logistique et Limites')
                     ->schema([
-                        Forms\Components\Repeater::make('start_blocs')
+                        Repeater::make('start_blocs')
                             ->label('Blocs de départ')
                             ->schema([
-                                Forms\Components\TextInput::make('label')->label('Nom du bloc')->required(),
-                                Forms\Components\TextInput::make('time')->label('Heure')->type('time'),
+                                TextInput::make('label')->label('Nom du bloc')->required(),
+                                TextInput::make('time')->label('Heure')->type('time'),
                             ])
                             ->columns(2),
-                        Forms\Components\DateTimePicker::make('registrations_deadline')
+                        DateTimePicker::make('registrations_deadline')
                             ->label('Délai d\'inscription'),
-                        Forms\Components\TextInput::make('registrations_limit')
+                        TextInput::make('registrations_limit')
                             ->label('Limite d\'inscriptions')
                             ->numeric(),
-                        Forms\Components\TextInput::make('registrations_number')
+                        TextInput::make('registrations_number')
                             ->label('Nombre d\'inscrits actuel')
                             ->numeric()
                             ->default(0)
@@ -72,16 +89,16 @@ class RunResource extends Resource
                             ->dehydrated(false),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Codes et Provision')
+                Section::make('Codes et Provision')
                     ->schema([
-                        Forms\Components\TextInput::make('datasport_code')
+                        TextInput::make('datasport_code')
                             ->label('Code Datasport'),
-                        Forms\Components\TextInput::make('code')
+                        TextInput::make('code')
                             ->label('Code interne'),
-                        Forms\Components\Toggle::make('accepts_voucher')
+                        Toggle::make('accepts_voucher')
                             ->label('Accepte les vouchers')
                             ->inline(false),
-                        Forms\Components\Select::make('provision_id')
+                        Select::make('provision_id')
                             ->label('Prestation liée')
                             ->relationship('provision', 'name')
                             ->searchable()
@@ -94,49 +111,49 @@ class RunResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nom')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('distance')
+                TextColumn::make('distance')
                     ->label('Dist.')
                     ->suffix(' km')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('cost')
+                TextColumn::make('cost')
                     ->label('Prix')
                     ->money('CHF')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('available_for_types')
+                TextColumn::make('available_for_types')
                     ->label('Types')
                     ->badge()
                     ->formatStateUsing(fn ($state) => is_array($state) ? collect($state)->map(fn ($type) => RunRegistrationType::tryFrom($type)?->getLabel() ?? $type)->implode(', ') : $state),
-                Tables\Columns\TextColumn::make('registrations_deadline')
+                TextColumn::make('registrations_deadline')
                     ->label('Délai')
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('registrations_limit')
+                TextColumn::make('registrations_limit')
                     ->label('Limite')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('registrations_number')
+                TextColumn::make('registrations_number')
                     ->label('Inscrits')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('accepts_voucher')
+                IconColumn::make('accepts_voucher')
                     ->label('Vouchers')
                     ->boolean(),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -151,9 +168,9 @@ class RunResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListRuns::route('/'),
-            'create' => Pages\CreateRun::route('/create'),
-            'edit'   => Pages\EditRun::route('/{record}/edit'),
+            'index'  => ListRuns::route('/'),
+            'create' => CreateRun::route('/create'),
+            'edit'   => EditRun::route('/{record}/edit'),
         ];
     }
 

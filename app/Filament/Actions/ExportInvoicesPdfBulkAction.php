@@ -2,9 +2,10 @@
 
 namespace App\Filament\Actions;
 
+use Filament\Actions\BulkAction;
+use Exception;
 use ZipArchive;
 use App\Services\InvoiceService;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
 use Sprain\SwissQrBill\Exception\InvalidQrBillDataException;
@@ -37,7 +38,7 @@ class ExportInvoicesPdfBulkAction extends BulkAction
                             $successCount++;
                         } catch (InvalidQrBillDataException $e) {
                             $errors[] = "Facture {$invoice->number}: ".$e->getMessage();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             $errors[] = "Facture {$invoice->number}: ".$e->getMessage();
                         }
                     }

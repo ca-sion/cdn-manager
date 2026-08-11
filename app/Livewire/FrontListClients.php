@@ -2,6 +2,10 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Support\Enums\IconSize;
+use Carbon\Carbon;
 use App\Models\Client;
 use Livewire\Component;
 use Filament\Tables\Table;
@@ -22,8 +26,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 
-class FrontListClients extends Component implements HasForms, HasTable
+class FrontListClients extends Component implements HasForms, HasTable, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
     use InteractsWithTable;
 
@@ -69,7 +74,7 @@ class FrontListClients extends Component implements HasForms, HasTable
                     ->icon('heroicon-o-document')
                     ->url(fn (Model $record): string => $record->pdfLink)
                     ->openUrlInNewTab()
-                    ->size(IconColumn\IconColumnSize::Small)
+                    ->size(IconSize::Small)
                     ->toggleable(),
                 TextColumn::make('category.name')
                     ->label('Catégorie')
@@ -137,7 +142,7 @@ class FrontListClients extends Component implements HasForms, HasTable
                         '<a href="'.$record->documents?->where('id', $state)->first()?->getFirstMediaUrl('*').'">'.
                         '📄 '.
                         $record->documents?->where('id', $state)->first()?->name.' ('.
-                        \Carbon\Carbon::parse($record->documents?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
+                        Carbon::parse($record->documents?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'
                     ))
                     ->verticallyAlignStart()
@@ -152,7 +157,7 @@ class FrontListClients extends Component implements HasForms, HasTable
                         '<a href="'.$record->invoices?->where('id', $state)->first()?->link.'" target="_blank">'.
                         '🧾 '.
                         $record->invoices?->where('id', $state)->first()?->number.' ('.
-                        \Carbon\Carbon::parse($record->invoices?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
+                        Carbon::parse($record->invoices?->where('id', $state)->first()?->date)->locale('fr_CH')->isoFormat('L').')'
                         .'</a>'.
                         ($record->invoices?->where('id', $state)->first()?->status->value == 'paid' ? ' ✓' : null)
                     ))
@@ -205,10 +210,10 @@ class FrontListClients extends Component implements HasForms, HasTable
                     }),
             ])
             ->filtersFormColumns(3)
-            ->actions([
+            ->recordActions([
                 // ...
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // ...
             ]);
     }

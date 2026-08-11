@@ -2,15 +2,24 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Enums\ActionsPosition;
 use App\Filament\Resources\InvoiceResource;
 use Filament\Resources\RelationManagers\RelationManager;
 
@@ -20,9 +29,9 @@ class InvoicesRelationManager extends RelationManager
 
     protected static ?string $title = 'Factures';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return InvoiceResource::form($form);
+        return InvoiceResource::form($schema);
     }
 
     public function table(Table $table): Table
@@ -31,55 +40,55 @@ class InvoicesRelationManager extends RelationManager
             ->recordTitleAttribute('number')
             ->defaultSort('number', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('edition.year')
+                TextColumn::make('edition.year')
                     ->label('Édition')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->label('Date')
                     ->dateTime('d.m.Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('number')
+                TextColumn::make('number')
                     ->label('Numéro')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->label('Titre')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status_view')
+                TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
                     ->sortable(['status'])
                     ->state(fn (Model $record) => $record->status),
-                Tables\Columns\SelectColumn::make('status')
+                SelectColumn::make('status')
                     ->label('')
                     ->options(InvoiceStatusEnum::class),
-                Tables\Columns\TextColumn::make('paid_on')
+                TextColumn::make('paid_on')
                     ->label('Payé le')
                     ->dateTime('d.m.Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->label('Montant')
                     ->money('CHF', 0, 'fr_CH'),
-                Tables\Columns\TextColumn::make('client_reference')
+                TextColumn::make('client_reference')
                     ->label('Référence client'),
-                Tables\Columns\TextColumn::make('client.invoicingContactEmail')
+                TextColumn::make('client.invoicingContactEmail')
                     ->label('Email'),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
-                Tables\Actions\Action::make('generateInvoice')
+                CreateAction::make(),
+                Action::make('generateInvoice')
                     ->label('Générer')
                     ->tooltip(fn (): ?string => $this->ownerRecord->invoicing_note)
                     ->action(fn () => InvoiceService::generateInvoiceByClient($this->ownerRecord->id)),
             ])
-            ->actions([
-                Tables\Actions\Action::make('pdf')
+            ->recordActions([
+                Action::make('pdf')
                     ->url(fn (Model $record): string => $record->link)
                     ->openUrlInNewTab()
                     ->icon('heroicon-o-document'),
-                Tables\Actions\Action::make('ClientSendInvoice')
+                Action::make('ClientSendInvoice')
                     ->label('Envoyer')
                     ->icon('heroicon-o-envelope')
                     ->action(function (Model $record) {
@@ -88,14 +97,14 @@ class InvoicesRelationManager extends RelationManager
                         $record->save();
                     })
                     ->requiresConfirmation(),
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
+                ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
                 ]),
-            ], position: ActionsPosition::BeforeColumns)
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ], position: RecordActionsPosition::BeforeColumns)
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition());

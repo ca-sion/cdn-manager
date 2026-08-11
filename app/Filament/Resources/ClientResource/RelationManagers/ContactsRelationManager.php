@@ -2,9 +2,20 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\AttachAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
 use Filament\Tables;
-use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Enums\ContactRoleEnum;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -13,23 +24,23 @@ class ContactsRelationManager extends RelationManager
 {
     protected static string $relationship = 'contacts';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('first_name')
+        return $schema
+            ->components([
+                TextInput::make('first_name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('last_name')
+                TextInput::make('last_name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Select::make('type')
+                Select::make('type')
                     ->label('Type')
                     ->options(ContactRoleEnum::class),
-                Forms\Components\TextInput::make('email')
+                TextInput::make('email')
                     ->label('Email')
                     ->email(),
-                Forms\Components\TextInput::make('phone')
+                TextInput::make('phone')
                     ->label('Téléphone')
                     ->tel()
                     ->telRegex('/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\.\/0-9]*$/'),
@@ -43,12 +54,12 @@ class ContactsRelationManager extends RelationManager
             ->reorderable('order_column')
             ->defaultSort('order_column')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nom'),
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->label('Type')
                     ->formatStateUsing(fn (string $state) => ContactRoleEnum::from($state)->getLabel()),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->label('Email')
                     ->copyable(),
             ])
@@ -56,24 +67,24 @@ class ContactsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
-                Tables\Actions\AttachAction::make()
+                CreateAction::make(),
+                AttachAction::make()
                     ->recordSelectSearchColumns(['first_name', 'last_name', 'email'])
-                    ->form(fn (Tables\Actions\AttachAction $action): array => [
+                    ->form(fn (AttachAction $action): array => [
                         $action->getRecordSelect(),
-                        Forms\Components\Select::make('type')
+                        Select::make('type')
                             ->options(ContactRoleEnum::class),
                     ]),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DetachAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DetachAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
