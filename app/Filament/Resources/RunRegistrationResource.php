@@ -191,6 +191,23 @@ class RunRegistrationResource extends Resource
                     ->label('Client')
                     ->placeholder('Non associé')
                     ->searchable(),
+                TextColumn::make('invoice_status')
+                    ->label('Facture')
+                    ->badge()
+                    ->color(fn ($record) => $record->invoice ? ($record->invoice->status?->value === 'paid' ? 'success' : 'info') : 'gray')
+                    ->getStateUsing(function ($record) {
+                        if (! $record->invoice) {
+                            return 'Non générée';
+                        }
+                        $num = $record->invoice->number;
+                        $statusLabel = is_object($record->invoice->status) && method_exists($record->invoice->status, 'getLabel')
+                            ? $record->invoice->status->getLabel()
+                            : (string) ($record->invoice->status?->value ?? $record->invoice->status);
+
+                        return "#{$num} ({$statusLabel})";
+                    })
+                    ->url(fn ($record) => $record->invoice_id ? InvoiceResource::getUrl('edit', ['record' => $record->invoice_id]) : null)
+                    ->openUrlInNewTab(),
                 TextColumn::make('created_at')
                     ->label('Créé le')
                     ->dateTime('d.m.Y H:i')
@@ -247,20 +264,39 @@ class RunRegistrationResource extends Resource
                         })
                         ->visible(fn ($record) => $record->client_id === null),
 
-                    // Automatic Invoice Generation
+                    // Automatic / Update Invoice Generation
                     Action::make('generateInvoice')
-                        ->label('Générer facture')
+                        ->label(fn (RunRegistration $record) => $record->invoice_id ? 'Mettre à jour la facture' : 'Générer la facture')
                         ->icon('heroicon-o-document-currency-dollar')
+                        ->color('success')
                         ->action(function (RunRegistration $record) {
                             try {
                                 app(RunRegistrationService::class)->createInvoice($record);
-                                Notification::make()->title('Facture générée !')->success()->send();
+                                Notification::make()->title('Facture générée / mise à jour avec succès !')->success()->send();
                             } catch (Exception $e) {
                                 Notification::make()->title('Erreur')->body($e->getMessage())->danger()->send();
                             }
                         })
                         ->requiresConfirmation()
                         ->visible(fn ($record) => $record->client_id !== null),
+
+                    // Open Generated Invoice Direct Link
+                    Action::make('openInvoice')
+                        ->label('Ouvrir la facture')
+                        ->icon('heroicon-o-arrow-top-right-on-square')
+                        ->color('info')
+                        ->url(fn (RunRegistration $record) => $record->invoice_id ? InvoiceResource::getUrl('edit', ['record' => $record->invoice_id]) : null)
+                        ->openUrlInNewTab()
+                        ->visible(fn (RunRegistration $record) => $record->invoice_id !== null),
+
+                    // Imprimer Contrat Élite (PDF)
+                    Action::make('printEliteContract')
+                        ->label('Imprimer Contrat Élite (PDF)')
+                        ->icon('heroicon-o-document-text')
+                        ->color('warning')
+                        ->url(fn (RunRegistration $record) => route('pdf.elite-contract', ['registration' => $record->id]))
+                        ->openUrlInNewTab()
+                        ->visible(fn (RunRegistration $record) => ($record->run_registration_type?->value ?? $record->run_registration_type) === 'elite'),
 
                     // Open Public Signed Form
                     Action::make('openPublicForm')
@@ -298,7 +334,7 @@ class RunRegistrationResource extends Resource
                                     'Code Postal'         => $element->postal_code,
                                     'Localité'            => $element->locality,
                                     'Pays'                => $element->country,
-                                    'IBAN'                => $element->iban,
+                                    'IBAN'                => $element->iban ?: $registration->payment_iban,
                                     'Frais offerts'       => $element->has_free_registration_fee ? 'Oui' : 'Non',
                                     'Prime départ'        => $element->has_bonus_start ? 'Oui' : 'Non',
                                     'Montant départ'      => $element->bonus_start_amount,
@@ -313,42 +349,42 @@ class RunRegistrationResource extends Resource
                                 ]);
                             }
                         }
+
+                        if ($data->isEmpty()) {
+                            Notification::make()->title('Aucune donnée Élite à exporter.')->warning()->send();
+                            return null;
+                        }
+
                         return (new FastExcel($data))->download('export_elite_'.date('Ymd_His').'.xlsx');
                     }),
 
-                // Export Datasport
-                Action::make('exportDatasportAll')
-                    ->label('Export Datasport')
-                    ->icon('heroicon-o-arrow-down-tray')
+                // Export Datasport Écoles
+                Action::make('exportDatasportSchool')
+                    ->label('Export Datasport Écoles')
+                    ->icon('heroicon-o-academic-cap')
+                    ->color('info')
                     ->action(function () {
-                        $registrations = RunRegistration::with('runRegistrationElements.run')->get();
-                        $data = collect();
-                        foreach ($registrations as $registration) {
-                            foreach ($registration->runRegistrationElements as $element) {
-                                $data->push([
-                                    'ID Dossier'     => $registration->id,
-                                    'Nom'            => $element->last_name,
-                                    'Prénom'         => $element->first_name,
-                                    'Date naissance' => $element->birthdate?->format('d.m.Y'),
-                                    'Sexe'           => $element->gender?->value ?? $element->gender,
-                                    'Nationalité'    => $element->nationality,
-                                    'Email'          => $element->email,
-                                    'Course'         => $element->run?->name ?? $element->run_name,
-                                    'Bloc'           => $element->bloc,
-                                    'Équipe'         => $element->team,
-                                    'Adresse'        => $element->address ?: $registration->invoicing_address,
-                                    'Code Postal'    => $element->postal_code ?: $registration->invoicing_postal_code,
-                                    'Localité'       => $element->locality ?: $registration->invoicing_locality,
-                                    'Pays'           => $element->country ?: $registration->school_country ?: 'SUI',
-                                ]);
-                            }
-                        }
-                        return (new FastExcel($data))->download('export_datasport_'.date('Ymd_His').'.xlsx');
+                        $registrations = RunRegistration::where('run_registration_type', 'school')
+                            ->with('runRegistrationElements.run')
+                            ->get();
+                        return RunRegistrationResource::generateDatasportSchoolExcel($registrations);
                     }),
 
-                // Export Aggregated Data
+                // Export Datasport Groupes & Entreprises
+                Action::make('exportDatasportGroupCompany')
+                    ->label('Export Datasport Groupes & Entreprises')
+                    ->icon('heroicon-o-building-office')
+                    ->color('warning')
+                    ->action(function () {
+                        $registrations = RunRegistration::whereIn('run_registration_type', ['group', 'company'])
+                            ->with('runRegistrationElements.run')
+                            ->get();
+                        return RunRegistrationResource::generateDatasportGroupCompanyExcel($registrations);
+                    }),
+
+                // Export Aggregated Data with Invoicing & Accounting details
                 Action::make('exportAggregatedData')
-                    ->label('Export Données & Agrégations')
+                    ->label('Export Données & Agrégations (Comptabilité)')
                     ->icon('heroicon-o-chart-bar')
                     ->color('success')
                     ->action(function () {
@@ -362,75 +398,154 @@ class RunRegistrationResource extends Resource
                                 : (string) $reg->run_registration_type;
 
                             $data->push([
-                                'ID Dossier'          => $reg->id,
-                                'Type'                => $typeLabel,
-                                'Organisme'           => $reg->company_name ?: ($reg->school_name ?: ($reg->contact_first_name.' '.$reg->contact_last_name)),
-                                'Personne contact'    => $reg->contact_first_name.' '.$reg->contact_last_name,
-                                'Email contact'       => $reg->contact_email,
-                                'Téléphone'           => $reg->contact_phone,
-                                'Localité'            => $reg->invoicing_locality ?: $reg->school_locality,
-                                'Client lié'          => $reg->client?->name ?? 'Non associé',
-                                'Nombre participants' => $reg->runRegistrationElements->count(),
-                                'Montant Total (CHF)' => $service->calculateTotal($reg),
-                                'Date création'       => $reg->created_at?->format('d.m.Y H:i'),
+                                'ID Dossier'                 => $reg->id,
+                                'Type'                       => $typeLabel,
+                                'Organisme / Entreprise'     => $reg->company_name ?: ($reg->school_name ?: ($reg->contact_first_name.' '.$reg->contact_last_name)),
+                                'Personne contact'           => $reg->contact_first_name.' '.$reg->contact_last_name,
+                                'Email contact'              => $reg->contact_email,
+                                'Téléphone contact'          => $reg->contact_phone,
+                                'Facturation - Raison Sociale' => $reg->invoicing_company_name,
+                                'Facturation - Adresse'      => $reg->invoicing_address,
+                                'Facturation - Complément'   => $reg->invoicing_address_extension,
+                                'Facturation - Code Postal'  => $reg->invoicing_postal_code ?: $reg->school_postal_code,
+                                'Facturation - Localité'     => $reg->invoicing_locality ?: $reg->school_locality,
+                                'Facturation - Email'        => $reg->invoicing_email,
+                                'IBAN de paiement'           => $reg->payment_iban,
+                                'Client lié'                 => $reg->client?->name ?? 'Non associé',
+                                'Nombre participants'        => $reg->runRegistrationElements->count(),
+                                'Montant Total (CHF)'        => $service->calculateTotal($reg),
+                                'Date création'              => $reg->created_at?->format('d.m.Y H:i'),
                             ]);
                         }
-                        return (new FastExcel($data))->download('export_inscriptions_agrégées_'.date('Ymd_His').'.xlsx');
+
+                        if ($data->isEmpty()) {
+                            Notification::make()->title('Aucune donnée à exporter.')->warning()->send();
+                            return null;
+                        }
+
+                        return (new FastExcel($data))->download('export_inscriptions_comptabilite_'.date('Ymd_His').'.xlsx');
                     }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                     BulkAction::make('generateInvoices')
-                        ->label('Générer factures')
+                        ->label('Générer / Regrouper factures par client')
                         ->icon('heroicon-o-document-currency-dollar')
                         ->action(function (Collection $records) {
-                            $count = 0;
-                            $errors = 0;
-                            foreach ($records as $record) {
-                                if ($record->client_id) {
-                                    try {
-                                        app(RunRegistrationService::class)->createInvoice($record);
-                                        $count++;
-                                    } catch (Exception $e) {
-                                        $errors++;
-                                    }
-                                } else {
-                                    $errors++;
+                            $clientIds = $records->pluck('client_id')->filter()->unique();
+
+                            if ($clientIds->isEmpty()) {
+                                Notification::make()
+                                    ->title('Aucun client associé dans la sélection.')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+
+                            $successCount = 0;
+                            $errorCount = 0;
+
+                            foreach ($clientIds as $clientId) {
+                                try {
+                                    app(RunRegistrationService::class)->createInvoiceForClient($clientId);
+                                    $successCount++;
+                                } catch (Exception $e) {
+                                    $errorCount++;
                                 }
                             }
+
                             Notification::make()
-                                ->title($count.' factures générées'.($errors > 0 ? ', '.$errors.' erreurs' : ''))
+                                ->title($successCount.' facture(s) consolidée(s) générée(s) pour '.$clientIds->count().' client(s)'.($errorCount > 0 ? ' ('.$errorCount.' erreurs)' : ''))
                                 ->success()
                                 ->send();
                         })
                         ->requiresConfirmation(),
-                    BulkAction::make('exportDatasport')
-                        ->label('Export Datasport Sélection')
-                        ->icon('heroicon-o-arrow-down-tray')
+                    BulkAction::make('exportDatasportSchool')
+                        ->label('Export Datasport Écoles (Sélection)')
+                        ->icon('heroicon-o-academic-cap')
                         ->action(function (Collection $records) {
-                            $data = collect();
-                            foreach ($records as $registration) {
-                                foreach ($registration->runRegistrationElements as $element) {
-                                    $data->push([
-                                        'Nom'            => $element->last_name,
-                                        'Prénom'         => $element->first_name,
-                                        'Date naissance' => $element->birthdate?->format('d.m.Y'),
-                                        'Sexe'           => $element->gender?->value ?? $element->gender,
-                                        'Nationalité'    => $element->nationality,
-                                        'Email'          => $element->email,
-                                        'Course'         => $element->run?->name ?? $element->run_name,
-                                        'Bloc'           => $element->bloc,
-                                        'Équipe'         => $element->team,
-                                        'Localité'       => $element->locality ?: $registration->invoicing_locality,
-                                    ]);
-                                }
-                            }
-
-                            return (new FastExcel($data))->download('export_datasport_'.date('Ymd_His').'.xlsx');
+                            $filtered = $records->filter(fn ($r) => ($r->run_registration_type?->value ?? $r->run_registration_type) === 'school');
+                            return RunRegistrationResource::generateDatasportSchoolExcel($filtered);
+                        }),
+                    BulkAction::make('exportDatasportGroupCompany')
+                        ->label('Export Datasport Groupes/Entreprises (Sélection)')
+                        ->icon('heroicon-o-building-office')
+                        ->action(function (Collection $records) {
+                            $filtered = $records->filter(fn ($r) => in_array($r->run_registration_type?->value ?? $r->run_registration_type, ['group', 'company']));
+                            return RunRegistrationResource::generateDatasportGroupCompanyExcel($filtered);
                         }),
                 ]),
             ]);
+    }
+
+    public static function generateDatasportSchoolExcel($registrations)
+    {
+        $data = collect();
+
+        foreach ($registrations as $registration) {
+            foreach ($registration->runRegistrationElements as $element) {
+                $gender = is_object($element->gender) ? $element->gender->value : ($element->gender ?? '');
+                $birthdate = $element->birthdate ? $element->birthdate->format('d.m.Y') : '';
+                $schoolEtClass = trim(($registration->school_name ?? '') . ' ' . ($registration->school_class_level ?? ''));
+                $maitre = trim(($registration->school_class_holder_first_name ?? '') . ' ' . ($registration->school_class_holder_last_name ?? ''));
+
+                $data->push([
+                    'Nom'                             => $element->last_name,
+                    'Prénom'                          => $element->first_name,
+                    'Date de naissance (jj.mm.aaaa)' => $birthdate,
+                    'Genre'                           => $gender,
+                    'Nationalité'                     => $element->nationality ?: ($element->country ?: 'Switzerland'),
+                    'E-mail'                          => $element->email ?: $registration->contact_email,
+                    'Code postal'                     => $element->postal_code ?: ($registration->school_postal_code ?: $registration->invoicing_postal_code),
+                    'Lieu'                            => $element->locality ?: ($registration->school_locality ?: $registration->invoicing_locality),
+                    'Pays'                            => $element->country ?: ($registration->school_country ?: 'Switzerland'),
+                    'Etablissement et classe'         => $schoolEtClass,
+                    'Prénom du responsable '          => $registration->contact_first_name,
+                    'Nom du responsable '             => $registration->contact_last_name,
+                    'Maître'                          => $maitre,
+                ]);
+            }
+        }
+
+        if ($data->isEmpty()) {
+            Notification::make()->title('Aucune inscription École à exporter.')->warning()->send();
+            return null;
+        }
+
+        return (new FastExcel($data))->download('export_datasport_ecoles_' . date('Ymd_His') . '.xlsx');
+    }
+
+    public static function generateDatasportGroupCompanyExcel($registrations)
+    {
+        $data = collect();
+
+        foreach ($registrations as $registration) {
+            foreach ($registration->runRegistrationElements as $element) {
+                $gender = is_object($element->gender) ? $element->gender->value : ($element->gender ?? '');
+                $birthdate = $element->birthdate ? $element->birthdate->format('d.m.Y') : '';
+                $companyName = $registration->company_name ?: ($element->team ?: '');
+
+                $data->push([
+                    'Nom'                                                                     => $element->last_name,
+                    'Prénom'                                                                  => $element->first_name,
+                    'Date de naissance (jj.mm.aaaa)'                                         => $birthdate,
+                    'Genre'                                                                   => $gender,
+                    'Nationalité'                                                             => $element->nationality ?: 'Switzerland',
+                    'E-mail'                                                                  => $element->email ?: $registration->contact_email,
+                    'Nom de l\'entreprise'                                                    => $companyName,
+                    'Bloc de départ souhaité'                                                 => $element->bloc ?: '',
+                    'Souhaite avoir accès à la vidéo de sa course (remplir seulement si non)' => $element->with_video ? 'oui' : 'non',
+                ]);
+            }
+        }
+
+        if ($data->isEmpty()) {
+            Notification::make()->title('Aucune inscription Groupe/Entreprise à exporter.')->warning()->send();
+            return null;
+        }
+
+        return (new FastExcel($data))->download('export_datasport_groupes_entreprises_' . date('Ymd_His') . '.xlsx');
     }
 
     public static function getRelations(): array

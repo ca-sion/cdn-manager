@@ -436,6 +436,9 @@ class DatabaseSeeder extends Seeder
 
         $this->ensureEngagement($clientProspect, $currentEdition, 'prospect');
 
+        // RunRegistrations & Vouchers Seeder
+        $this->call(RunRegistrationSeeder::class);
+
         // Fillers
         Contact::factory(10)->create();
     }

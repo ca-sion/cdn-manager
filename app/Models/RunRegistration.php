@@ -15,18 +15,11 @@ class RunRegistration extends Model
 
     protected $fillable = [
         'client_id',
+        'invoice_id',
         'run_registration_type',
         'type',
-        'invoicing_company_name',
-        'invoicing_address',
-        'invoicing_address_extension',
-        'invoicing_postal_code',
-        'invoicing_locality',
-        'invoicing_email',
-        'invoicing_note',
-        'payment_iban',
-        'payment_note',
         'company_name',
+        'company_bloc',
         'school_name',
         'school_postal_code',
         'school_locality',
@@ -40,6 +33,15 @@ class RunRegistration extends Model
         'contact_last_name',
         'contact_email',
         'contact_phone',
+        'invoicing_company_name',
+        'invoicing_address',
+        'invoicing_address_extension',
+        'invoicing_postal_code',
+        'invoicing_locality',
+        'invoicing_email',
+        'invoicing_note',
+        'payment_iban',
+        'payment_note',
     ];
 
     protected $casts = [
@@ -60,6 +62,11 @@ class RunRegistration extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function invoice()
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     public function runRegistrationElements()

@@ -369,6 +369,33 @@ class ClientResource extends Resource
                                 ->success()
                                 ->send();
                         }),
+                    BulkAction::make('send_company_registration_invitation')
+                        ->label('Envoyer invitation inscription entreprise (Lien signé)')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('warning')
+                        ->action(function (Collection $records) {
+                            $sentCount = 0;
+                            foreach ($records as $client) {
+                                $signedUrl = URL::signedRoute('front.run-registration.create', [
+                                    'type'      => 'company',
+                                    'client_id' => $client->id,
+                                ]);
+
+                                try {
+                                    $client->notify(new ClientSendVouchersNotification(
+                                        $client->vouchers,
+                                        "Veuillez utiliser ce lien pré-rempli pour compléter l'inscription de vos coureurs d'entreprise :\n" . $signedUrl
+                                    ));
+                                    $sentCount++;
+                                } catch (Exception $e) {
+                                    // Ignore mail errors
+                                }
+                            }
+                            Notification::make()
+                                ->title($sentCount.' invitation(s) d\'inscription entreprise envoyée(s)')
+                                ->success()
+                                ->send();
+                        }),
                     BulkAction::make('relaunch_advertiser_form')
                         ->label('Relancer annonceur avec formulaire')
                         ->icon('heroicon-o-envelope')

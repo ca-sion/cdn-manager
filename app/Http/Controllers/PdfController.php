@@ -10,6 +10,7 @@ use App\Models\ClientCategory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProvisionElement;
 use App\Models\ProvisionCategory;
+use App\Models\RunRegistration;
 use Illuminate\Support\Facades\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -114,5 +115,25 @@ class PdfController extends Controller
         $provisionCategories = ProvisionCategory::all();
 
         return view('pdf.provisions', compact('provisions', 'displayAmount', 'displayClient', 'amountSum', 'netAmountSum', 'provisionsList', 'clientCategories', 'provisionCategories', 'provisionCategoryId', 'provisionId', 'clientCategoryId'));
+    }
+
+    public function eliteContract(RunRegistration $registration)
+    {
+        $element = $registration->runRegistrationElements()->first();
+        $edition = Edition::find(setting('edition_id'));
+
+        $view = View::make('pdf.elite-contract', [
+            'registration' => $registration,
+            'element'      => $element,
+            'edition'      => $edition,
+        ]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $runnerName = $element ? str($element->first_name . ' ' . $element->last_name)->slug() : 'elite';
+
+        return Pdf::loadHTML($html)
+            ->setPaper('A4', 'portrait')
+            ->setOption(['defaultFont' => 'sans-serif'])
+            ->stream('contrat-elite-' . $runnerName . '.pdf');
     }
 }

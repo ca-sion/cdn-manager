@@ -99,6 +99,14 @@ class Client extends Model implements HasMedia
     }
 
     /**
+     * The vouchers that belong to the client.
+     */
+    public function vouchers(): HasMany
+    {
+        return $this->hasMany(Voucher::class);
+    }
+
+    /**
      * The documents that belong to the client.
      */
     public function documents(): HasMany
