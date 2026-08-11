@@ -10,6 +10,9 @@ use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Section;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
 use App\Classes\Price;
 use App\Models\Contact;
 use Livewire\Component;
@@ -22,7 +25,6 @@ use Illuminate\Support\Facades\Blade;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Placeholder;
 use App\Notifications\ContactDonorFormCreated;
 use Filament\Forms\Concerns\InteractsWithForms;
 
@@ -62,16 +64,17 @@ class DonorForm extends Component implements HasForms, HasActions
             ->components([
                 Wizard::make([
                     Step::make('Formulaire')
+                        ->icon('heroicon-m-heart')
                         ->columns(2)
                         ->schema([
                             TextInput::make('first_name')
                                 ->label('Prénom')
                                 ->live(debounce: 500)
                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
-                                    $set('donnation_provision_mention', $get('first_name').' '.$get('last_name').' - '.$get('role'));
+                                    $set('donnation_provision_mention', trim(($get('first_name') ?? '').' '.($get('last_name') ?? '').' - '.($get('role') ?? ''), ' -'));
                                 })
                                 ->afterStateHydrated(function (Get $get, Set $set) {
-                                    $set('donnation_provision_mention', $get('first_name').' '.$get('last_name').' - '.$get('role'));
+                                    $set('donnation_provision_mention', trim(($get('first_name') ?? '').' '.($get('last_name') ?? '').' - '.($get('role') ?? ''), ' -'));
                                 })
                                 ->disabled(fn (DonorForm $livewire) => $livewire->contact?->first_name)
                                 ->readOnly(fn (DonorForm $livewire) => $livewire->contact?->first_name)
@@ -80,64 +83,83 @@ class DonorForm extends Component implements HasForms, HasActions
                                 ->label('Nom de famille')
                                 ->live(debounce: 500)
                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
-                                    $set('donnation_provision_mention', $get('first_name').' '.$get('last_name').' - '.$get('role'));
+                                    $set('donnation_provision_mention', trim(($get('first_name') ?? '').' '.($get('last_name') ?? '').' - '.($get('role') ?? ''), ' -'));
                                 })
                                 ->disabled(fn (DonorForm $livewire) => $livewire->contact?->first_name)
                                 ->readOnly(fn (DonorForm $livewire) => $livewire->contact?->last_name)
                                 ->dehydrated(),
                             TextInput::make('role')
                                 ->label('Fonction/Titre')
+                                ->prefixIcon('heroicon-m-briefcase')
                                 ->live(debounce: 500)
                                 ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
-                                    $set('donnation_provision_mention', $get('first_name').' '.$get('last_name').' - '.$get('role'));
+                                    $set('donnation_provision_mention', trim(($get('first_name') ?? '').' '.($get('last_name') ?? '').' - '.($get('role') ?? ''), ' -'));
                                 })
                                 ->readOnly(fn (DonorForm $livewire) => $livewire->contact?->role),
                             TextInput::make('email')
                                 ->label('Email')
+                                ->email()
+                                ->prefixIcon('heroicon-m-envelope')
                                 ->required(),
                             Section::make('Don d\'honneur')
+                                ->icon('heroicon-m-sparkles')
                                 ->description('Crédité le jour de la course')
                                 ->columnSpanFull()
-                                ->columns(3)
+                                ->columns(2)
                                 ->schema([
                                     TextInput::make('donnation_provision_amount')
                                         ->label('Montant annoncé')
                                         ->helperText('Le montant n\'est pas soumis à la TVA')
                                         ->numeric()
                                         ->suffix('CHF')
+                                        ->prefixIcon('heroicon-m-banknotes')
                                         ->required()
                                         ->maxLength(255),
                                     TextInput::make('donnation_provision_mention')
                                         ->label('Mention à côté du montant')
-                                        ->helperText('Mentionner si anynyme')
+                                        ->helperText('Mentionner si anonyme')
+                                        ->prefixIcon('heroicon-m-chat-bubble-bottom-center-text')
                                         ->required()
                                         ->maxLength(255)
                                         ->live(),
                                 ]),
                         ]),
                     Step::make('Récapitulatif')
+                        ->icon('heroicon-m-clipboard-document-check')
                         ->schema([
-                            Placeholder::make('details')
-                                ->label(new HtmlString('<div class="format"><h2>Détails de la commande</h2></div>'))
-                                ->content(function (Get $get, Component $livewire) {
-
-                                    $donnation_provision_amount = (float) $get('donnation_provision_amount');
-                                    $donnation_provision_mention = $get('donnation_provision_mention');
-
-                                    $totalNet = $donnation_provision_amount;
-
-                                    return view('livewire.advertiser-form-order-details', [
-                                        'total_net'                 => Price::of($totalNet)->amount('c'),
-                                        'total_taxes'               => '-',
-                                        'total'                     => Price::of($totalNet)->amount('c'),
-                                        'data'                      => json_decode(json_encode($livewire->data)),
-                                        'provisions'                => [],
-                                        'donnationProvisionAmount'  => $donnation_provision_amount ? Price::of($donnation_provision_amount)->amount('c') : null,
-                                        'donnationProvisionMention' => $donnation_provision_mention,
-                                    ]);
-                                }),
+                            Section::make('Détails de la commande')
+                                ->columns(3)
+                                ->schema([
+                                    TextEntry::make('donor_name')
+                                        ->label('Donateur')
+                                        ->state(fn (Get $get) => trim(($get('first_name') ?? '').' '.($get('last_name') ?? '')) ?: '-')
+                                        ->icon('heroicon-m-user')
+                                        ->weight(FontWeight::Bold),
+                                    TextEntry::make('donor_email')
+                                        ->label('Email')
+                                        ->state(fn (Get $get) => $get('email') ?: '-')
+                                        ->icon('heroicon-m-envelope'),
+                                    TextEntry::make('donor_role')
+                                        ->label('Fonction/Titre')
+                                        ->state(fn (Get $get) => $get('role') ?: '-')
+                                        ->icon('heroicon-m-briefcase')
+                                        ->visible(fn (Get $get) => ! empty($get('role'))),
+                                    TextEntry::make('summary_donation_amount')
+                                        ->label('Montant du don')
+                                        ->state(fn (Get $get) => $get('donnation_provision_amount') ? Price::of((float) $get('donnation_provision_amount'))->amount('c') : '-')
+                                        ->icon('heroicon-m-banknotes')
+                                        ->badge()
+                                        ->color('success')
+                                        ->size(TextSize::Large),
+                                    TextEntry::make('summary_donation_mention')
+                                        ->label('Mention du don')
+                                        ->state(fn (Get $get) => $get('donnation_provision_mention') ?: '-')
+                                        ->icon('heroicon-m-chat-bubble-bottom-center-text'),
+                                ]),
                             Textarea::make('note')
-                                ->label('Remarque ou ajout que vous aimeriez communiquer'),
+                                ->label('Remarque ou ajout que vous aimeriez communiquer')
+                                ->rows(3)
+                                ->columnSpanFull(),
                         ]),
                 ])
                     ->submitAction(new HtmlString(Blade::render(<<<'BLADE'

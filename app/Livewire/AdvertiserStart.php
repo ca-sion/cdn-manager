@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use App\Models\Client;
 use Livewire\Component;
@@ -31,22 +32,35 @@ class AdvertiserStart extends Component implements HasForms, HasActions
     {
         return $schema
             ->components([
-                ToggleButtons::make('choice')
-                    ->label('')
-                    ->inline()
-                    ->options([
-                        'first'   => 'Non, c\'est la première fois que je passe commande',
-                        'already' => 'Oui, j\'ai déjà passé commande pour une édition précédente',
-                    ])
-                    ->live(),
-                Select::make('client_id')
-                    ->label('Rechercher votre société ou entreprise')
-                    ->options(Client::all()->pluck('name', 'id'))
-                    ->searchable()
-                    ->placeholder('Taper le nom de votre entreprise…')
-                    ->optionsLimit(1)
-                    ->visible(fn (Get $get) => $get('choice') == 'already')
-                    ->required(fn (Get $get) => $get('choice') == 'already'),
+                Section::make('Pour commencer')
+                    ->description('Avez-vous déjà passé une commande pour une édition précédente ?')
+                    ->schema([
+                        ToggleButtons::make('choice')
+                            ->label('')
+                            ->inline()
+                            ->options([
+                                'first'   => 'Non, c\'est la première fois que je passe commande',
+                                'already' => 'Oui, j\'ai déjà passé commande pour une édition précédente',
+                            ])
+                            ->icons([
+                                'first'   => 'heroicon-m-sparkles',
+                                'already' => 'heroicon-m-arrow-path',
+                            ])
+                            ->colors([
+                                'first'   => 'primary',
+                                'already' => 'info',
+                            ])
+                            ->live(),
+                        Select::make('client_id')
+                            ->label('Rechercher votre société ou entreprise')
+                            ->options(Client::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->prefixIcon('heroicon-m-magnifying-glass')
+                            ->placeholder('Taper le nom de votre entreprise…')
+                            ->optionsLimit(10)
+                            ->visible(fn (Get $get) => $get('choice') == 'already')
+                            ->required(fn (Get $get) => $get('choice') == 'already'),
+                    ]),
             ])
             ->statePath('data');
     }

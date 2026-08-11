@@ -24,6 +24,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Forms\Concerns\InteractsWithForms;
 use App\Notifications\ClientAdvertiserFormCreated;
 
@@ -86,33 +87,36 @@ class AdvertiserForm extends Component implements HasForms, HasActions
             ->components([
                 Wizard::make([
                     Step::make('Informations')
+                        ->icon('heroicon-m-information-circle')
                         ->visible(fn (AdvertiserForm $livewire) => $livewire->client !== null)
                         ->schema([
-                            Placeholder::make('client_name')
-                                ->label(new HtmlString('<strong>Nom</strong>'))
-                                ->content(fn (AdvertiserForm $livewire) => $livewire->client?->name),
-                            Placeholder::make('previous_order_details')
-                                ->label(new HtmlString('<strong>Commande de l\'édition précédente</strong>'))
-                                ->content(function (AdvertiserForm $livewire) {
+                            TextEntry::make('client_name')
+                                ->label('Nom de l\'annonceur')
+                                ->state(fn (AdvertiserForm $livewire) => $livewire->client?->name)
+                                ->icon('heroicon-m-building-office')
+                                ->weight(\Filament\Support\Enums\FontWeight::Bold),
+                            TextEntry::make('previous_order_details')
+                                ->label('Commande de l\'édition précédente')
+                                ->icon('heroicon-m-clock')
+                                ->state(function (AdvertiserForm $livewire) {
                                     if (! $livewire->client) {
                                         return 'Aucune information disponible.';
                                     }
-
-                                    if (empty($livewire->client->getPreviousEditionProvisionElementsDetails())) {
+                                    $details = $livewire->client->getPreviousEditionProvisionElementsDetails();
+                                    if (empty($details)) {
                                         return 'Aucune commande passée l\'année dernière.';
                                     }
-
-                                    return new HtmlString('<ul style="list-style: disc;margin-left: 2rem;}"><li>'.implode('</li><li>', $livewire->client->getPreviousEditionProvisionElementsDetails()).'</li></ul>');
-                                }),
+                                    return implode(' • ', $details);
+                                })
+                                ->badge()
+                                ->color('info'),
                         ]),
                     Step::make('Prestations')
+                        ->icon('heroicon-m-shopping-bag')
                         ->schema([
-                            Placeholder::make('Prestations description')
-                                ->label('')
-                                ->content(new HtmlString('Sélectionner les prestations qui vous conviennent dans les listes ci-après.')),
                             Section::make('Anonce journalistique')
                                 ->visible((bool) setting('advertiser_form_journal_category'))
-                                ->description(new HtmlString('Annonce dans le Journal de la Course de Noël et du Trail des Châteaux, édité à plus de 40 000 exemplaires, à paraître dans un Nouvelliste de novembre et distribué dans les districts de Sion, d’Hérens et de Conthey.<br><br>Consulter <a href="/docs/Dimensions_encarté_NF.pdf" class="underline text-primary-600 hover:text-primary-500">mise en page des emplacements</a> pour choisir votre emplacement et les dimensions de votre annonce.'))
+                                ->description(new HtmlString('Annonce dans le Journal de la Course de Noël et du Trail des Châteaux, édité à plus de 40 000 exemplaires, à paraître dans un Nouvelliste de novembre et distribué dans les districts de Sion, d’Hérens et de Conthey.<br><br>Consulter <a href="/docs/Dimensions_encarté_NF.pdf" class="underline text-primary-600 hover:text-primary-500 font-medium">mise en page des emplacements</a> pour choisir votre emplacement et les dimensions de votre annonce.'))
                                 ->schema([
                                     CheckboxList::make('journal_provisions')
                                         ->label('')
@@ -162,17 +166,21 @@ class AdvertiserForm extends Component implements HasForms, HasActions
                                         ->helperText('Le montant n\'est pas soumis à la TVA')
                                         ->numeric()
                                         ->suffix('CHF')
+                                        ->prefixIcon('heroicon-m-banknotes')
                                         ->maxLength(255),
                                     TextInput::make('donnation_provision_mention')
                                         ->label('Mention à côté du montant')
-                                        ->helperText('Mentionner si anynyme')
+                                        ->helperText('Mentionner si anonyme')
+                                        ->prefixIcon('heroicon-m-chat-bubble-bottom-center-text')
                                         ->maxLength(255)
                                         ->live(),
                                 ]),
                         ]),
                     Step::make('Données de base')
+                        ->icon('heroicon-m-building-office-2')
                         ->schema([
                             Section::make('Annonceur')
+                                ->icon('heroicon-m-briefcase')
                                 ->columns(12)
                                 ->schema([
                                     TextInput::make('name')
@@ -197,6 +205,7 @@ class AdvertiserForm extends Component implements HasForms, HasActions
                                         ->columnSpan(['md' => 4]),
                                 ]),
                             Section::make('Personne de contact')
+                                ->icon('heroicon-m-user')
                                 ->columns(3)
                                 ->schema([
                                     TextInput::make('contact.first_name')
@@ -216,6 +225,7 @@ class AdvertiserForm extends Component implements HasForms, HasActions
                                         ->live(),
                                 ]),
                             Section::make('Adresse de facturation')
+                                ->icon('heroicon-m-credit-card')
                                 ->columns(12)
                                 ->schema([
                                     TextInput::make('invoicing_email')
@@ -243,11 +253,13 @@ class AdvertiserForm extends Component implements HasForms, HasActions
                                 ]),
                         ]),
                     Step::make('Récapitulatif')
+                        ->icon('heroicon-m-document-check')
                         ->schema([
                             Textarea::make('note')
-                                ->label('Remarque ou ajout que vous aimeriez communiquer'),
+                                ->label('Remarque ou ajout que vous aimeriez communiquer')
+                                ->rows(3),
                             Placeholder::make('details')
-                                ->label(new HtmlString('<div class="format"><h2>Détails de la commande</h2></div>'))
+                                ->label(new HtmlString('<div class="format"><h2 class="text-xl font-bold">Détails de la commande</h2></div>'))
                                 ->content(function (Get $get, Component $livewire) {
                                     $provisionIds = collect($get('journal_provisions'))
                                         ->merge($get('screen_provisions'))

@@ -7,6 +7,9 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
 use Livewire\Component;
 use App\Models\ProvisionElement;
 use Illuminate\Support\HtmlString;
@@ -15,7 +18,6 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TagsInput;
 use Filament\Notifications\Notification;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Concerns\InteractsWithForms;
 
@@ -38,30 +40,32 @@ class VipResponse extends Component implements HasForms, HasActions
     {
         return $schema
             ->components([
-                Section::make()
-                    ->description(new HtmlString(''))
+                Section::make('Votre invitation VIP')
+                    ->icon('heroicon-m-sparkles')
+                    ->description('Pour confirmer votre invitation VIP à la Course de Noël et au Trail des Châteaux, veuillez renseigner les informations ci-après. Vous pouvez également indiquer le nom des personnes invitées selon le nombre d\'invitations autorisées.')
                     ->columns(3)
                     ->schema([
-                        Placeholder::make('details')
-                            ->label(new HtmlString('<div class="format"><h2>Votre invitation VIP</h2></div>'))
-                            ->content(function (Get $get) {
-                                return new HtmlString('<div class="format">
-                                Pour confirmer votre invitation VIP à la Course de Noël et au Trail des Châteaux 2026, veuillez renseigner les informations ci-après. Vous pouvez également indiquer le nom des personnes invitées selon le nombre d\'invitations autorisées.
-                                </div>');
-                            })
-                            ->columnSpanFull(),
-                        Placeholder::make('vip_invitation_number')
+                        TextEntry::make('vip_invitation_number')
                             ->label('Nombre d\'invitations')
-                            ->content(fn () => $this->provisionElement->vip_invitation_number),
-                        Placeholder::make('invited')
+                            ->state(fn () => $this->provisionElement->vip_invitation_number)
+                            ->icon('heroicon-m-ticket')
+                            ->badge()
+                            ->color('primary')
+                            ->size(TextSize::Large),
+                        TextEntry::make('invited')
                             ->label('Invité')
-                            ->content(fn () => $this->provisionElement->recipient->name),
-                        Placeholder::make('category')
+                            ->state(fn () => $this->provisionElement->recipient?->name)
+                            ->icon('heroicon-m-user')
+                            ->weight(FontWeight::Bold),
+                        TextEntry::make('category')
                             ->label('Type d\'invitation')
-                            ->content(fn () => $this->provisionElement->vip_category),
+                            ->state(fn () => $this->provisionElement->vip_category)
+                            ->icon('heroicon-m-tag')
+                            ->badge()
+                            ->color('info'),
                     ]),
-                Section::make()
-                    ->description(new HtmlString(''))
+                Section::make('Réponse')
+                    ->icon('heroicon-m-envelope-open')
                     ->columns(2)
                     ->schema([
                         ToggleButtons::make('vip_response_status')
