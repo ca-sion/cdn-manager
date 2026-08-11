@@ -18,9 +18,9 @@ return new class extends Migration
             $table->decimal('cost', 8, 2)->nullable();
             $table->json('available_for_types')->nullable();
             $table->json('start_blocs')->nullable();
-            $table->date('registrations_deadline')->nullable();
+            $table->dateTime('registrations_deadline')->nullable();
             $table->integer('registrations_limit')->nullable();
-            $table->integer('registrations_number')->nullable();
+            $table->integer('registrations_number')->default(0);
             $table->string('datasport_code')->nullable();
             $table->string('code')->nullable();
             $table->boolean('accepts_voucher')->default(false);

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\RunRegistrationTypesEnum;
+use App\Enums\RunRegistrationType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,7 +18,7 @@ class RunRegistrationFactory extends Factory
     public function definition(): array
     {
         return [
-            'type'                   => $this->faker->randomElement(RunRegistrationTypesEnum::cases()),
+            'run_registration_type'  => $this->faker->randomElement(RunRegistrationType::cases()),
             'invoicing_company_name' => $this->faker->company,
             'invoicing_address'      => $this->faker->streetAddress,
             'invoicing_postal_code'  => $this->faker->postcode,

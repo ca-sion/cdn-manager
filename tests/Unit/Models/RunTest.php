@@ -41,7 +41,7 @@ class RunTest extends TestCase
 
         $this->assertEquals('array', $casts['available_for_types']);
         $this->assertEquals('array', $casts['start_blocs']);
-        $this->assertEquals('date', $casts['registrations_deadline']);
+        $this->assertEquals('datetime', $casts['registrations_deadline']);
         $this->assertEquals('boolean', $casts['accepts_voucher']);
         $this->assertEquals('integer', $casts['registrations_limit']);
         $this->assertEquals('integer', $casts['registrations_number']);

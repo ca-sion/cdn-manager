@@ -1,0 +1,160 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Enums\RunRegistrationType;
+use App\Models\Client;
+use App\Models\Edition;
+use App\Models\Run;
+use App\Models\RunRegistration;
+use App\Models\RunRegistrationElement;
+use App\Notifications\RunRegistrationLink;
+use App\Services\RunRegistrationService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
+use Livewire\Livewire;
+use App\Livewire\FrontRunRegistration;
+use Tests\TestCase;
+
+class RunRegistrationSystemTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Edition::firstOrCreate(['id' => 1], ['name' => '2026', 'year' => '2026']);
+    }
+
+    /** @test */
+    public function public_creation_route_renders_form()
+    {
+        $response = $this->get(route('front.run-registration.create', ['type' => 'company']));
+        $response->assertStatus(200);
+    }
+
+    /** @test */
+    public function public_creation_submits_saves_and_dispatches_notification()
+    {
+        Notification::fake();
+
+        $run = Run::factory()->create(['name' => 'Course 10km', 'cost' => 35.00]);
+
+        Livewire::test(FrontRunRegistration::class, ['type' => 'company'])
+            ->set('company_name', 'Acme Corp')
+            ->set('contact_first_name', 'Jean')
+            ->set('contact_last_name', 'Dupont')
+            ->set('contact_email', 'jean.dupont@acme.test')
+            ->set('contact_phone', '0791234567')
+            ->set('invoicing_company_name', 'Acme Corp Holding')
+            ->set('invoicing_address', 'Rue de la Gare 1')
+            ->set('invoicing_postal_code', '1950')
+            ->set('invoicing_locality', 'Sion')
+            ->set('elements', [
+                [
+                    '_k'         => 'l1',
+                    'first_name' => 'Pierre',
+                    'last_name'  => 'Martin',
+                    'birthdate'  => '1990-05-15',
+                    'gender'     => 'M',
+                    'run_id'     => $run->id,
+                ],
+            ])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $registration = RunRegistration::where('contact_email', 'jean.dupont@acme.test')->first();
+        $this->assertNotNull($registration);
+        $this->assertEquals('Acme Corp', $registration->company_name);
+        $this->assertCount(1, $registration->runRegistrationElements);
+
+        Notification::assertSentTo($registration, RunRegistrationLink::class);
+    }
+
+    /** @test */
+    public function signed_edit_link_allows_editing()
+    {
+        $registration = RunRegistration::factory()->create([
+            'run_registration_type' => RunRegistrationType::Company,
+            'contact_first_name' => 'Jean',
+            'contact_last_name' => 'Dupont',
+            'contact_email' => 'jean@test.ch',
+        ]);
+
+        $element = RunRegistrationElement::factory()->create([
+            'run_registration_id' => $registration->id,
+            'first_name' => 'Alice',
+            'last_name' => 'Bernard',
+        ]);
+
+        $url = URL::signedRoute('front.run-registration.edit', [
+            'registration' => $registration->id,
+        ]);
+
+        $response = $this->get($url);
+        $response->assertStatus(200);
+
+        Livewire::test(FrontRunRegistration::class, ['registration' => $registration->id])
+            ->assertSet('company_name', null)
+            ->assertSet('contact_first_name', 'Jean')
+            ->assertCount('elements', 1);
+    }
+
+    /** @test */
+    public function unsigned_edit_link_is_forbidden()
+    {
+        $registration = RunRegistration::factory()->create();
+
+        $url = route('front.run-registration.edit', [
+            'registration' => $registration->id,
+        ]);
+
+        $response = $this->get($url);
+        $response->assertStatus(403);
+    }
+
+    /** @test */
+    public function laragrid_grid_ops_call_is_authorized()
+    {
+        $component = Livewire::test(FrontRunRegistration::class, ['type' => 'group']);
+        $elements = $component->get('elements');
+        $rowKey = $elements[0]['_k'] ?? 'l1';
+
+        $result = $component->call('gridOps', 'elements', [
+            'baseVersion' => 0,
+            'ops' => [
+                ['seq' => 1, 't' => 'set', 'row' => $rowKey, 'col' => 'first_name', 'v' => 'Alice'],
+            ],
+        ]);
+
+        $result->assertHasNoErrors();
+    }
+
+    /** @test */
+    public function create_invoice_service_generates_invoice_for_linked_client()
+    {
+        $client = Client::create([
+            'name' => 'Test Client SA',
+            'email' => 'client@test.ch',
+        ]);
+
+        $run = Run::factory()->create(['name' => 'Trail 20km', 'cost' => 50.00]);
+
+        $registration = RunRegistration::factory()->create([
+            'client_id' => $client->id,
+        ]);
+
+        RunRegistrationElement::factory()->create([
+            'run_registration_id' => $registration->id,
+            'run_id' => $run->id,
+            'has_free_registration_fee' => false,
+        ]);
+
+        $service = app(RunRegistrationService::class);
+        $invoice = $service->createInvoice($registration);
+
+        $this->assertNotNull($invoice);
+        $this->assertEquals($client->id, $invoice->client_id);
+    }
+}

@@ -8,7 +8,7 @@ use Filament\Tables;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
-use App\Enums\RunRegistrationTypesEnum;
+use App\Enums\RunRegistrationType;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\RunResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -18,6 +18,8 @@ class RunResource extends Resource
     protected static ?string $model = Run::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-flag';
+
+    protected static ?string $navigationGroup = 'Courses';
 
     protected static ?string $modelLabel = 'Course';
 
@@ -42,9 +44,9 @@ class RunResource extends Resource
                             ->numeric()
                             ->prefix('CHF'),
                         Forms\Components\Select::make('available_for_types')
-                            ->label(' Disponible pour')
+                            ->label('Disponible pour')
                             ->multiple()
-                            ->options(RunRegistrationTypesEnum::class)
+                            ->options(RunRegistrationType::class)
                             ->preload(),
                     ])->columns(2),
 
@@ -57,7 +59,7 @@ class RunResource extends Resource
                                 Forms\Components\TextInput::make('time')->label('Heure')->type('time'),
                             ])
                             ->columns(2),
-                        Forms\Components\DatePicker::make('registrations_deadline')
+                        Forms\Components\DateTimePicker::make('registrations_deadline')
                             ->label('Délai d\'inscription'),
                         Forms\Components\TextInput::make('registrations_limit')
                             ->label('Limite d\'inscriptions')
@@ -65,6 +67,7 @@ class RunResource extends Resource
                         Forms\Components\TextInput::make('registrations_number')
                             ->label('Nombre d\'inscrits actuel')
                             ->numeric()
+                            ->default(0)
                             ->disabled()
                             ->dehydrated(false),
                     ])->columns(2),
@@ -106,10 +109,10 @@ class RunResource extends Resource
                 Tables\Columns\TextColumn::make('available_for_types')
                     ->label('Types')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => is_array($state) ? collect($state)->map(fn ($type) => RunRegistrationTypesEnum::from($type)->getLabel())->implode(', ') : $state),
+                    ->formatStateUsing(fn ($state) => is_array($state) ? collect($state)->map(fn ($type) => RunRegistrationType::tryFrom($type)?->getLabel() ?? $type)->implode(', ') : $state),
                 Tables\Columns\TextColumn::make('registrations_deadline')
                     ->label('Délai')
-                    ->date('d.m.Y')
+                    ->dateTime('d.m.Y H:i')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('registrations_limit')
                     ->label('Limite')

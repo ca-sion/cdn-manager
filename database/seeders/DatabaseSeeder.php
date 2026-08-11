@@ -17,6 +17,7 @@ use App\Enums\InvoiceStatusEnum;
 use App\Models\ClientEngagement;
 use App\Models\ProvisionElement;
 use App\Models\ProvisionCategory;
+use App\Models\Run;
 use Illuminate\Support\Facades\DB;
 use App\Enums\ProvisionElementStatusEnum;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
@@ -90,17 +91,15 @@ class DatabaseSeeder extends Seeder
         $provCatPack = ProvisionCategory::create(['name' => 'Packs Sponsoring']);
 
         // 7. Provisions (The Catalog) linked to Products
-
-        // Journal Provisions
         $provPage1 = Provision::create([
             'edition_id'            => $currentEdition->id,
             'category_id'           => $provCatJournal->id,
             'dicastry_id'           => $dicastrySponso->id,
-            'product_id'            => $prodPage1->id, // Linked!
+            'product_id'            => $prodPage1->id,
             'name'                  => 'Annonce 1/1 page',
             'code'                  => 'J-1-1',
             'has_product'           => true,
-            'has_media'             => true, // Needs PDF upload
+            'has_media'             => true,
             'has_numeric_indicator' => false,
         ]);
 
@@ -108,34 +107,32 @@ class DatabaseSeeder extends Seeder
             'edition_id'  => $currentEdition->id,
             'category_id' => $provCatJournal->id,
             'dicastry_id' => $dicastrySponso->id,
-            'product_id'  => $prodPageHalf->id, // Linked!
+            'product_id'  => $prodPageHalf->id,
             'name'        => 'Annonce 1/2 page',
             'code'        => 'J-1-2',
             'has_product' => true,
             'has_media'   => true,
         ]);
 
-        // Banner Provisions
         $provBannerFinish = Provision::create([
             'edition_id'                => $currentEdition->id,
             'category_id'               => $provCatBanner->id,
             'dicastry_id'               => $dicastryTech->id,
-            'product_id'                => $prodBanner->id, // Linked!
+            'product_id'                => $prodBanner->id,
             'name'                      => 'Banderole Arrivée',
             'code'                      => 'B-ARR',
             'has_product'               => true,
-            'has_goods_to_be_delivered' => true, // Needs physical delivery
-            'due_date_indicator'        => '20.11.2025', // Deadline text
+            'has_goods_to_be_delivered' => true,
+            'due_date_indicator'        => '20.11.2025',
         ]);
 
-        // Special Provisions (Donation & VIP) - No Product link usually (variable price or free)
         $provDonation = Provision::create([
             'edition_id'            => $currentEdition->id,
             'category_id'           => null,
             'dicastry_id'           => $dicastryAdmin->id,
             'name'                  => 'Don de soutien',
             'code'                  => 'DON',
-            'has_numeric_indicator' => true, // Amount entered manually
+            'has_numeric_indicator' => true,
         ]);
 
         $provVip = Provision::create([
@@ -144,10 +141,80 @@ class DatabaseSeeder extends Seeder
             'dicastry_id' => $dicastryAdmin->id,
             'name'        => 'Accès Espace VIP',
             'code'        => 'VIP',
-            'has_vip'     => true, // Enables VIP guest list logic
+            'has_vip'     => true,
         ]);
 
-        // 8. POPULATE SETTINGS TABLE
+        // 8. Runs (Courses)
+        Run::create([
+            'name'                   => 'Course Entreprises 10km',
+            'distance'               => 10.00,
+            'cost'                   => 35.00,
+            'available_for_types'    => ['company', 'group'],
+            'start_blocs'            => [
+                ['label' => 'Bloc A', 'time' => '10:00'],
+                ['label' => 'Bloc B', 'time' => '10:15'],
+            ],
+            'registrations_deadline' => now()->addDays(45),
+            'registrations_limit'    => 300,
+            'registrations_number'   => 45,
+            'datasport_code'         => 'DS-10K',
+            'code'                   => 'RUN-10K-ENT',
+            'accepts_voucher'        => true,
+        ]);
+
+        Run::create([
+            'name'                   => 'Course des Écoles 3km',
+            'distance'               => 3.00,
+            'cost'                   => 15.00,
+            'available_for_types'    => ['school'],
+            'start_blocs'            => [
+                ['label' => 'Bloc Écoles 1', 'time' => '11:00'],
+                ['label' => 'Bloc Écoles 2', 'time' => '11:20'],
+            ],
+            'registrations_deadline' => now()->addDays(45),
+            'registrations_limit'    => 600,
+            'registrations_number'   => 150,
+            'datasport_code'         => 'DS-3K',
+            'code'                   => 'RUN-3K-SCH',
+            'accepts_voucher'        => true,
+        ]);
+
+        Run::create([
+            'name'                   => 'Trail des Châteaux 20km',
+            'distance'               => 20.00,
+            'cost'                   => 50.00,
+            'available_for_types'    => ['company', 'group', 'elite'],
+            'start_blocs'            => [
+                ['label' => 'Bloc Départ Spécial', 'time' => '08:30'],
+            ],
+            'registrations_deadline' => now()->addDays(45),
+            'registrations_limit'    => 400,
+            'registrations_number'   => 80,
+            'datasport_code'         => 'DS-20K',
+            'code'                   => 'RUN-20K-TRAIL',
+            'accepts_voucher'        => true,
+        ]);
+
+        Run::create([
+            'name'                   => 'Course Élite Hommes / Dames',
+            'distance'               => 7.50,
+            'cost'                   => 0.00,
+            'available_for_types'    => ['elite'],
+            'start_blocs'            => [
+                ['label' => 'Bloc Élite', 'time' => '16:00'],
+            ],
+            'registrations_deadline' => now()->addDays(45),
+            'registrations_limit'    => 100,
+            'registrations_number'   => 25,
+            'datasport_code'         => 'DS-ELITE',
+            'code'                   => 'RUN-ELITE',
+            'accepts_voucher'        => true,
+        ]);
+
+        // Additional random runs via factory
+        Run::factory(3)->create();
+
+        // 9. POPULATE SETTINGS TABLE
         $this->updateSetting('edition_id', $currentEdition->id);
         $this->updateSetting('advertiser_form_client_category', $catPme->id);
         $this->updateSetting('advertiser_form_journal_category', $provCatJournal->id);
@@ -160,12 +227,12 @@ class DatabaseSeeder extends Seeder
         $this->updateSetting('reports_banners_provisions', [$provBannerFinish->id]);
         $this->updateSetting('reports_advertisers_journal_provisions', [$provPage1->id, $provPageHalf->id]);
         $this->updateSetting('reports_interclass_donor_provision', $provDonation->id);
+        $this->updateSetting('registrations_deadline', now()->addDays(45)->format('Y-m-d H:i:s'));
 
         // ==========================================
         // SCENARIOS
         // ==========================================
 
-        // Helper for Invoices
         $createPosition = fn ($name, $cost, $qty = 1) => [
             'name'        => $name,
             'cost'        => $cost,
@@ -175,7 +242,6 @@ class DatabaseSeeder extends Seeder
         ];
 
         // --- SCENARIO 1: The Big Sponsor (Paid) ---
-        // Client with Contacts (Director, Assistant)
         $clientBank = Client::factory()->create([
             'name'        => 'Banque Cantonale',
             'category_id' => $catPrincipal->id,
@@ -195,10 +261,9 @@ class DatabaseSeeder extends Seeder
             'category_id' => $contactCatEntreprise->id,
         ]);
 
-        $clientBank->contacts()->attach($contactDirector, ['type' => 'executive']); // Décideur
-        $clientBank->contacts()->attach($contactAssistant, ['type' => 'administration']); // Admin
+        $clientBank->contacts()->attach($contactDirector, ['type' => 'executive']);
+        $clientBank->contacts()->attach($contactAssistant, ['type' => 'administration']);
 
-        // Provisions
         ProvisionElement::create([
             'edition_id'     => $currentEdition->id,
             'provision_id'   => $provPage1->id,
@@ -206,25 +271,23 @@ class DatabaseSeeder extends Seeder
             'recipient_id'   => $clientBank->id,
             'status'         => ProvisionElementStatusEnum::Confirmed,
             'quantity'       => 1,
-            'cost'           => $prodPage1->cost, // Auto-filled from product ideally, but explicit here
+            'cost'           => $prodPage1->cost,
             'tax_rate'       => $prodPage1->tax_rate,
-            'media_status'   => 'received', // File uploaded
+            'media_status'   => 'received',
         ]);
 
-        // VIP for the Director
         ProvisionElement::create([
             'edition_id'            => $currentEdition->id,
             'provision_id'          => $provVip->id,
-            'recipient_type'        => Contact::class, // Attached to Contact!
+            'recipient_type'        => Contact::class,
             'recipient_id'          => $contactDirector->id,
             'status'                => ProvisionElementStatusEnum::Confirmed,
             'vip_invitation_number' => 2,
             'vip_response_status'   => 'accepted',
-            'vip_guests'            => [['name' => 'Mme Dubois']], // +1 guest
+            'vip_guests'            => [['name' => 'Mme Dubois']],
             'cost'                  => 0,
         ]);
 
-        // Invoice
         Invoice::create([
             'edition_id'   => $currentEdition->id,
             'client_id'    => $clientBank->id,
@@ -244,7 +307,6 @@ class DatabaseSeeder extends Seeder
         $this->ensureEngagement($clientBank, $currentEdition, 'paid');
 
         // --- SCENARIO 2: The SME (Sent, Unpaid) ---
-        // Client with Marketing Contact
         $clientGarage = Client::factory()->create([
             'name'        => 'Garage du Centre',
             'category_id' => $catPme->id,
@@ -266,7 +328,7 @@ class DatabaseSeeder extends Seeder
             'status'         => ProvisionElementStatusEnum::Confirmed,
             'quantity'       => 1,
             'cost'           => $prodPageHalf->cost,
-            'media_status'   => 'missing', // Alert!
+            'media_status'   => 'missing',
         ]);
 
         ProvisionElement::create([
@@ -277,7 +339,7 @@ class DatabaseSeeder extends Seeder
             'status'                => ProvisionElementStatusEnum::ToPrepare,
             'quantity'              => 1,
             'cost'                  => $prodBanner->cost,
-            'goods_to_be_delivered' => 'received', // Banderole livrée au local
+            'goods_to_be_delivered' => 'received',
         ]);
 
         Invoice::create([
@@ -378,9 +440,6 @@ class DatabaseSeeder extends Seeder
         Contact::factory(10)->create();
     }
 
-    /**
-     * Helper to update the settings table (json key-value store).
-     */
     private function updateSetting(string $key, mixed $value): void
     {
         $table = config('settings.database_table_name', 'settings');
@@ -395,9 +454,6 @@ class DatabaseSeeder extends Seeder
         );
     }
 
-    /**
-     * Helper to create/update ClientEngagement
-     */
     private function ensureEngagement($client, $edition, $stage, $status = null)
     {
         ClientEngagement::updateOrCreate(

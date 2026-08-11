@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use App\Enums\RunRegistrationTypesEnum;
+use App\Enums\RunRegistrationType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class RunRegistration extends Model
 {
@@ -14,6 +15,7 @@ class RunRegistration extends Model
 
     protected $fillable = [
         'client_id',
+        'run_registration_type',
         'type',
         'invoicing_company_name',
         'invoicing_address',
@@ -41,8 +43,19 @@ class RunRegistration extends Model
     ];
 
     protected $casts = [
-        'type' => RunRegistrationTypesEnum::class,
+        'run_registration_type' => RunRegistrationType::class,
     ];
+
+    /**
+     * Accessor & Mutator for legacy 'type' attribute.
+     */
+    protected function type(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->run_registration_type,
+            set: fn ($value) => ['run_registration_type' => $value instanceof RunRegistrationType ? $value->value : (is_object($value) && property_exists($value, 'value') ? $value->value : $value)],
+        );
+    }
 
     public function client()
     {
@@ -59,6 +72,6 @@ class RunRegistration extends Model
      */
     public function routeNotificationForMail(): string
     {
-        return $this->contact_email;
+        return $this->contact_email ?? null;
     }
 }

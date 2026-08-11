@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Gender;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -46,6 +47,7 @@ class RunRegistrationElement extends Model
 
     protected $casts = [
         'birthdate'                 => 'date',
+        'gender'                    => Gender::class,
         'with_video'                => 'boolean',
         'has_free_registration_fee' => 'boolean',
         'has_bonus_start'           => 'boolean',

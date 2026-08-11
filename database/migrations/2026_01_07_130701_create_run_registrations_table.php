@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('run_registrations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->nullable()->constrained('clients')->nullOnDelete();
-            $table->string('type'); // Enum
+            $table->string('run_registration_type'); // Enum RunRegistrationType
 
             // Invoicing Details
             $table->string('invoicing_company_name')->nullable();

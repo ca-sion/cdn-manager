@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use Tests\TestCase;
 use App\Models\RunRegistration;
+use App\Enums\RunRegistrationType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class RunRegistrationTest extends TestCase
@@ -15,6 +16,7 @@ class RunRegistrationTest extends TestCase
     {
         $fillable = [
             'client_id',
+            'run_registration_type',
             'type',
             'invoicing_company_name',
             'invoicing_address',
@@ -43,7 +45,6 @@ class RunRegistrationTest extends TestCase
 
         $runRegistration = new RunRegistration;
 
-        // sort arrays to ensure order doesn't matter
         $expected = $fillable;
         $actual = $runRegistration->getFillable();
         sort($expected);
@@ -58,9 +59,7 @@ class RunRegistrationTest extends TestCase
         $runRegistration = new RunRegistration;
         $casts = $runRegistration->getCasts();
 
-        // Enums and other casts
-        // $this->assertEquals(RunRegistrationTypesEnum::class, $casts['type']); // We'll test this after implementing Enum
-        $this->assertTrue(in_array('deleted_at', array_keys($casts)) || in_array('deleted_at', $runRegistration->getDates()));
+        $this->assertEquals(RunRegistrationType::class, $casts['run_registration_type']);
     }
 
     /** @test */
