@@ -77,9 +77,15 @@ class RunRegistration extends Model
     /**
      * Route notifications for the mail channel.
      */
-    public function routeNotificationForMail(): string
+    public function routeNotificationForMail(): ?string
     {
-        return $this->contact_email ?? null;
+        $email = $this->contact_email
+            ?: ($this->school_class_holder_email
+            ?: ($this->invoicing_email
+            ?: ($this->client?->email
+            ?: ($this->client?->invoicing_email ?: null))));
+
+        return ! empty($email) ? trim($email) : null;
     }
 
     /**

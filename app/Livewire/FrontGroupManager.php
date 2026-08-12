@@ -58,7 +58,7 @@ class FrontGroupManager extends Component
     {
         $registration = RunRegistration::findOrFail($registrationId);
 
-        $targetEmail = $registration->contact_email ?? $registration->invoicing_email;
+        $targetEmail = $registration->routeNotificationForMail();
         if (! $targetEmail) {
             session()->flash('error', 'Aucune adresse email de contact disponible pour ce dossier.');
             return;
