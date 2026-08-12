@@ -562,6 +562,83 @@ class ReportsController extends Controller
         return $pdf;
     }
 
+    public function invoices()
+    {
+        $editionYear = request()->input('edition');
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $invoices = Invoice::where('edition_id', $edition->id)
+            ->with(['client'])
+            ->orderBy('number', 'asc')
+            ->get();
+
+        $grandTotal = $invoices->sum('total');
+
+        if (request()->input('export')) {
+            $exportData = $invoices->map(fn ($inv) => [
+                'N° Facture'     => '#' . $inv->number,
+                'Client'         => $inv->client?->name ?? $inv->invoicing_company_name,
+                'Date'           => $inv->created_at?->format('d.m.Y'),
+                'Échéance'       => $inv->due_at?->format('d.m.Y'),
+                'Statut'         => is_object($inv->status) && method_exists($inv->status, 'getLabel') ? $inv->status->getLabel() : (string) ($inv->status?->value ?? $inv->status),
+                'Montant Total'  => $inv->total,
+            ]);
+
+            return (new FastExcel($exportData))->download($edition?->year . '-invoices.xlsx');
+        }
+
+        $view = View::make('pdf.invoices', ['invoices' => $invoices, 'edition' => $edition, 'grandTotal' => $grandTotal]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        return Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug() . '-invoices.pdf');
+    }
+
+    public function elites()
+    {
+        $editionYear = request()->input('edition');
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $elements = \App\Models\RunRegistrationElement::whereHas('runRegistration', fn ($q) => $q->where('run_registration_type', 'elite'))
+            ->with(['run', 'runRegistration'])
+            ->get();
+
+        $totalStartBonus = $elements->sum('bonus_start_amount');
+
+        if (request()->input('export')) {
+            $exportData = $elements->map(fn ($el) => [
+                'Nom'                 => $el->last_name,
+                'Prénom'              => $el->first_name,
+                'Date Naissance'      => $el->birthdate?->format('d.m.Y'),
+                'Genre'               => is_object($el->gender) ? $el->gender->value : $el->gender,
+                'Nationalité'         => $el->nationality,
+                'Email'               => $el->email,
+                'Course'              => $el->run?->name ?? $el->run_name,
+                'Bloc'                => $el->bloc,
+                'IBAN'                => $el->iban ?: $el->runRegistration?->payment_iban,
+                'Prime départ (CHF)'  => $el->bonus_start_amount,
+                'Prime classement'    => $el->bonus_ranking_amount,
+                'Hébergement'         => $el->has_accommodation ? 'Oui' : 'Non',
+                'Nuitée Vendredi'     => $el->accommodation_friday ? 'Oui' : 'Non',
+                'Nuitée Samedi'       => $el->accommodation_saturday ? 'Oui' : 'Non',
+                'Précisions héb.'     => $el->accommodation_precision,
+                'Defraiement frais'   => $el->has_expense_reimbursement ? 'Oui' : 'Non',
+            ]);
+
+            return (new FastExcel($exportData))->download($edition?->year . '-elites.xlsx');
+        }
+
+        $view = View::make('pdf.elites', ['elements' => $elements, 'edition' => $edition, 'totalStartBonus' => $totalStartBonus]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        return Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug() . '-coureurs-elite.pdf');
+    }
+
     /**
      * Aplatit les attributs de relations spécifiées sur chaque élément d'une collection.
      * Gère les relations BelongsTo/HasOne et agrège les relations HasMany.

@@ -282,12 +282,10 @@ class RunRegistrationElementResource extends Resource
                             ]);
 
                             try {
-                                $record->runRegistration->notify(new ClientSendVouchersNotification(
-                                    collect(),
-                                    "Bonjour {$record->first_name} {$record->last_name},\nVoici votre lien d'accès sécurisé pour compléter votre fiche et vos conditions Élite :\n" . $signedUrl
-                                ));
+                                $targetEmail = $record->email ?: $record->runRegistration?->contact_email;
+                                $record->runRegistration->notify(new \App\Notifications\EliteRunnerLinkNotification($record, $signedUrl));
 
-                                Notification::make()->title('Email envoyé au coureur Élite avec succès !')->success()->send();
+                                Notification::make()->title("Email envoyé avec succès à {$targetEmail} !")->success()->send();
                             } catch (Exception $e) {
                                 Notification::make()->title('Erreur lors de l\'envoi')->body($e->getMessage())->danger()->send();
                             }

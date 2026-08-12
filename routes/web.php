@@ -16,10 +16,15 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\TrackingController;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+use App\Models\RunRegistration;
+use App\Livewire\FrontEliteManager;
+use App\Livewire\FrontEliteRegistration;
+use App\Livewire\FrontGroupManager;
 
+Route::get('registrations/manager', FrontGroupManager::class)->middleware(SiteProtection::class)->name('front.run-registration.manager');
+Route::get('registrations/elite-manager', FrontEliteManager::class)->middleware(SiteProtection::class)->name('front.elite-manager');
+Route::get('registrations/elite', FrontEliteRegistration::class)->name('front.run-registration.elite');
+Route::get('registrations/elite/edit/{registration}', FrontEliteRegistration::class)->middleware('signed')->name('front.run-registration.elite-edit');
 Route::get('registrations/{type}', FrontRunRegistration::class)->name('front.run-registration.create');
 Route::get('registrations/edit/{registration}', FrontRunRegistration::class)->middleware('signed')->name('front.run-registration.edit');
 
@@ -60,4 +65,6 @@ Route::prefix('reports')->middleware([SiteProtection::class])->group(function ()
     Route::get('banners', [ReportsController::class, 'banners'])->name('reports.banners');
     Route::get('screens', [ReportsController::class, 'screens'])->name('reports.screens');
     Route::get('financial-report', [ReportsController::class, 'financialReport'])->name('reports.financial');
+    Route::get('invoices', [ReportsController::class, 'invoices'])->name('reports.invoices');
+    Route::get('elites', [ReportsController::class, 'elites'])->name('reports.elites');
 });

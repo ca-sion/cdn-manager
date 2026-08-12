@@ -88,7 +88,7 @@ class RunRegistrationSeeder extends Seeder
                 'run_name'                  => $runCompany->name,
                 'team'                      => 'UBS SA - Equipe Valais',
                 'bloc'                      => 'Bloc 1 - 18h10',
-                'nationality'               => 'Switzerland',
+                'nationality'               => 'SUI',
                 'has_free_registration_fee' => false,
             ]));
         }
@@ -118,7 +118,7 @@ class RunRegistrationSeeder extends Seeder
             'school_postal_code'              => '1950',
             'school_locality'                 => 'Sion',
             'school_country'                  => 'SUI',
-            'school_class_level'              => 'Classe 8H',
+            'school_class_level'              => '8H',
             'school_class_holder_first_name'  => 'Isabelle',
             'school_class_holder_last_name'   => 'Emery',
             'school_class_holder_email'       => 'isabelle.emery@sacrecoeur-sion.ch',
@@ -140,7 +140,7 @@ class RunRegistrationSeeder extends Seeder
                 'run_registration_id'       => $regSchool->id,
                 'run_id'                    => $runSchool->id,
                 'run_name'                  => $runSchool->name,
-                'nationality'               => 'Switzerland',
+                'nationality'               => 'SUI',
                 'has_free_registration_fee' => false,
             ]));
         }
@@ -163,7 +163,7 @@ class RunRegistrationSeeder extends Seeder
             'last_name'                 => 'Clivaz',
             'birthdate'                 => '1991-07-04',
             'gender'                    => Gender::Male,
-            'nationality'               => 'Switzerland',
+            'nationality'               => 'SUI',
             'email'                     => 'antoine.clivaz@gmail.com',
             'team'                      => 'Les Courreurs du Samedi',
             'has_free_registration_fee' => false,
@@ -176,7 +176,7 @@ class RunRegistrationSeeder extends Seeder
                 'last_name'                        => 'Abraham',
                 'birthdate'                        => '1982-08-12',
                 'gender'                           => Gender::Male,
-                'nationality'                      => 'Switzerland',
+                'nationality'                      => 'SUI',
                 'email'                            => 'tadesse.abraham@running.ch',
                 'address'                          => 'Avenue de la Gare 15',
                 'postal_code'                      => '1201',
@@ -199,7 +199,7 @@ class RunRegistrationSeeder extends Seeder
                 'last_name'                        => 'Bekele',
                 'birthdate'                        => '1994-11-21',
                 'gender'                           => Gender::Female,
-                'nationality'                      => 'Ethiopia',
+                'nationality'                      => 'ETH',
                 'email'                            => 'helen.bekele@athletics.org',
                 'address'                          => 'Rue de Lausanne 40',
                 'postal_code'                      => '1000',

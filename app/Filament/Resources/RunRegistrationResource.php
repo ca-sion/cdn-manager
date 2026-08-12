@@ -504,6 +504,8 @@ class RunRegistrationResource extends Resource
                     'Prénom du responsable '          => $registration->contact_first_name,
                     'Nom du responsable '             => $registration->contact_last_name,
                     'Maître'                          => $maitre,
+                    'Etablissement'                   => $registration->school_name,
+                    'Degré'                           => $registration->school_class_level,
                 ]);
             }
         }

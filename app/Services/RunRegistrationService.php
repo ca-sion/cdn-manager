@@ -18,15 +18,7 @@ class RunRegistrationService
      */
     public function calculateTotal(RunRegistration $registration): float
     {
-        return $registration->runRegistrationElements()
-            ->where('has_free_registration_fee', false)
-            ->get()
-            ->sum(function ($element) {
-                if ($element->run && $element->run->provision && $element->run->provision->product) {
-                    return (float) ($element->run->provision->product->price?->amount ?? $element->run->cost);
-                }
-                return (float) ($element->run?->cost ?? 0);
-            });
+        return $registration->calculateEstimatedTotal();
     }
 
     /**

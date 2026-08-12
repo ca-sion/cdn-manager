@@ -81,4 +81,97 @@ class RunRegistration extends Model
     {
         return $this->contact_email ?? null;
     }
+
+    /**
+     * Calculate estimated total price for any collection or array of element rows (transversal reusable logic).
+     */
+    public static function calculateElementsEstimatedTotal(iterable $elements, string $type = 'company'): float
+    {
+        $total = 0.0;
+        $companyCost = null;
+
+        if ($type === 'company') {
+            $companyRun = Run::where(function ($q) {
+                $q->whereJsonContains('available_for_types', 'company')
+                  ->orWhereNull('available_for_types');
+            })->first();
+            $companyCost = (float) ($companyRun?->provision?->product?->price?->amount ?? $companyRun?->cost ?? 0);
+        }
+
+        foreach ($elements as $row) {
+            $rowArr = is_array($row) ? $row : $row->toArray();
+
+            if (empty($rowArr['first_name']) && empty($rowArr['last_name'])) {
+                continue;
+            }
+
+            if (! empty($rowArr['has_free_registration_fee'])) {
+                continue;
+            }
+
+            if ($type === 'company') {
+                $total += $companyCost;
+            } elseif (! empty($rowArr['run_id'])) {
+                $runId = $rowArr['run_id'];
+                $run = is_object($row) && isset($row->run) ? $row->run : Run::find($runId);
+                if ($run) {
+                    $cost = (float) ($run->provision?->product?->price?->amount ?? $run->cost ?? 0);
+                    $total += $cost;
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Calculate estimated total price for this stored registration batch.
+     */
+    public function calculateEstimatedTotal(): float
+    {
+        $type = is_object($this->run_registration_type) ? $this->run_registration_type->value : (string) $this->run_registration_type;
+        return static::calculateElementsEstimatedTotal($this->runRegistrationElements, $type);
+    }
+
+    /**
+     * Accessor for estimated_total attribute.
+     */
+    public function getEstimatedTotalAttribute(): float
+    {
+        return $this->calculateEstimatedTotal();
+    }
+
+    /**
+     * Accessor for participants_count attribute.
+     */
+    public function getParticipantsCountAttribute(): int
+    {
+        return $this->runRegistrationElements()->count();
+    }
+
+    /**
+     * Display name/title for the group/company/school registration.
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        $type = is_object($this->run_registration_type) ? $this->run_registration_type->value : $this->run_registration_type;
+
+        if ($type === 'company') {
+            return $this->company_name ?: (trim($this->contact_first_name . ' ' . $this->contact_last_name) ?: 'Entreprise #' . $this->id);
+        }
+
+        if ($type === 'school') {
+            $name = $this->school_name ?: 'Centre Scolaire';
+            if ($this->school_class_level) {
+                $name .= ' (' . $this->school_class_level . ')';
+            }
+            return $name;
+        }
+
+        if (! empty($this->company_name)) {
+            return $this->company_name;
+        }
+
+        return trim($this->contact_first_name . ' ' . $this->contact_last_name) ?: ('Dossier #' . $this->id);
+    }
 }
