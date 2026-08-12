@@ -48,6 +48,7 @@ class RunRegistrationSystemTest extends TestCase
             ->set('data.contact_email', 'jean.dupont@acme.test')
             ->set('data.contact_phone', '0791234567')
             ->set('data.invoicing_company_name', 'Acme Corp Holding')
+            ->set('data.invoicing_email', 'facturation@acme.test')
             ->set('data.invoicing_address', 'Rue de la Gare 1')
             ->set('data.invoicing_postal_code', '1950')
             ->set('data.invoicing_locality', 'Sion')
@@ -58,6 +59,7 @@ class RunRegistrationSystemTest extends TestCase
                     'last_name'  => 'Martin',
                     'birthdate'  => '1990-05-15',
                     'gender'     => 'M',
+                    'email'      => 'pierre.martin@acme.test',
                     'run_id'     => $run->id,
                 ],
             ])

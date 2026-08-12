@@ -27,7 +27,9 @@ class RunRegistrationServiceTest extends TestCase
         $run1 = Run::factory()->create(['cost' => 20.00]);
         $run2 = Run::factory()->create(['cost' => 35.00]);
 
-        $registration = RunRegistration::factory()->create();
+        $registration = RunRegistration::factory()->create([
+            'run_registration_type' => \App\Enums\RunRegistrationType::Group,
+        ]);
 
         RunRegistrationElement::factory()->create([
             'run_registration_id'       => $registration->id,
