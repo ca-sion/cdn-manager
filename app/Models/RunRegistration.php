@@ -111,9 +111,15 @@ class RunRegistration extends Model
 
             if ($type === 'company') {
                 $total += $companyCost;
-            } elseif (! empty($rowArr['run_id'])) {
-                $runId = $rowArr['run_id'];
-                $run = is_object($row) && isset($row->run) ? $row->run : Run::find($runId);
+            } else {
+                $runId = ! empty($rowArr['run_id']) ? $rowArr['run_id'] : setting('default_run_' . $type);
+                $run = $runId ? (is_object($row) && isset($row->run) ? $row->run : Run::find($runId)) : null;
+                if (! $run) {
+                    $run = Run::where(function ($q) use ($type) {
+                        $q->whereJsonContains('available_for_types', $type)
+                          ->orWhereNull('available_for_types');
+                    })->first();
+                }
                 if ($run) {
                     $cost = (float) ($run->provision?->product?->price?->amount ?? $run->cost ?? 0);
                     $total += $cost;

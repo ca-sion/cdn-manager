@@ -82,6 +82,24 @@ class Settings extends BaseSettings
                             ->label('Donation interclasse : Prestation')
                             ->options(Provision::all()->pluck('name', 'id')),
                     ]),
+                Section::make('Inscriptions courses')
+                    ->schema([
+                        Select::make('default_run_school')
+                            ->label('Course par défaut : Écoles / Interclasses')
+                            ->options(\App\Models\Run::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->nullable(),
+                        Select::make('default_run_company')
+                            ->label('Course par défaut : Entreprises')
+                            ->options(\App\Models\Run::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->nullable(),
+                        Select::make('default_run_elite')
+                            ->label('Course par défaut : Élite')
+                            ->options(\App\Models\Run::all()->pluck('name', 'id'))
+                            ->searchable()
+                            ->nullable(),
+                    ]),
             ]);
     }
 }

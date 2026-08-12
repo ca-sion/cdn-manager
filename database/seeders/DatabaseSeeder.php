@@ -84,6 +84,22 @@ class DatabaseSeeder extends Seeder
             'include_vat' => false,
         ]);
 
+        $prodSchool = Product::create([
+            'edition_id'  => $currentEdition->id,
+            'name'        => 'Inscription interclasses',
+            'cost'        => 20.00,
+            'tax_rate'    => 0.0,
+            'include_vat' => false,
+        ]);
+
+        $prodCompany = Product::create([
+            'edition_id'  => $currentEdition->id,
+            'name'        => 'Inscription Entreprise',
+            'cost'        => 35.00,
+            'tax_rate'    => 0.0,
+            'include_vat' => false,
+        ]);
+
         // 6. Categories (Provisions/Prestations)
         $provCatJournal = ProvisionCategory::create(['name' => 'Journal de fête']);
         $provCatBanner = ProvisionCategory::create(['name' => 'Banderoles']);
@@ -126,6 +142,26 @@ class DatabaseSeeder extends Seeder
             'due_date_indicator'        => '20.11.2025',
         ]);
 
+        $provSchool = Provision::create([
+            'edition_id'  => $currentEdition->id,
+            'category_id' => null,
+            'dicastry_id' => $dicastryAdmin->id,
+            'product_id'  => $prodSchool->id,
+            'name'        => 'Inscription interclasses',
+            'code'        => 'INS-SCH',
+            'has_product' => true,
+        ]);
+
+        $provCompany = Provision::create([
+            'edition_id'  => $currentEdition->id,
+            'category_id' => null,
+            'dicastry_id' => $dicastryAdmin->id,
+            'product_id'  => $prodCompany->id,
+            'name'        => 'Inscription Entreprise',
+            'code'        => 'INS-ENT',
+            'has_product' => true,
+        ]);
+
         $provDonation = Provision::create([
             'edition_id'            => $currentEdition->id,
             'category_id'           => null,
@@ -149,6 +185,7 @@ class DatabaseSeeder extends Seeder
             'name'                   => 'Course Entreprises 10km',
             'distance'               => 10.00,
             'cost'                   => 35.00,
+            'provision_id'           => $provCompany->id,
             'available_for_types'    => ['company', 'group'],
             'start_blocs'            => [
                 ['label' => 'Bloc A', 'time' => '10:00'],
@@ -165,7 +202,8 @@ class DatabaseSeeder extends Seeder
         Run::create([
             'name'                   => 'Course des Écoles 3km',
             'distance'               => 3.00,
-            'cost'                   => 15.00,
+            'cost'                   => 20.00,
+            'provision_id'           => $provSchool->id,
             'available_for_types'    => ['school'],
             'start_blocs'            => [
                 ['label' => 'Bloc Écoles 1', 'time' => '11:00'],

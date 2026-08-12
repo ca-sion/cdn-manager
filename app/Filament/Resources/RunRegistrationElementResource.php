@@ -21,6 +21,7 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Resources\Resource;
@@ -298,6 +299,34 @@ class RunRegistrationElementResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    BulkAction::make('bulkAssignRun')
+                        ->label('⚡ Attribuer la course en masse')
+                        ->icon('heroicon-o-flag')
+                        ->schema([
+                            Select::make('run_id')
+                                ->label('Sélectionner la course')
+                                ->options(\App\Models\Run::all()->pluck('name', 'id'))
+                                ->searchable()
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $run = \App\Models\Run::find($data['run_id']);
+                            if (! $run) {
+                                return;
+                            }
+
+                            foreach ($records as $record) {
+                                $record->run_id = $run->id;
+                                $record->run_name = $run->name;
+                                $record->save();
+                            }
+
+                            Notification::make()
+                                ->title($records->count() . ' participant(s) associé(s) à la course ' . $run->name)
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                 ]),
             ]);
     }

@@ -69,4 +69,41 @@ class RunRegistrationElement extends Model
     {
         return $this->belongsTo(Run::class);
     }
+
+    protected static function booted(): void
+    {
+        static::saving(function (RunRegistrationElement $element) {
+            if (empty($element->run_id) && $element->run_registration_id) {
+                $registration = $element->runRegistration;
+                if ($registration) {
+                    $type = is_object($registration->run_registration_type)
+                        ? $registration->run_registration_type->value
+                        : (string) $registration->run_registration_type;
+
+                    $defaultRunId = match ($type) {
+                        'school'  => setting('default_run_school'),
+                        'company' => setting('default_run_company'),
+                        'elite'   => setting('default_run_elite'),
+                        default   => null,
+                    };
+
+                    if (! $defaultRunId) {
+                        $defaultRun = Run::where(function ($q) use ($type) {
+                            $q->whereJsonContains('available_for_types', $type)
+                              ->orWhereNull('available_for_types');
+                        })->first();
+                        $defaultRunId = $defaultRun?->id;
+                    }
+
+                    if ($defaultRunId) {
+                        $element->run_id = $defaultRunId;
+                        if (empty($element->run_name)) {
+                            $run = Run::find($defaultRunId);
+                            $element->run_name = $run?->name;
+                        }
+                    }
+                }
+            }
+        });
+    }
 }

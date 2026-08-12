@@ -20,25 +20,25 @@ class RunRegistrationSeeder extends Seeder
     {
         $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
 
-        // 1. S'assurer que les courses existent
-        $runElite = Run::firstOrCreate(
-            ['name' => 'Course Élite Hommes & Femmes'],
-            ['cost' => 0.00, 'registrations_deadline' => now()->addDays(30), 'start_blocs' => [['label' => 'Bloc Élite', 'time' => '17:30']]]
+        // 1. Récupérer ou créer les courses de référence
+        $runSchool = Run::where('name', 'like', '%Écoles%')->first() ?? Run::firstOrCreate(
+            ['name' => 'Course des Écoles 3km'],
+            ['cost' => 20.00, 'available_for_types' => ['school'], 'registrations_deadline' => now()->addDays(30)]
         );
 
-        $runCompany = Run::firstOrCreate(
-            ['name' => 'Course Entreprises & Teams'],
-            ['cost' => 35.00, 'registrations_deadline' => now()->addDays(30), 'start_blocs' => [['label' => 'Bloc 1 - 18h10', 'time' => '18:10'], ['label' => 'Bloc 2 - 18h25', 'time' => '18:25']]]
+        $runElite = Run::where('name', 'like', '%Élite%')->first() ?? Run::firstOrCreate(
+            ['name' => 'Course Élite Hommes / Dames'],
+            ['cost' => 0.00, 'available_for_types' => ['elite'], 'registrations_deadline' => now()->addDays(30)]
         );
 
-        $runSchool = Run::firstOrCreate(
-            ['name' => 'Course Écoles & Jeunesse'],
-            ['cost' => 15.00, 'registrations_deadline' => now()->addDays(30)]
+        $runCompany = Run::where('name', 'like', '%Entreprises%')->first() ?? Run::firstOrCreate(
+            ['name' => 'Course Entreprises 10km'],
+            ['cost' => 35.00, 'available_for_types' => ['company', 'group'], 'registrations_deadline' => now()->addDays(30)]
         );
 
-        $runGroup = Run::firstOrCreate(
+        $runGroup = Run::where('name', 'like', '%Trail%')->first() ?? Run::firstOrCreate(
             ['name' => 'Course Populaire 5km / 10km'],
-            ['cost' => 30.00, 'registrations_deadline' => now()->addDays(30)]
+            ['cost' => 30.00, 'available_for_types' => ['group'], 'registrations_deadline' => now()->addDays(30)]
         );
 
         // 2. CAS 1 : Entreprise liée à un Client ("UBS SA") avec Facture Consolidée
