@@ -6,7 +6,7 @@ use Exception;
 use App\Models\Run;
 use App\Models\RunRegistration;
 use App\Models\RunRegistrationElement;
-use App\Notifications\EliteRunnerLinkNotification;
+use App\Notifications\EliteRunnerLink;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\URL;
@@ -269,7 +269,7 @@ class FrontEliteManager extends Component
         ]);
 
         try {
-            $element->runRegistration->notify(new EliteRunnerLinkNotification($element, $signedUrl));
+            $element->runRegistration->notify(new EliteRunnerLink($element, $signedUrl));
             session()->flash('message', "E-mail d'accès envoyé avec succès à {$targetEmail} !");
         } catch (Exception $e) {
             session()->flash('error', "Erreur lors de l'envoi : " . $e->getMessage());

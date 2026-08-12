@@ -28,7 +28,7 @@ use Filament\Notifications\Notification;
 use Rap2hpoutre\FastExcel\FastExcel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\URL;
-use App\Notifications\ClientSendVouchersNotification;
+use App\Notifications\ClientSendVouchers;
 
 class RunRegistrationElementResource extends Resource
 {
@@ -283,7 +283,7 @@ class RunRegistrationElementResource extends Resource
 
                             try {
                                 $targetEmail = $record->email ?: $record->runRegistration?->contact_email;
-                                $record->runRegistration->notify(new \App\Notifications\EliteRunnerLinkNotification($record, $signedUrl));
+                                $record->runRegistration->notify(new \App\Notifications\EliteRunnerLink($record, $signedUrl));
 
                                 Notification::make()->title("Email envoyé avec succès à {$targetEmail} !")->success()->send();
                             } catch (Exception $e) {

@@ -382,7 +382,7 @@ class ClientResource extends Resource
                                 ]);
 
                                 try {
-                                    $client->notify(new ClientSendVouchersNotification(
+                                    $client->notify(new ClientSendVouchers(
                                         $client->vouchers,
                                         "Veuillez utiliser ce lien pré-rempli pour compléter l'inscription de vos coureurs d'entreprise :\n" . $signedUrl
                                     ));

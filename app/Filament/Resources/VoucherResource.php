@@ -24,7 +24,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Resources\Resource;
 use Filament\Notifications\Notification;
-use App\Notifications\ClientSendVouchersNotification;
+use App\Notifications\ClientSendVouchers;
 use Illuminate\Support\Collection;
 
 class VoucherResource extends Resource
@@ -224,7 +224,7 @@ class VoucherResource extends Resource
                         }
 
                         try {
-                            $client->notify(new ClientSendVouchersNotification($vouchers, $data['custom_message'] ?? null));
+                            $client->notify(new ClientSendVouchers($vouchers, $data['custom_message'] ?? null));
                             Notification::make()
                                 ->title("Email de vouchers envoyé avec succès à {$client->name} !")
                                 ->success()

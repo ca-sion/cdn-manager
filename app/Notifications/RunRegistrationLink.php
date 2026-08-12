@@ -31,12 +31,18 @@ class RunRegistrationLink extends Notification
             'registration' => $notifiable->id,
         ]);
 
+        $dossierName = $notifiable->display_name;
+        $currentEditionYear = now()->format('Y');
+
         return (new MailMessage)
-            ->subject('Course de Noël - Lien d\'édition de votre inscription')
-            ->greeting('Bonjour '.$notifiable->contact_first_name.',')
-            ->line('Vous avez créé un dossier d\'inscription pour la Course de Noël.')
-            ->line('Vous pouvez accéder à tout moment à votre dossier pour ajouter ou modifier des participants via le lien sécurisé ci-dessous.')
-            ->action('Accéder à mon inscription', $url)
-            ->line('Nous vous remercions pour votre participation !');
+            ->subject('🏃‍♂️ Course de Noël '.$currentEditionYear.' - Votre dossier d\'inscription (' . $dossierName . ')')
+            ->replyTo('inscriptions@coursedenoel.ch')
+            ->greeting('Bonjour ' . ($notifiable->contact_first_name ?: 'Bonjour') . ',')
+            ->line('Merci pour votre inscription et votre intérêt pour la Course de Noël !')
+            ->line('Votre dossier pour **' . $dossierName . '** a bien été enregistré. Vous pouvez accéder à tout moment à votre espace personnel pour ajouter, modifier ou mettre à jour la liste de vos participants via le lien sécurisé ci-dessous :')
+            ->action('📋 Gérer mon dossier d\'inscription', $url)
+            ->line('Ce lien d\'accès permanent reste valide durant toute la période des inscriptions. Nous vous conseillons de conserver cet e-mail pour y accéder facilement ultérieurement.')
+            ->line('Au plaisir de vous accueillir le jour de la course !')
+            ->salutation('Le Comité d\'organisation');
     }
 }
