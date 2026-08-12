@@ -114,37 +114,36 @@ class FrontGroupManager extends Component
         session()->flash('message', 'Dossier d\'inscription et ses participants supprimés.');
     }
 
-    public function exportExcelGlobal()
+    public function exportDatasportSchool()
     {
-        $query = RunRegistrationElement::whereHas('runRegistration', function ($q) {
-            $q->where('run_registration_type', '!=', 'elite');
-            if (! empty($this->typeFilter)) {
-                $q->where('run_registration_type', $this->typeFilter);
-            }
-        })->with(['run', 'runRegistration']);
+        $registrations = RunRegistration::where('run_registration_type', 'school')
+            ->with('runRegistrationElements.run')
+            ->get();
+        return \App\Filament\Resources\RunRegistrationResource::generateDatasportSchoolExcel($registrations);
+    }
 
-        $elements = $query->get();
+    public function exportDatasportCompany()
+    {
+        $registrations = RunRegistration::where('run_registration_type', 'company')
+            ->with('runRegistrationElements.run')
+            ->get();
+        return \App\Filament\Resources\RunRegistrationResource::generateDatasportCompanyExcel($registrations);
+    }
 
-        if ($elements->isEmpty()) {
-            session()->flash('error', 'Aucun participant à exporter.');
-            return null;
-        }
+    public function exportDatasportGroup()
+    {
+        $registrations = RunRegistration::where('run_registration_type', 'group')
+            ->with('runRegistrationElements.run')
+            ->get();
+        return \App\Filament\Resources\RunRegistrationResource::generateDatasportGroupExcel($registrations);
+    }
 
-        $data = $elements->map(fn ($el) => [
-            'ID Dossier'          => $el->run_registration_id,
-            'Nom du Groupe'       => $el->runRegistration?->display_name,
-            'Type Inscription'    => is_object($el->runRegistration?->run_registration_type) ? $el->runRegistration->run_registration_type->getLabel() : $el->runRegistration?->run_registration_type,
-            'Nom'                 => $el->last_name,
-            'Prénom'              => $el->first_name,
-            'Date Naissance'      => $el->birthdate?->format('d.m.Y'),
-            'Genre'               => is_object($el->gender) ? $el->gender->value : $el->gender,
-            'Nationalité'         => $el->nationality ?? 'SUI',
-            'Équipe / Entreprise' => $el->team ?: $el->runRegistration?->company_name,
-            'Email Contact'       => $el->email ?: $el->runRegistration?->contact_email,
-            'Course Assignée'     => $el->run?->name ?? $el->run_name,
-        ]);
-
-        return (new FastExcel($data))->download('export_participants_groupes_' . date('Ymd_His') . '.xlsx');
+    public function exportAggregatedData()
+    {
+        $registrations = RunRegistration::where('run_registration_type', '!=', 'elite')
+            ->with(['runRegistrationElements.run', 'client'])
+            ->get();
+        return \App\Filament\Resources\RunRegistrationResource::generateAggregatedExcel($registrations);
     }
 
     public function render()
@@ -187,18 +186,30 @@ class FrontGroupManager extends Component
 
         $registrations = $query->orderBy($sortColumn, $sortDirection)->paginate(20);
 
-        // Calculate global statistics using transversal RunRegistration model helpers
+        // Calculate global statistics separated by type using transversal RunRegistration model helpers
         $allRegistrations = RunRegistration::where('run_registration_type', '!=', 'elite')
             ->with(['runRegistrationElements.run.provision.product.price'])
             ->get();
 
+        $companies = $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'company');
+        $schools   = $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'school');
+        $groups    = $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'group');
+
         $stats = [
-            'total_dossiers'     => $allRegistrations->count(),
-            'companies_count'    => $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : $r->run_registration_type) === 'company')->count(),
-            'schools_count'      => $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : $r->run_registration_type) === 'school')->count(),
-            'groups_count'       => $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : $r->run_registration_type) === 'group')->count(),
-            'total_participants' => $allRegistrations->sum(fn($r) => $r->participants_count),
-            'total_estimated'    => $allRegistrations->sum(fn($r) => $r->estimated_total),
+            'total_dossiers'          => $allRegistrations->count(),
+            'total_participants'      => $allRegistrations->sum(fn($r) => $r->participants_count),
+
+            'companies_dossiers'      => $companies->count(),
+            'companies_participants'  => $companies->sum(fn($r) => $r->participants_count),
+
+            'schools_dossiers'        => $schools->count(),
+            'schools_participants'    => $schools->sum(fn($r) => $r->participants_count),
+
+            'groups_dossiers'         => $groups->count(),
+            'groups_participants'     => $groups->sum(fn($r) => $r->participants_count),
+
+            'filtered_estimated'      => $registrations->getCollection()->sum(fn($r) => $r->estimated_total),
+            'total_estimated'         => $allRegistrations->sum(fn($r) => $r->estimated_total),
         ];
 
         $clients = Client::orderBy('name')->get();

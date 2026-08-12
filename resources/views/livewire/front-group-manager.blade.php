@@ -16,15 +16,41 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-            <x-filament::button
-                type="button"
-                wire:click="exportExcelGlobal"
-                color="gray"
-                size="sm"
-                icon="heroicon-m-arrow-down-tray"
-            >
-                Export Datasport (.xlsx)
-            </x-filament::button>
+            <!-- Dropdown Menu Exportations -->
+            <div x-data="{ open: false }" class="relative inline-block text-left">
+                <button 
+                    @click="open = !open" 
+                    @click.away="open = false" 
+                    type="button" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 font-semibold text-xs rounded-lg transition border border-slate-700 shadow-xs cursor-pointer"
+                >
+                    <span>Exportations</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+
+                <div 
+                    x-show="open" 
+                    x-transition 
+                    class="absolute right-0 mt-1.5 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1 divide-y divide-gray-100 dark:divide-gray-700"
+                >
+                    <div class="py-1">
+                        <button wire:click="exportDatasportSchool" @click="open = false" class="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 cursor-pointer">
+                            Export Datasport interclasses
+                        </button>
+                        <button wire:click="exportDatasportCompany" @click="open = false" class="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 cursor-pointer">
+                            Export Datasport Entreprises
+                        </button>
+                        <button wire:click="exportDatasportGroup" @click="open = false" class="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 cursor-pointer">
+                            Export Datasport groupes / clubs
+                        </button>
+                    </div>
+                    <div class="py-1">
+                        <button wire:click="exportAggregatedData" @click="open = false" class="w-full text-left px-3 py-2 text-xs text-slate-900 dark:text-white font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 cursor-pointer">
+                            Export agrégé
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <x-filament::button
                 tag="a"
@@ -50,31 +76,58 @@
         </div>
     @endif
 
-    <!-- Statistics Dashboard Cards (Using transversal model calculations) -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    <!-- Statistics Dashboard Cards (Separated by Type & Clean Hierarchy) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <!-- Entreprises -->
         <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-            <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total dossiers</div>
-            <div class="text-xl font-extrabold text-slate-900 dark:text-white mt-0.5">{{ $stats['total_dossiers'] }}</div>
+            <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                Entreprises
+            </div>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                {{ $stats['companies_dossiers'] }} <span class="text-2xs font-medium text-gray-500">dossiers</span>
+            </div>
+            <div class="text-2xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
+                {{ $stats['companies_participants'] }} coureurs
+            </div>
         </div>
 
+        <!-- Interclasses / Écoles -->
         <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-            <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total participants</div>
-            <div class="text-xl font-extrabold text-slate-900 dark:text-white mt-0.5">{{ $stats['total_participants'] }} <span class="text-2xs font-normal text-gray-500">coureurs</span></div>
+            <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                Interclasses / Écoles
+            </div>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                {{ $stats['schools_dossiers'] }} <span class="text-2xs font-medium text-gray-500">classes</span>
+            </div>
+            <div class="text-2xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
+                {{ $stats['schools_participants'] }} élèves
+            </div>
         </div>
 
+        <!-- Groupes / Clubs -->
         <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-            <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Entreprises</div>
-            <div class="text-xl font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{{ $stats['companies_count'] }}</div>
+            <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                Groupes / Clubs
+            </div>
+            <div class="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                {{ $stats['groups_dossiers'] }} <span class="text-2xs font-medium text-gray-500">groupes</span>
+            </div>
+            <div class="text-2xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
+                {{ $stats['groups_participants'] }} coureurs
+            </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-            <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Écoles / Groupes</div>
-            <div class="text-xl font-extrabold text-slate-800 dark:text-slate-200 mt-0.5">{{ $stats['schools_count'] + $stats['groups_count'] }}</div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs col-span-2 sm:col-span-1">
-            <div class="text-2xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Montant estimé cumulé</div>
-            <div class="text-lg font-extrabold text-slate-900 dark:text-white mt-0.5 font-mono">{{ number_format($stats['total_estimated'], 2, '.', "'") }} CHF</div>
+        <!-- Total Général -->
+        <div class="bg-slate-900 text-white p-3.5 rounded-xl border border-slate-800 shadow-2xs">
+            <div class="text-2xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                Total participants
+            </div>
+            <div class="text-xl font-extrabold text-white mt-1">
+                {{ $stats['total_participants'] }} <span class="text-2xs font-medium text-slate-300">athlètes</span>
+            </div>
+            <div class="text-2xs font-semibold text-slate-300 mt-0.5">
+                {{ $stats['total_dossiers'] }} dossiers
+            </div>
         </div>
     </div>
 
@@ -116,7 +169,7 @@
                 <button 
                     type="button"
                     wire:click="$set('search', ''); $set('typeFilter', ''); $set('invoiceFilter', '')" 
-                    class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium text-xs rounded-lg transition"
+                    class="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 font-medium text-xs rounded-lg transition cursor-pointer"
                 >
                     ✖ Réinitialiser
                 </button>
@@ -201,7 +254,7 @@
                                 @else
                                     <button 
                                         wire:click="openLinkClientModal({{ $reg->id }})" 
-                                        class="text-2xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 hover:underline"
+                                        class="text-2xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 hover:underline cursor-pointer"
                                     >
                                         Non lié
                                     </button>
@@ -215,14 +268,14 @@
                                         title="Ouvrir le formulaire / LaraGrid" 
                                         class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded text-2xs font-medium border border-gray-200 dark:border-gray-600 transition"
                                     >
-                                        Ouvrir
+                                        ✏️ Ouvrir
                                     </a>
 
                                     <button 
                                         wire:click="sendEditLink({{ $reg->id }})" 
                                         wire:confirm="Envoyer le lien d'accès permanent à {{ $reg->contact_email }} ?" 
                                         title="Envoyer l'accès par e-mail" 
-                                        class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded text-2xs font-medium border border-slate-200 dark:border-slate-600 transition"
+                                        class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded text-2xs font-medium border border-slate-200 dark:border-slate-600 transition cursor-pointer"
                                     >
                                         Lien
                                     </button>
@@ -230,7 +283,7 @@
                                     <button 
                                         wire:click="openLinkClientModal({{ $reg->id }})" 
                                         title="Lier à un client CRM" 
-                                        class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded text-2xs font-medium border border-slate-200 dark:border-slate-600 transition"
+                                        class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded text-2xs font-medium border border-slate-200 dark:border-slate-600 transition cursor-pointer"
                                     >
                                         Client
                                     </button>
@@ -239,7 +292,7 @@
                                         wire:click="deleteRegistration({{ $reg->id }})" 
                                         wire:confirm="Êtes-vous sûr de vouloir supprimer ce dossier d'inscription et tous ses participants ?" 
                                         title="Supprimer" 
-                                        class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:hover:bg-rose-900 dark:text-rose-300 rounded text-2xs font-medium border border-rose-200 dark:border-rose-800 transition"
+                                        class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:hover:bg-rose-900 dark:text-rose-300 rounded text-2xs font-medium border border-rose-200 dark:border-rose-800 transition cursor-pointer"
                                     >
                                         🗑️
                                     </button>
@@ -257,6 +310,16 @@
             </table>
         </div>
 
+        <!-- Discret Footer pour le Total Financier Estimé -->
+        <div class="p-3 bg-gray-50 dark:bg-gray-900/60 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between text-2xs text-gray-500 dark:text-gray-400 gap-2">
+            <div>
+                Total estimé des dossiers de la page : <span class="font-bold text-slate-800 dark:text-slate-200 font-mono">{{ number_format($stats['filtered_estimated'], 2, '.', "'") }} CHF</span>
+            </div>
+            <div>
+                Cumul global estimé (tous dossiers) : <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">{{ number_format($stats['total_estimated'], 2, '.', "'") }} CHF</span>
+            </div>
+        </div>
+
         @if($registrations->hasPages())
             <div class="p-3 border-t border-gray-100 dark:border-gray-700">
                 {{ $registrations->links() }}
@@ -272,7 +335,7 @@
                     <h3 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         🔗 Associer un Client CRM
                     </h3>
-                    <button wire:click="$set('showLinkClientModal', false)" class="text-gray-400 hover:text-gray-600 font-bold text-xs">
+                    <button wire:click="$set('showLinkClientModal', false)" class="text-gray-400 hover:text-gray-600 font-bold text-xs cursor-pointer">
                         ✖
                     </button>
                 </div>
@@ -296,10 +359,10 @@
                 </div>
 
                 <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <button type="button" wire:click="$set('showLinkClientModal', false)" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs rounded-lg transition">
+                    <button type="button" wire:click="$set('showLinkClientModal', false)" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs rounded-lg transition cursor-pointer">
                         Annuler
                     </button>
-                    <button type="button" wire:click="saveClientLink" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition">
+                    <button type="button" wire:click="saveClientLink" class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition cursor-pointer">
                         Enregistrer le lien
                     </button>
                 </div>
