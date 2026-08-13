@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Liste des Coureurs Élite</title>
+    <title>Liste des coureurs Élite</title>
     <style>
         @page { margin: 25px 25px 25px 50px; }
         body { font-family: 'Helvetica', sans-serif; font-size: small; color:#222222; }
@@ -20,7 +20,7 @@
 </head>
 <body>
     <div class="document-vertical-line"></div>
-    <div class="title">Rapport des Coureurs Élite</div>
+    <div class="title">Rapport des coureurs Élite</div>
     <div class="subtitle">{{ $edition->year }} · {{ $edition->name }}</div>
 
     <div class="container">
@@ -34,7 +34,9 @@
                     <td>Course</td>
                     <td>IBAN</td>
                     <td>Hébergement</td>
-                    <td style="text-align: right">Prime Départ</td>
+                    <td style="text-align: right">Prime dép.</td>
+                    <td style="text-align: right">Prime arr.</td>
+                    <td style="text-align: right">Prime</td>
                 </tr>
             </thead>
             <tbody>
@@ -60,13 +62,31 @@
                             -
                         @endif
                     </td>
+
+                    <td style="text-align: right">
+                        @if ($el->bonus_arrival_amount)
+                            {{ number_format($el->bonus_arrival_amount, 2, '.', "'") }} CHF
+                        @else
+                            -
+                        @endif
+                    </td>
+
+                    <td style="text-align: right">
+                        @if ($el->bonus_ranking_amount)
+                            {{ number_format($el->bonus_ranking_amount, 2, '.', "'") }} CHF
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="7" style="text-align: right"><strong>Total Primes Départ</strong></td>
+                    <td colspan="7" style="text-align: right"><strong>Totaux</strong></td>
                     <td style="text-align: right"><strong>{{ number_format($totalStartBonus, 2, '.', "'") }} CHF</strong></td>
+                    <td style="text-align: right"><strong>{{ number_format($totalArrivalBonus, 2, '.', "'") }} CHF</strong></td>
+                    <td style="text-align: right"><strong>{{ number_format($totalRankingBonus, 2, '.', "'") }} CHF</strong></td>
                 </tr>
             </tfoot>
         </table>

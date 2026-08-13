@@ -2,34 +2,37 @@
 
 namespace App\Filament\Resources;
 
-use Exception;
+use App\Helpers\CountryHelper;
 use App\Models\Run;
 use App\Models\RunRegistrationElement;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Filters\SelectFilter;
+use App\Notifications\ClientSendVouchers;
+use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Resources\Resource;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Rap2hpoutre\FastExcel\FastExcel;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\URL;
-use App\Notifications\ClientSendVouchers;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class RunRegistrationElementResource extends Resource
 {
@@ -49,7 +52,7 @@ class RunRegistrationElementResource extends Resource
             ->components([
                 Tabs::make('RunnerDetails')
                     ->tabs([
-                        Tab::make('Identité & Course')
+                        Tab::make('Identité du coureur')
                             ->schema([
                                 TextInput::make('first_name')
                                     ->label('Prénom')
@@ -61,7 +64,8 @@ class RunRegistrationElementResource extends Resource
 
                                 DatePicker::make('birthdate')
                                     ->label('Date de naissance')
-                                    ->displayFormat('d.m.Y'),
+                                    ->displayFormat('d.m.Y')
+                                    ->required(),
 
                                 Select::make('gender')
                                     ->label('Genre')
@@ -70,71 +74,149 @@ class RunRegistrationElementResource extends Resource
                                         'F' => 'Femme (F)',
                                     ]),
 
-                                TextInput::make('nationality')
+                                Select::make('nationality')
                                     ->label('Nationalité')
-                                    ->default('Switzerland'),
+                                    ->options(CountryHelper::getOptions())
+                                    ->default('SUI'),
 
                                 TextInput::make('email')
                                     ->label('Email')
                                     ->email(),
 
+                                TextInput::make('team')
+                                    ->label('Équipe / Club'),
+                            ])->columns(2),
+
+                        Tab::make('Course')
+                            ->schema([
                                 Select::make('run_id')
                                     ->label('Course inscrite')
                                     ->relationship('run', 'name')
                                     ->searchable()
                                     ->preload(),
-
                                 TextInput::make('bloc')
                                     ->label('Bloc de départ'),
-
-                                TextInput::make('team')
-                                    ->label('Équipe / Entreprise / Titulaire'),
+                                Checkbox::make('with_video')
+                                    ->label('Vidéo'),
+                                TextInput::make('voucher_code')
+                                    ->label('Code / Voucher'),
                             ])->columns(2),
-
-                        Tab::make('Conditions Élite & Primes')
+                        
+                        Tab::make('Coordonnées')
                             ->schema([
-                                TextInput::make('iban')
-                                    ->label('IBAN de versement'),
+                        TextInput::make('address')
+                            ->label('Adresse')
+                            ->columnSpan(4),
 
-                                Toggle::make('has_free_registration_fee')
-                                    ->label('Frais d\'inscription offerts / Voucher ?'),
+                        TextInput::make('address_extension')
+                            ->label('Complément d\'adresse')
+                            ->columnSpan(3),
 
-                                Toggle::make('has_bonus_start')
-                                    ->label('Prime de départ octroyée ?'),
+                        TextInput::make('postal_code')
+                            ->label('Code postal')
+                            ->columnSpan(2),
 
-                                TextInput::make('bonus_start_amount')
-                                    ->label('Montant prime de départ (CHF)')
-                                    ->numeric(),
+                        TextInput::make('locality')
+                            ->label('Localité')
+                            ->columnSpan(3),
 
-                                TextInput::make('bonus_ranking_amount')
-                                    ->label('Montant prime de classement (CHF)')
-                                    ->numeric(),
+                        Select::make('country')
+                            ->label('Pays')
+                            ->options(CountryHelper::getOptions())
+                            ->searchable()
+                            ->default('SUI')
+                            ->columnSpan(3),
+                        
+                        TextInput::make('iban')
+                            ->label('IBAN')
+                            ->hint('Pour le versement des primes')
+                            ->columnSpan(9),
+                        ])->columns(12),
 
-                                TextInput::make('bonus_arrival_amount')
-                                    ->label('Montant prime d\'arrivée (CHF)')
-                                    ->numeric(),
-                            ])->columns(2),
+                        Tab::make('Conditions et contrat')
+                    ->icon('heroicon-m-document-text')
+                    ->columns(2)
+                    ->schema([
 
-                        Tab::make('Hébergement & Frais')
-                            ->schema([
-                                Toggle::make('has_accommodation')
-                                    ->label('Hébergement pris en charge ?'),
+                        Toggle::make('has_free_registration_fee')
+                            ->label('Dossard offert')
+                            ->columnSpanFull()
+                            ->dehydrated(),
 
-                                Toggle::make('accommodation_friday')
-                                    ->label('Nuit du vendredi ?'),
+                        Toggle::make('has_bonus_start')
+                            ->label('Prime de départ accordée')
+                            ->live()
+                            ->dehydrated(),
 
-                                Toggle::make('accommodation_saturday')
-                                    ->label('Nuit du samedi ?'),
+                        TextInput::make('bonus_start_amount')
+                            ->label('Montant prime de départ')
+                            ->numeric()
+                            ->suffix('CHF')
+                            ->visible(fn (Get $get) => $get('has_bonus_start'))
+                            ->dehydrated(),
 
-                                Textarea::make('accommodation_precision')
-                                    ->label('Précisions hébergement (Hôtel, chambre...)'),
+                        Toggle::make('has_expense_reimbursement')
+                            ->label('Remboursement des frais de déplacement')
+                            ->live()
+                            ->dehydrated()
+                            ->columnSpanFull(),
 
-                                Toggle::make('has_expense_reimbursement')
-                                    ->label('Remboursement de frais ?'),
+                        Textarea::make('expense_reimbursement_precision')
+                            ->label('Précisions remboursement de frais')
+                                ->hint('Transports, billets, etc.')
+                            ->visible(fn (Get $get) => $get('has_expense_reimbursement'))
+                            ->dehydrated()
+                            ->columnSpanFull(),
+                    ]),
 
-                                Textarea::make('expense_reimbursement_precision')
-                                    ->label('Précisions remboursement (Transports, billets...)'),
-                            ])->columns(2),
+                Tab::make('Primes')
+                    ->icon('heroicon-m-currency-dollar')
+                    ->columns(2)
+                    ->schema([
+
+                        TextInput::make('bonus_ranking_amount')
+                            ->label('Montant prime de classement')
+                            ->live()
+                            ->numeric()
+                            ->suffix('CHF')
+                            ->dehydrated(),
+
+                        TextInput::make('bonus_arrival_amount')
+                            ->label('Montant prime d\'arrivée')
+                            ->numeric()
+                            ->suffix('CHF')
+                            ->dehydrated(),
+                    ]),
+
+                    Tab::make('Hébergement')
+                        ->icon('heroicon-m-building-office')
+                        ->columns(2)
+                        ->schema([
+
+                            Toggle::make('has_accommodation')
+                                ->label('Prise en charge de l\'hébergement')
+                                ->live()
+                                ->columnSpanFull()
+                                ->dehydrated(),
+
+                            Toggle::make('accommodation_friday')
+                                ->label('Nuitée du vendredi')
+                                ->visible(fn (Get $get) => $get('has_accommodation'))
+                                ->dehydrated(),
+
+                            Toggle::make('accommodation_saturday')
+                                ->label('Nuitée du samedi')
+                                ->visible(fn (Get $get) => $get('has_accommodation'))
+                                ->dehydrated(),
+
+                            Textarea::make('accommodation_precision')
+                                ->label('Précisions hébergement')
+                                ->hint('Hôtel, type de chambre et nombre de place.')
+                                ->visible(fn (Get $get) => $get('has_accommodation'))
+                                ->dehydrated()
+                                ->columnSpanFull(),
+                        ]),
+                        
                     ])->columnSpanFull(),
             ]);
     }
@@ -257,18 +339,18 @@ class RunRegistrationElementResource extends Resource
                 ActionGroup::make([
                     EditAction::make(),
 
-                    // Imprimer Contrat Élite PDF
+                    // Imprimer Contrat Élite PDF (URL Signée)
                     Action::make('printEliteContract')
                         ->label('Imprimer Contrat Élite (PDF)')
                         ->icon('heroicon-o-document-text')
                         ->color('warning')
-                        ->url(fn (RunRegistrationElement $record) => route('pdf.elite-contract', ['registration' => $record->run_registration_id]))
+                        ->url(fn (RunRegistrationElement $record) => URL::signedRoute('pdf.elite-contract', ['registration' => $record->run_registration_id]))
                         ->openUrlInNewTab()
                         ->visible(fn (RunRegistrationElement $record) => ($record->runRegistration?->run_registration_type?->value ?? $record->runRegistration?->run_registration_type) === 'elite'),
 
-                    // Envoyer lien d'édition au coureur Élite par email
+                    // Step 1: Envoyer invitation à compléter la fiche coureur Élite
                     Action::make('sendEliteEditLink')
-                        ->label('Envoyer lien édition au coureur Élite')
+                        ->label('1. Envoyer invitation (fiche)')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('success')
                         ->requiresConfirmation()
@@ -278,15 +360,34 @@ class RunRegistrationElementResource extends Resource
                                 return;
                             }
 
-                            $signedUrl = URL::signedRoute('front.run-registration.edit', [
-                                'registration' => $record->run_registration_id,
-                            ]);
+                            try {
+                                $targetEmail = $record->email ?: $record->runRegistration?->contact_email;
+                                $record->runRegistration->notify(new \App\Notifications\EliteRunnerFormLink($record));
+
+                                Notification::make()->title("Invitation envoyée avec succès à {$targetEmail} !")->success()->send();
+                            } catch (Exception $e) {
+                                Notification::make()->title('Erreur lors de l\'envoi')->body($e->getMessage())->danger()->send();
+                            }
+                        })
+                        ->visible(fn (RunRegistrationElement $record) => ($record->runRegistration?->run_registration_type?->value ?? $record->runRegistration?->run_registration_type) === 'elite'),
+
+                    // Step 2: Envoyer confirmation de contrat Élite finalisé
+                    Action::make('sendEliteContractFinalized')
+                        ->label('2. Envoyer contrat')
+                        ->icon('heroicon-o-check-badge')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->action(function (RunRegistrationElement $record) {
+                            if (! $record->email && ! $record->runRegistration?->contact_email) {
+                                Notification::make()->title('Aucune adresse email renseignée pour ce coureur.')->warning()->send();
+                                return;
+                            }
 
                             try {
                                 $targetEmail = $record->email ?: $record->runRegistration?->contact_email;
-                                $record->runRegistration->notify(new \App\Notifications\EliteRunnerLink($record, $signedUrl));
+                                $record->runRegistration->notify(new \App\Notifications\EliteRunnerContractFinalized($record));
 
-                                Notification::make()->title("Email envoyé avec succès à {$targetEmail} !")->success()->send();
+                                Notification::make()->title("Contrat envoyé avec succès à {$targetEmail} !")->success()->send();
                             } catch (Exception $e) {
                                 Notification::make()->title('Erreur lors de l\'envoi')->body($e->getMessage())->danger()->send();
                             }

@@ -6,7 +6,7 @@ use Exception;
 use App\Models\Run;
 use App\Models\RunRegistration;
 use App\Models\RunRegistrationElement;
-use App\Notifications\EliteRunnerLink;
+use App\Notifications\EliteRunnerFormLink;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\URL;
@@ -264,13 +264,27 @@ class FrontEliteManager extends Component
             return;
         }
 
-        $signedUrl = URL::signedRoute('front.run-registration.edit', [
-            'registration' => $element->run_registration_id,
-        ]);
+        try {
+            $element->runRegistration->notify(new EliteRunnerFormLink($element));
+            session()->flash('message', "E-mail d'invitation envoyé avec succès à {$targetEmail} !");
+        } catch (Exception $e) {
+            session()->flash('error', "Erreur lors de l'envoi : " . $e->getMessage());
+        }
+    }
+
+    public function sendFinalizedContract(int $elementId): void
+    {
+        $element = RunRegistrationElement::findOrFail($elementId);
+
+        $targetEmail = $element->email ?: $element->runRegistration?->contact_email;
+        if (! $targetEmail) {
+            session()->flash('error', 'Aucune adresse email disponible pour ce coureur.');
+            return;
+        }
 
         try {
-            $element->runRegistration->notify(new EliteRunnerLink($element, $signedUrl));
-            session()->flash('message', "E-mail d'accès envoyé avec succès à {$targetEmail} !");
+            $element->runRegistration->notify(new \App\Notifications\EliteRunnerContractFinalized($element));
+            session()->flash('message', "Contrat finalisé envoyé avec succès par e-mail à {$targetEmail} !");
         } catch (Exception $e) {
             session()->flash('error', "Erreur lors de l'envoi : " . $e->getMessage());
         }

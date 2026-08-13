@@ -11,7 +11,7 @@ use App\Models\RunRegistration;
 use App\Models\RunRegistrationElement;
 use App\Enums\RunRegistrationType;
 use App\Notifications\RunRegistrationLink;
-use App\Notifications\EliteRunnerLink;
+use App\Notifications\EliteRunnerFormLink;
 use App\Notifications\ClientSendVouchers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -47,12 +47,28 @@ class NotificationsTest extends TestCase
 
         $signedUrl = 'https://cdn-manager.test/registrations/elite/edit/1?signature=test';
 
-        $notification = new EliteRunnerLink($element, $signedUrl);
+        $notification = new EliteRunnerFormLink($element, $signedUrl);
         $mail = $notification->toMail(new Client());
 
         $this->assertStringContainsString('Course de Noël', $mail->subject);
         $this->assertEquals('Bonjour Julien,', $mail->greeting);
         $this->assertEquals($signedUrl, $mail->actionUrl);
+    }
+
+    /** @test */
+    public function elite_runner_contract_finalized_notification_renders_proper_content()
+    {
+        $element = new RunRegistrationElement([
+            'first_name' => 'Julien',
+            'last_name'  => 'Wanders',
+        ]);
+
+        $notification = new \App\Notifications\EliteRunnerContractFinalized($element);
+        $mail = $notification->toMail(new Client());
+
+        $this->assertStringContainsString('Confirmation course Élite et contrat', $mail->subject);
+        $this->assertEquals('Bonjour Julien,', $mail->greeting);
+        $this->assertStringContainsString('Télécharger le Contrat (PDF)', $mail->actionText);
     }
 
     /** @test */

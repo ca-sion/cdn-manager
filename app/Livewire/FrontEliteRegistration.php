@@ -99,14 +99,10 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
                     ->schema([
                         TextInput::make('elite_first_name')
                             ->label('Prénom')
-                            ->disabled(fn () => ! $this->isManager)
-                            ->dehydrated()
                             ->required(),
 
                         TextInput::make('elite_last_name')
                             ->label('Nom de famille')
-                            ->disabled(fn () => ! $this->isManager)
-                            ->dehydrated()
                             ->required(),
 
                         DatePicker::make('elite_birthdate')
@@ -172,6 +168,7 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
 
                 Section::make('Conditions et contrat')
                     ->icon('heroicon-m-document-text')
+                    ->visible(fn () => $this->isManager)
                     ->columns(2)
                     ->schema([
 
@@ -234,6 +231,7 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
 
                 Section::make('Hébergement')
                     ->icon('heroicon-m-building-office')
+                    ->visible(fn () => $this->isManager)
                     ->columns(2)
                     ->schema([
 
@@ -351,6 +349,17 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
         session()->flash('message', 'Dossier d\'inscription enregistré avec succès.');
     }
 
+    public function getPdfUrlProperty(): ?string
+    {
+        if (! $this->registration || ! $this->registration->exists) {
+            return null;
+        }
+
+        return URL::signedRoute('pdf.elite-contract', [
+            'registration' => $this->registration->id,
+        ]);
+    }
+
     public function sendEmailLink(): void
     {
         if (! $this->registration || ! $this->registration->exists) {
@@ -362,10 +371,35 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
             $this->registration->save();
         }
 
+        $element = $this->registration->runRegistrationElements()->first();
+        if (! $element) {
+            return;
+        }
+
         try {
-            $this->registration->notify(new RunRegistrationLink());
+            $this->registration->notify(new \App\Notifications\EliteRunnerFormLink($element));
             $recipient = $this->registration->contact_email ?: ($this->data['elite_email'] ?? 'le coureur');
-            session()->flash('message', 'Le lien de modification a été envoyé avec succès par e-mail à ' . $recipient . '.');
+            session()->flash('message', 'Le lien vers la fiche a été envoyé par e-mail à ' . $recipient . '.');
+        } catch (\Throwable $e) {
+            session()->flash('message', 'Erreur lors de l\'envoi de l\'e-mail : ' . $e->getMessage());
+        }
+    }
+
+    public function sendContractEmail(): void
+    {
+        if (! $this->registration || ! $this->registration->exists) {
+            return;
+        }
+
+        $element = $this->registration->runRegistrationElements()->first();
+        if (! $element) {
+            return;
+        }
+
+        try {
+            $this->registration->notify(new \App\Notifications\EliteRunnerContractFinalized($element));
+            $recipient = $this->registration->contact_email ?: ($this->data['elite_email'] ?? 'le coureur');
+            session()->flash('message', 'Le contrat PDF finalisé a été envoyé par e-mail à ' . $recipient . '.');
         } catch (\Throwable $e) {
             session()->flash('message', 'Erreur lors de l\'envoi de l\'e-mail : ' . $e->getMessage());
         }
@@ -373,6 +407,11 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
 
     public function render(): View
     {
-        return view('livewire.front-elite-registration');
+        $element = $this->registration?->runRegistrationElements()->first();
+
+        return view('livewire.front-elite-registration', [
+            'element' => $element,
+            'pdfUrl'  => $this->pdfUrl,
+        ]);
     }
 }

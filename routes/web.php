@@ -35,7 +35,8 @@ Route::get('/invoices/{invoice}/emlRelaunch', [InvoiceController::class, 'emlRel
 Route::get('/pdf/provisions', [PdfController::class, 'provisions'])->middleware(SiteProtection::class)->name('pdf.provisions');
 Route::get('/pdf/clients', [PdfController::class, 'clients'])->middleware(SiteProtection::class)->name('pdf.clients');
 Route::get('/pdf/client/{client}', [PdfController::class, 'client'])->middleware('signed')->name('pdf.client');
-Route::get('/pdf/elite-contract/{registration}', [PdfController::class, 'eliteContract'])->name('pdf.elite-contract');
+Route::get('/pdf/elite-contract/{registration}', [PdfController::class, 'eliteContract'])->middleware('signed')->name('pdf.elite-contract');
+
 
 Route::get('provisions', FrontListProvisions::class)->middleware(SiteProtection::class)->name('front.provisions');
 Route::get('clients', FrontListClients::class)->middleware(SiteProtection::class)->name('front.clients');

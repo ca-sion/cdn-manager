@@ -1,69 +1,85 @@
-<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Contrat Coureur Élite - {{ $element->first_name ?? '' }} {{ $element->last_name ?? '' }}</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Contrat Coureur Élite - {{ $element?->first_name }} {{ $element?->last_name }}</title>
+    <link href="https://fonts.cdnfonts.com/css/dejavu-sans" rel="stylesheet">
+
     <style>
+
+        @page {
+            margin: 50px 50px 75px 50px;
+        }
+
         body {
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 13px;
-            color: #1a202c;
-            line-height: 1.5;
-            margin: 20px;
+            font-family: 'Helvetica', sans-serif;
+            font-size: small;
+            color: #222222;
         }
-        .header {
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
+        .dejavu {
+            font-family: 'DejaVu Sans', sans-serif;
         }
-        .header table {
-            width: 100%;
+        .container {
+            max-width: 620px;
+            margin: 0 auto;
         }
-        .title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e3a8a;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .document-vertical-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            margin-top: -50px;
+            margin-left: -50px;
+            width: 20px;
+            height: 3000px;
+            background-color: #BCDCF6;
         }
-        .subtitle {
-            font-size: 13px;
-            color: #64748b;
+        p {
+            margin-bottom: .4rem;
+            margin-top: 0px;
+        }
+        .break-avoid {
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
         .section-title {
-            font-size: 14px;
+            font-size: small;
             font-weight: bold;
             color: #1e3a8a;
-            background-color: #f1f5f9;
-            padding: 6px 10px;
-            margin-top: 20px;
+            border-bottom: 1px solid #BCDCF6;
+            padding-bottom: 4px;
+            margin-top: 25px;
             margin-bottom: 10px;
-            border-left: 4px solid #2563eb;
-            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        table.data-table {
+        .data-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
         }
-        table.data-table th, table.data-table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #e2e8f0;
-            text-align: left;
+        .data-table td, .data-table th {
+            font-size: x-small;
+            padding: 5px 8px;
             vertical-align: top;
+            border-bottom: 1px solid #f1f5f9;
         }
-        table.data-table th {
+        .data-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .data-table td.label, .data-table th.label {
             width: 35%;
             font-weight: bold;
             color: #475569;
-            background-color: #fafafa;
+            text-align: left;
         }
         .badge {
             display: inline-block;
-            padding: 2px 8px;
-            font-size: 11px;
+            padding: 2px 6px;
+            font-size: xx-small;
             font-weight: bold;
-            border-radius: 4px;
+            vertical-align: text-bottom;
+            border-radius: 3px;
             background-color: #e2e8f0;
             color: #334155;
         }
@@ -71,160 +87,252 @@
             background-color: #dcfce7;
             color: #166534;
         }
-        .signatures {
-            margin-top: 40px;
-            width: 100%;
-        }
-        .signatures td {
-            width: 50%;
-            vertical-align: top;
-            padding-top: 10px;
-        }
-        .signature-box {
-            border: 1px dashed #cbd5e1;
-            height: 90px;
-            margin-top: 10px;
-            border-radius: 4px;
-        }
     </style>
 </head>
+
 <body>
 
-    <div class="header">
-        <table>
-            <tr>
-                <td>
-                    <div class="title">CONTRAT COUREUR ÉLITE</div>
-                    <div class="subtitle">Course de Noël Sion — Édition {{ $edition->year ?? date('Y') }}</div>
-                </td>
-                <td style="text-align: right;">
-                    <strong>Dossier N° :</strong> #{{ $registration->id }}<br>
-                    <strong>Date :</strong> {{ date('d.m.Y') }}
-                </td>
-            </tr>
-        </table>
+    <x-pdf.header />
+
+    <table width="100%">
+        <tr>
+            <td align="left" valign="top" style="max-width:8cm;padding-top: 2.5cm;padding-left: 1.1cm">
+                <div style="text-wrap: nowrap;word-break: break-word;">
+                    @if ($element?->first_name || $element?->last_name)
+                        <strong>{{ $element->first_name }} {{ $element->last_name }}</strong><br>
+                    @endif
+                    @if ($element?->address)
+                        {{ $element->address }}<br>
+                    @endif
+                    @if ($element?->address_extension)
+                        {{ $element->address_extension }}<br>
+                    @endif
+                    @if ($element?->postal_code || $element?->locality)
+                        {{ $element->postal_code }} {{ $element->locality }}<br>
+                    @endif
+                    @if ($element?->country)
+                        {{ $element->country }}<br>
+                    @endif
+                </div>
+            </td>
+            <td align="left" style="min-width: 3cm;text-align: right;font-size: x-small;">
+                <div style="margin-right: 10px;">
+                    Dossier N°<br>
+                    Date<br>
+                    @if ($edition?->name || $edition?->year)
+                    Édition<br>
+                    @endif
+                </div>
+            </td>
+            <td align="left" style="font-size: x-small;">
+                {{ $registration->id }}<br>
+                {{ date('d.m.Y') }}<br>
+                @if ($edition?->name || $edition?->year)
+                {{ $edition?->name ?? 'Édition '.$edition?->year }}<br>
+                @endif
+            </td>
+        </tr>
+    </table>
+
+    <div class="container">
+
+        <br>
+        <br>
+
+        <h2 style="font-size: medium;">
+            Contrat pour coureur Élite
+            @if ($edition?->name)
+                · {{ $edition->name }}
+            @elseif ($edition?->year)
+                · Édition {{ $edition->year }}
+            @endif
+        </h2>
+
+        @if ($element)
+            {{-- 1. Identité du Coureur --}}
+            <div class="section-title">1. Identité du coureur</div>
+            <table class="data-table break-avoid">
+                <tr>
+                    <td class="label">Prénom et nom</td>
+                    <td><strong>{{ $element->last_name }} {{ $element->first_name }}</strong></td>
+                </tr>
+                @if ($element->birthdate || $element->gender)
+                <tr>
+                    <td class="label">Date de naissance / Genre</td>
+                    <td>
+                        @if ($element->birthdate)
+                            {{ $element->birthdate->format('d.m.Y') }}
+                        @endif
+                        @if ($element->gender)
+                            ({{ is_object($element->gender) ? $element->gender->value : $element->gender }})
+                        @endif
+                    </td>
+                </tr>
+                @endif
+                @if ($element->nationality)
+                <tr>
+                    <td class="label">Nationalité</td>
+                    <td>{{ $element->nationality }}</td>
+                </tr>
+                @endif
+                @if ($element->email || $registration->contact_email)
+                <tr>
+                    <td class="label">Adresse email</td>
+                    <td>{{ $element->email ?: $registration->contact_email }}</td>
+                </tr>
+                @endif
+                @if ($element->team)
+                <tr>
+                    <td class="label">Club / Équipe</td>
+                    <td>{{ $element->team }}</td>
+                </tr>
+                @endif
+                @if ($element->address || $element->postal_code || $element->locality)
+                <tr>
+                    <td class="label">Adresse postale</td>
+                    <td>
+                        @if ($element->address)
+                            {{ $element->address }}
+                            @if ($element->address_extension)
+                                <br>{{ $element->address_extension }}
+                            @endif
+                            <br>
+                        @endif
+                        @if ($element->postal_code || $element->locality)
+                            {{ $element->postal_code }} {{ $element->locality }}
+                        @endif
+                        @if ($element->country)
+                            ({{ $element->country }})
+                        @endif
+                    </td>
+                </tr>
+                @endif
+            </table>
+
+            {{-- 2. Engagement & Course --}}
+            @if ($element->run?->name || $element->run_name || $element->bloc)
+            <div class="section-title">2. Engagement et course</div>
+            <table class="data-table break-avoid">
+                @if ($element->run?->name || $element->run_name)
+                <tr>
+                    <td class="label">Course inscrite</td>
+                    <td><strong>{{ $element->run?->name ?? $element->run_name }}</strong></td>
+                </tr>
+                @endif
+                @if ($element->bloc)
+                <tr>
+                    <td class="label">Bloc de départ</td>
+                    <td>{{ $element->bloc }}</td>
+                </tr>
+                @endif
+            </table>
+            @endif
+
+            {{-- 3. Conditions Financières & Primes --}}
+            @php
+                $hasFreeRegistration = (bool) $element->has_free_registration_fee;
+                $hasBonusStart = $element->has_bonus_start || ($element->bonus_start_amount && $element->bonus_start_amount > 0);
+                $hasBonusRanking = $element->bonus_ranking_amount && $element->bonus_ranking_amount > 0;
+                $hasBonusArrival = $element->bonus_arrival_amount && $element->bonus_arrival_amount > 0;
+                $iban = $element->iban ?: $registration->payment_iban;
+                $hasFinancialPayout = $hasBonusStart || $hasBonusRanking || $hasBonusArrival || (bool) $element->has_expense_reimbursement;
+                $showIban = $hasFinancialPayout && !empty($iban);
+
+                $showFinancialSection = $hasFreeRegistration || $hasBonusStart || $hasBonusRanking || $hasBonusArrival || $showIban;
+            @endphp
+
+            @if ($showFinancialSection)
+            <div class="section-title">3. Conditions et primes</div>
+            <table class="data-table break-avoid">
+                @if ($hasFreeRegistration)
+                <tr>
+                    <td class="label">Frais d'inscription</td>
+                    <td><span class="badge badge-success">Offerts / Pris en charge</span></td>
+                </tr>
+                @endif
+
+                @if ($hasBonusStart)
+                <tr>
+                    <td class="label">Prime de départ</td>
+                    <td>
+                        <span class="badge badge-success">Oui</span>
+                        @if ($element->bonus_start_amount && $element->bonus_start_amount > 0)
+                            {{ number_format($element->bonus_start_amount, 2, '.', "'") }} CHF
+                        @endif
+                    </td>
+                </tr>
+                @endif
+
+                @if ($hasBonusRanking)
+                <tr>
+                    <td class="label">Prime de classement</td>
+                    <td>{{ number_format($element->bonus_ranking_amount, 2, '.', "'") }} CHF</td>
+                </tr>
+                @endif
+
+                @if ($hasBonusArrival)
+                <tr>
+                    <td class="label">Prime d'arrivée</td>
+                    <td>{{ number_format($element->bonus_arrival_amount, 2, '.', "'") }} CHF</td>
+                </tr>
+                @endif
+
+                @if ($showIban)
+                <tr>
+                    <td class="label">IBAN de versement</td>
+                    <td><strong>{{ $iban }}</strong></td>
+                </tr>
+                @endif
+            </table>
+            @endif
+
+            {{-- 4. Hébergement & Défraiements --}}
+            @php
+                $hasAccommodation = (bool) $element->has_accommodation;
+                $hasExpenseReimbursement = (bool) $element->has_expense_reimbursement;
+                $showLogisticsSection = $hasAccommodation || $hasExpenseReimbursement;
+            @endphp
+
+            @if ($showLogisticsSection)
+            <div class="section-title">4. Hébergement et défraiements</div>
+            <table class="data-table break-avoid">
+                @if ($hasAccommodation)
+                <tr>
+                    <td class="label">Hébergement</td>
+                    <td>
+                        <span class="badge badge-success">Pris en charge</span>
+                        @if ($element->accommodation_friday) (Nuit du vendredi) @endif
+                        @if ($element->accommodation_saturday) (Nuit du samedi) @endif
+                        @if ($element->accommodation_precision) — {{ $element->accommodation_precision }} @endif
+                    </td>
+                </tr>
+                @endif
+
+                @if ($hasExpenseReimbursement)
+                <tr>
+                    <td class="label">Remboursement de frais</td>
+                    <td>
+                        <span class="badge badge-success">Pris en charge</span>
+                        @if ($element->expense_reimbursement_precision) ({{ $element->expense_reimbursement_precision }}) @endif
+                    </td>
+                </tr>
+                @endif
+            </table>
+            @endif
+
+            {{-- Remarques s'il y en a --}}
+            @if ($element->payment_note)
+            <div class="section-title">Remarques</div>
+            <div style="font-size: x-small; margin-bottom: 15px;">
+                <p>{{ $element->payment_note }}</p>
+            </div>
+            @endif
+
+        @endif
+
     </div>
-
-    <div class="section-title">1. Identité du Coureur Élite</div>
-    <table class="data-table">
-        <tr>
-            <th>Nom & Prénom</th>
-            <td><strong>{{ $element->last_name ?? '' }} {{ $element->first_name ?? '' }}</strong></td>
-        </tr>
-        <tr>
-            <th>Date de naissance / Genre</th>
-            <td>
-                {{ $element->birthdate ? $element->birthdate->format('d.m.Y') : '-' }} 
-                ({{ is_object($element->gender) ? $element->gender->value : ($element->gender ?? '-') }})
-            </td>
-        </tr>
-        <tr>
-            <th>Nationalité</th>
-            <td>{{ $element->nationality ?: 'Switzerland' }}</td>
-        </tr>
-        <tr>
-            <th>Adresse email</th>
-            <td>{{ $element->email ?: ($registration->contact_email ?: '-') }}</td>
-        </tr>
-        <tr>
-            <th>Adresse postale</th>
-            <td>
-                {{ $element->address ?? '-' }} 
-                {{ $element->address_extension ? '('.$element->address_extension.')' : '' }}<br>
-                {{ $element->postal_code ?? '' }} {{ $element->locality ?? '' }} ({{ $element->country ?? 'SUI' }})
-            </td>
-        </tr>
-    </table>
-
-    <div class="section-title">2. Engagement & Course</div>
-    <table class="data-table">
-        <tr>
-            <th>Course inscrite</th>
-            <td><strong>{{ $element->run?->name ?? ($element->run_name ?? 'Course Élite') }}</strong></td>
-        </tr>
-        <tr>
-            <th>Bloc de départ</th>
-            <td>{{ $element->bloc ?: 'Attribué par l\'organisation' }}</td>
-        </tr>
-    </table>
-
-    <div class="section-title">3. Conditions Financières & Primes</div>
-    <table class="data-table">
-        <tr>
-            <th>Frais d'inscription</th>
-            <td>
-                @if($element->has_free_registration_fee)
-                    <span class="badge badge-success">Offerts / Pris en charge</span>
-                @else
-                    <span class="badge">Standard</span>
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <th>Prime de départ</th>
-            <td>
-                @if($element->has_bonus_start)
-                    <span class="badge badge-success">Oui</span> {{ $element->bonus_start_amount ? '('.number_format($element->bonus_start_amount, 2).' CHF)' : '' }}
-                @else
-                    Non
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <th>Prime de classement</th>
-            <td>{{ $element->bonus_ranking_amount ? number_format($element->bonus_ranking_amount, 2).' CHF' : 'Selon grille officielle' }}</td>
-        </tr>
-        <tr>
-            <th>Prime d'arrivée</th>
-            <td>{{ $element->bonus_arrival_amount ? number_format($element->bonus_arrival_amount, 2).' CHF' : '-' }}</td>
-        </tr>
-        <tr>
-            <th>IBAN de versement des primes</th>
-            <td><strong>{{ $element->iban ?: ($registration->payment_iban ?: 'À communiquer') }}</strong></td>
-        </tr>
-    </table>
-
-    <div class="section-title">4. Hébergement & Defraiements</div>
-    <table class="data-table">
-        <tr>
-            <th>Hébergement pris en charge</th>
-            <td>
-                @if($element->has_accommodation)
-                    <span class="badge badge-success">Oui</span>
-                    @if($element->accommodation_friday) (Nuit du vendredi) @endif
-                    @if($element->accommodation_saturday) (Nuit du samedi) @endif
-                    @if($element->accommodation_precision) — {{ $element->accommodation_precision }} @endif
-                @else
-                    Non
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <th>Remboursement de frais</th>
-            <td>
-                @if($element->has_expense_reimbursement)
-                    <span class="badge badge-success">Oui</span> {{ $element->expense_reimbursement_precision ? '('.$element->expense_reimbursement_precision.')' : '' }}
-                @else
-                    Non
-                @endif
-            </td>
-        </tr>
-    </table>
-
-    <table class="signatures">
-        <tr>
-            <td>
-                <strong>Pour l'Organisation :</strong><br>
-                Fait à Sion, le {{ date('d.m.Y') }}
-                <div class="signature-box"></div>
-            </td>
-            <td>
-                <strong>Le Coureur Élite :</strong><br>
-                Lu et approuvé
-                <div class="signature-box"></div>
-            </td>
-        </tr>
-    </table>
+    <!-- container -->
 
 </body>
 </html>
+

@@ -258,7 +258,7 @@
 
                                     @if($runner->run_registration_id)
                                         <a 
-                                            href="{{ route('pdf.elite-contract', ['registration' => $runner->run_registration_id]) }}" 
+                                            href="{{ \Illuminate\Support\Facades\URL::signedRoute('pdf.elite-contract', ['registration' => $runner->run_registration_id]) }}" 
                                             target="_blank" 
                                             title="Imprimer le contrat PDF" 
                                             class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded text-2xs font-medium border border-slate-200 dark:border-slate-600 transition"
@@ -268,11 +268,20 @@
 
                                         <button 
                                             wire:click="sendEditLink({{ $runner->id }})" 
-                                            wire:confirm="Envoyer le lien d'accès par e-mail à {{ $runner->email ?? $runner->runRegistration?->contact_email }} ?" 
-                                            title="Envoyer l'accès par e-mail" 
+                                            wire:confirm="Envoyer l'invitation à compléter la fiche par e-mail à {{ $runner->email ?? $runner->runRegistration?->contact_email }} ?" 
+                                            title="1. Envoyer l'invitation (fiche)" 
                                             class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded text-2xs font-medium border border-slate-200 dark:border-slate-600 transition"
                                         >
-                                            Lien
+                                            1. Fiche
+                                        </button>
+
+                                        <button 
+                                            wire:click="sendFinalizedContract({{ $runner->id }})" 
+                                            wire:confirm="Envoyer le contrat finalisé par e-mail à {{ $runner->email ?? $runner->runRegistration?->contact_email }} ?" 
+                                            title="2. Envoyer le contrat finalisé" 
+                                            class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 rounded text-2xs font-medium border border-slate-200 dark:border-slate-600 transition"
+                                        >
+                                            2.Final
                                         </button>
                                     @endif
 

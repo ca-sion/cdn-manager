@@ -606,6 +606,8 @@ class ReportsController extends Controller
             ->get();
 
         $totalStartBonus = $elements->sum('bonus_start_amount');
+        $totalArrivalBonus = $elements->sum('bonus_arrival_amount');
+        $totalRankingBonus = $elements->sum('bonus_ranking_amount');
 
         if (request()->input('export')) {
             $exportData = $elements->map(fn ($el) => [
@@ -618,7 +620,8 @@ class ReportsController extends Controller
                 'Course'              => $el->run?->name ?? $el->run_name,
                 'Bloc'                => $el->bloc,
                 'IBAN'                => $el->iban ?: $el->runRegistration?->payment_iban,
-                'Prime départ (CHF)'  => $el->bonus_start_amount,
+                'Prime départ'        => $el->bonus_start_amount,
+                'Prime arrivée'       => $el->bonus_arrival_amount,
                 'Prime classement'    => $el->bonus_ranking_amount,
                 'Hébergement'         => $el->has_accommodation ? 'Oui' : 'Non',
                 'Nuitée Vendredi'     => $el->accommodation_friday ? 'Oui' : 'Non',
@@ -630,7 +633,7 @@ class ReportsController extends Controller
             return (new FastExcel($exportData))->download($edition?->year . '-elites.xlsx');
         }
 
-        $view = View::make('pdf.elites', ['elements' => $elements, 'edition' => $edition, 'totalStartBonus' => $totalStartBonus]);
+        $view = View::make('pdf.elites', ['elements' => $elements, 'edition' => $edition, 'totalStartBonus' => $totalStartBonus, 'totalArrivalBonus' => $totalArrivalBonus, 'totalRankingBonus' => $totalRankingBonus]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
 
         return Pdf::loadHTML($html)

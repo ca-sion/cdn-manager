@@ -44,21 +44,26 @@
 
             <div class="flex items-center gap-2">
                 @if ($this->registration && $this->registration->exists)
-                    <a 
-                        href="{{ route('pdf.elite-contract', ['registration' => $this->registration->id]) }}" 
-                        target="_blank" 
-                        class="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold text-xs rounded-xl transition shadow-xs"
-                    >
-                        📄 Contrat PDF
-                    </a>
                     <button 
                         type="button" 
                         wire:click="sendEmailLink" 
-                        wire:confirm="Envoyer le lien d'accès par e-mail à {{ $this->data['elite_email'] ?? $this->registration->contact_email }} ?" 
+                        wire:confirm="Envoyer le lien de la fiche par e-mail à {{ $this->data['elite_email'] ?? $this->registration->contact_email }} ?" 
                         class="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900 dark:text-blue-300 font-semibold text-xs rounded-xl border border-blue-200 dark:border-blue-800 transition shadow-xs"
+                        title="Envoyer le lien d'invitation/fiche"
                     >
-                        ✉️ Lien par e-mail
+                        ✉️ E-mail fiche
                     </button>
+                    @if ($isManager)
+                        <button 
+                            type="button" 
+                            wire:click="sendContractEmail" 
+                            wire:confirm="Envoyer la confirmation de contrat finalisé avec PDF à {{ $this->data['elite_email'] ?? $this->registration->contact_email }} ?" 
+                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:hover:bg-emerald-900 dark:text-emerald-300 font-semibold text-xs rounded-xl border border-emerald-200 dark:border-emerald-800 transition shadow-xs"
+                            title="Envoyer le contrat finalisé avec PDF"
+                        >
+                            📄 E-mail contrat
+                        </button>
+                    @endif
                 @endif
 
                 <button 
@@ -70,6 +75,76 @@
                 </button>
             </div>
         </div>
+
+        @if ($element && ($element->has_free_registration_fee || $element->has_bonus_start || $element->bonus_ranking_amount || $element->bonus_arrival_amount || $element->has_accommodation || $element->has_expense_reimbursement))
+            <!-- Athlete Contract Conditions Summary Card (Light Filament Card Style) -->
+            <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xs space-y-3">
+                <div class="flex items-center justify-between border-b pb-2.5 dark:border-gray-700">
+                    <h3 class="text-sm font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                        <span>🏆</span> Conditions et engagement
+                    </h3>
+                    @if ($pdfUrl)
+                        <a href="{{ $pdfUrl }}" target="_blank" class="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline flex items-center gap-1">
+                            <span>📄</span> Imprimer le contrat (PDF)
+                        </a>
+                    @endif
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                    @if ($element->has_free_registration_fee)
+                        <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700/60">
+                            <span class="text-gray-500 dark:text-gray-400 block text-2xs uppercase tracking-wider font-semibold">Frais d'inscription</span>
+                            <span class="font-bold text-emerald-700 dark:text-emerald-400">Offerts / Pris en charge</span>
+                        </div>
+                    @endif
+
+                    @if ($element->has_bonus_start)
+                        <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700/60">
+                            <span class="text-gray-500 dark:text-gray-400 block text-2xs uppercase tracking-wider font-semibold">Prime de départ</span>
+                            <span class="font-bold text-emerald-700 dark:text-emerald-400">
+                                Oui {{ $element->bonus_start_amount > 0 ? '('.number_format($element->bonus_start_amount, 2, '.', "'").' CHF)' : '' }}
+                            </span>
+                        </div>
+                    @endif
+
+                    @if ($element->bonus_ranking_amount > 0)
+                        <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700/60">
+                            <span class="text-gray-500 dark:text-gray-400 block text-2xs uppercase tracking-wider font-semibold">Prime de classement</span>
+                            <span class="font-bold text-emerald-700 dark:text-emerald-400">{{ number_format($element->bonus_ranking_amount, 2, '.', "'") }} CHF</span>
+                        </div>
+                    @endif
+
+                    @if ($element->bonus_arrival_amount > 0)
+                        <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700/60">
+                            <span class="text-gray-500 dark:text-gray-400 block text-2xs uppercase tracking-wider font-semibold">Prime d'arrivée</span>
+                            <span class="font-bold text-emerald-700 dark:text-emerald-400">{{ number_format($element->bonus_arrival_amount, 2, '.', "'") }} CHF</span>
+                        </div>
+                    @endif
+
+                    @if ($element->has_accommodation)
+                        <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700/60">
+                            <span class="text-gray-500 dark:text-gray-400 block text-2xs uppercase tracking-wider font-semibold">Hébergement</span>
+                            <span class="font-bold text-emerald-700 dark:text-emerald-400">Pris en charge</span>
+                            <div class="text-2xs text-gray-600 dark:text-gray-300 mt-0.5 font-medium">
+                                @if ($element->accommodation_friday) Ven @endif
+                                @if ($element->accommodation_saturday) Sam @endif
+                                @if ($element->accommodation_precision) ({{ $element->accommodation_precision }}) @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    @if ($element->has_expense_reimbursement)
+                        <div class="p-3 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700/60">
+                            <span class="text-gray-500 dark:text-gray-400 block text-2xs uppercase tracking-wider font-semibold">Remboursement de frais</span>
+                            <span class="font-bold text-emerald-700 dark:text-emerald-400">Pris en charge</span>
+                            @if ($element->expense_reimbursement_precision)
+                                <div class="text-2xs text-gray-600 dark:text-gray-300 mt-0.5 font-medium">{{ $element->expense_reimbursement_precision }}</div>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
 
         <form wire:submit.prevent="save" class="space-y-6">
             {{ $this->form }}
