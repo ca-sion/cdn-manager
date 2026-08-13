@@ -23,7 +23,7 @@
                 size="sm"
                 icon="heroicon-m-arrow-down-tray"
             >
-                Exporter (Excel / CSV)
+                Export Datasport
             </x-filament::button>
 
             <x-filament::button
@@ -142,7 +142,7 @@
                             class="px-3.5 py-2.5 cursor-pointer hover:bg-gray-100/70 dark:hover:bg-gray-800 transition group"
                         >
                             <div class="flex items-center gap-1">
-                                <span>Sexe / Naissance</span>
+                                <span>Naissance / Genre</span>
                                 <span class="text-gray-400 group-hover:text-slate-700">
                                     @if($sortField === 'gender')
                                         {{ $sortDirection === 'asc' ? '▲' : '▼' }}
@@ -221,10 +221,10 @@
                             </td>
                             <td class="px-3.5 py-2.5">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="px-2 py-0.5 text-2xs font-semibold rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                                        {{ (is_object($runner->gender) ? $runner->gender->value : $runner->gender) === 'F' ? 'Femme (F)' : 'Homme (M)' }}
-                                    </span>
                                     <span class="text-2xs text-gray-500 font-mono">{{ $runner->birthdate?->format('d.m.Y') }}</span>
+                                    <span class="px-2 py-0.5 text-2xs font-semibold rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                                        {{ (is_object($runner->gender) ? $runner->gender->value : $runner->gender) === 'F' ? 'F' : 'M' }}
+                                    </span>
                                 </div>
                             </td>
                             <td class="px-3.5 py-2.5 font-medium text-gray-800 dark:text-gray-200">
@@ -240,7 +240,7 @@
                             <td class="px-3.5 py-2.5">
                                 @if($runner->has_accommodation)
                                     <span class="inline-flex items-center gap-1 text-2xs font-medium text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                                        🏨 Oui ({{ $runner->accommodation_friday ? 'Ven ' : '' }}{{ $runner->accommodation_saturday ? 'Sam' : '' }})
+                                        Oui ({{ $runner->accommodation_friday ? 've ' : '' }}{{ $runner->accommodation_saturday ? 'sa' : '' }})
                                     </span>
                                 @else
                                     <span class="text-gray-400 text-2xs">Non</span>

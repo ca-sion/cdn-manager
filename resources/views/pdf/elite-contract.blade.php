@@ -137,7 +137,6 @@
     <div class="container">
 
         <br>
-        <br>
 
         <h2 style="font-size: medium;">
             Contrat pour coureur Élite
@@ -255,7 +254,6 @@
                 <tr>
                     <td class="label">Prime de départ</td>
                     <td>
-                        <span class="badge badge-success">Oui</span>
                         @if ($element->bonus_start_amount && $element->bonus_start_amount > 0)
                             {{ number_format($element->bonus_start_amount, 2, '.', "'") }} CHF
                         @endif
@@ -300,10 +298,11 @@
                 <tr>
                     <td class="label">Hébergement</td>
                     <td>
-                        <span class="badge badge-success">Pris en charge</span>
-                        @if ($element->accommodation_friday) (Nuit du vendredi) @endif
-                        @if ($element->accommodation_saturday) (Nuit du samedi) @endif
-                        @if ($element->accommodation_precision) — {{ $element->accommodation_precision }} @endif
+                        <strong>Hôtel Elite, Avenue du Midi 6, 1950 Sion</strong>
+                        <br>
+                        @if ($element->accommodation_friday)Nuit du vendredi soir @endif
+                        @if ($element->accommodation_saturday) — Nuit du samedi soir @endif
+                        @if ($element->accommodation_precision)<br>{{ $element->accommodation_precision }} @endif
                     </td>
                 </tr>
                 @endif
@@ -313,7 +312,7 @@
                     <td class="label">Remboursement de frais</td>
                     <td>
                         <span class="badge badge-success">Pris en charge</span>
-                        @if ($element->expense_reimbursement_precision) ({{ $element->expense_reimbursement_precision }}) @endif
+                        @if ($element->expense_reimbursement_precision) {{ $element->expense_reimbursement_precision }} @endif
                     </td>
                 </tr>
                 @endif
