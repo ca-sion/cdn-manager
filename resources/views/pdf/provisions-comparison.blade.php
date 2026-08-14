@@ -112,6 +112,13 @@
             white-space: nowrap;
         }
 
+        .client-meta {
+            font-size: 7.5px;
+            color: #666666;
+            margin-top: 2px;
+            font-style: italic;
+        }
+
     </style>
 </head>
 
@@ -177,7 +184,21 @@
                     @foreach ($comparisonData['new'] as $client)
                         <tr>
                             <td>{{ $client->category?->name }}</td>
-                            <td>{{ $client->name }}</td>
+                            <td>
+                                {{ $client->name }}
+                                @if($engagement = $client->reference_engagement)
+                                    @php
+                                        $metaParts = array_filter([
+                                            $engagement->responsibleContact?->name ? 'Resp: ' . $engagement->responsibleContact->name : null,
+                                            $engagement->stage ? 'Étape: ' . $engagement->stage->getLabel() : null,
+                                            $engagement->status ? 'Statut: ' . $engagement->status->getLabel() : null,
+                                        ]);
+                                    @endphp
+                                    @if(!empty($metaParts))
+                                        <div class="client-meta">{{ implode(' · ', $metaParts) }}</div>
+                                    @endif
+                                @endif
+                            </td>
                             <td>
                                 <ul class="provisions-list">
                                     @foreach($client->diff_details['provisions']->sortBy('order_column') as $pe)
@@ -213,7 +234,21 @@
                     @foreach ($comparisonData['lost'] as $client)
                         <tr>
                             <td>{{ $client->category?->name }}</td>
-                            <td>{{ $client->name }}</td>
+                            <td>
+                                {{ $client->name }}
+                                @if($engagement = $client->reference_engagement)
+                                    @php
+                                        $metaParts = array_filter([
+                                            $engagement->responsibleContact?->name ? 'Resp: ' . $engagement->responsibleContact->name : null,
+                                            $engagement->stage ? 'Étape: ' . $engagement->stage->getLabel() : null,
+                                            $engagement->status ? 'Statut: ' . $engagement->status->getLabel() : null,
+                                        ]);
+                                    @endphp
+                                    @if(!empty($metaParts))
+                                        <div class="client-meta">{{ implode(' · ', $metaParts) }}</div>
+                                    @endif
+                                @endif
+                            </td>
                             <td>
                                 <ul class="provisions-list">
                                     @foreach($client->diff_details['provisions']->sortBy('order_column') as $pe)
@@ -253,7 +288,21 @@
                     @foreach ($comparisonData['modified'] as $client)
                         <tr class="break-avoid">
                             <td>{{ $client->category?->name }}</td>
-                            <td>{{ $client->name }}</td>
+                            <td>
+                                {{ $client->name }}
+                                @if($engagement = $client->reference_engagement)
+                                    @php
+                                        $metaParts = array_filter([
+                                            $engagement->responsibleContact?->name ? 'Resp: ' . $engagement->responsibleContact->name : null,
+                                            $engagement->stage ? 'Étape: ' . $engagement->stage->getLabel() : null,
+                                            $engagement->status ? 'Statut: ' . $engagement->status->getLabel() : null,
+                                        ]);
+                                    @endphp
+                                    @if(!empty($metaParts))
+                                        <div class="client-meta">{{ implode(' · ', $metaParts) }}</div>
+                                    @endif
+                                @endif
+                            </td>
                             <td>
                                 <ul class="provisions-list">
                                     @foreach($client->diff_details['comparison_provisions']->sortBy('order_column') as $pe)

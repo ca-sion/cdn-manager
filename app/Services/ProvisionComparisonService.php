@@ -24,6 +24,10 @@ class ProvisionComparisonService
 
         $clients = Client::with([
             'category',
+            'clientEngagements' => function ($query) use ($referenceEdition, $comparisonEdition) {
+                $query->whereIn('edition_id', [$referenceEdition->id, $comparisonEdition->id]);
+            },
+            'clientEngagements.responsibleContact',
             'provisionElements' => function ($query) use ($referenceEdition, $comparisonEdition) {
                 $query->whereIn('edition_id', [$referenceEdition->id, $comparisonEdition->id]);
             },
@@ -49,6 +53,8 @@ class ProvisionComparisonService
         ];
 
         foreach ($clients as $client) {
+            $client->reference_engagement = $client->clientEngagements->firstWhere('edition_id', $referenceEdition->id);
+
             $referenceProvisions = $client->provisionElements->where('edition_id', $referenceEdition->id);
             $comparisonProvisions = $client->provisionElements->where('edition_id', $comparisonEdition->id);
 
