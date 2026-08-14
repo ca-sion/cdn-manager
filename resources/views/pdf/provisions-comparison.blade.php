@@ -188,8 +188,9 @@
                                 {{ $client->name }}
                                 @if($engagement = $client->reference_engagement)
                                     @php
+                                        $responsible = $engagement->responsible ?: $engagement->responsibleContact?->name;
                                         $metaParts = array_filter([
-                                            $engagement->responsibleContact?->name ? 'Resp: ' . $engagement->responsibleContact->name : null,
+                                            $responsible ? 'Resp: ' . $responsible : null,
                                             $engagement->stage ? 'Étape: ' . $engagement->stage->getLabel() : null,
                                             $engagement->status ? 'Statut: ' . $engagement->status->getLabel() : null,
                                         ]);
@@ -238,8 +239,9 @@
                                 {{ $client->name }}
                                 @if($engagement = $client->reference_engagement)
                                     @php
+                                        $responsible = $engagement->responsible ?: $engagement->responsibleContact?->name;
                                         $metaParts = array_filter([
-                                            $engagement->responsibleContact?->name ? 'Resp: ' . $engagement->responsibleContact->name : null,
+                                            $responsible ? 'Resp: ' . $responsible : null,
                                             $engagement->stage ? 'Étape: ' . $engagement->stage->getLabel() : null,
                                             $engagement->status ? 'Statut: ' . $engagement->status->getLabel() : null,
                                         ]);
@@ -292,8 +294,9 @@
                                 {{ $client->name }}
                                 @if($engagement = $client->reference_engagement)
                                     @php
+                                        $responsible = $engagement->responsible ?: $engagement->responsibleContact?->name;
                                         $metaParts = array_filter([
-                                            $engagement->responsibleContact?->name ? 'Resp: ' . $engagement->responsibleContact->name : null,
+                                            $responsible ? 'Resp: ' . $responsible : null,
                                             $engagement->stage ? 'Étape: ' . $engagement->stage->getLabel() : null,
                                             $engagement->status ? 'Statut: ' . $engagement->status->getLabel() : null,
                                         ]);
