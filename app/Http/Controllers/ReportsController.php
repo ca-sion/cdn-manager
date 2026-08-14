@@ -29,10 +29,10 @@ class ReportsController extends Controller
             setting('advertiser_form_banner_category'),
             setting('advertiser_form_screen_category'),
             setting('advertiser_form_pack_category'),
-        ])->filter()->all();
+        ])->flatten()->filter()->values()->all();
 
         $donationProvisionId = setting('advertiser_form_donation_provision');
-        $clientCategoryIds = setting('reports_advertisers_categories', []);
+        $clientCategoryIds = collect(setting('reports_advertisers_categories', []))->flatten()->filter()->values()->all();
 
         $clients = Client::whereIn('category_id', $clientCategoryIds)
             ->with([
@@ -279,9 +279,9 @@ class ReportsController extends Controller
 
         $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
 
-        $journalProvisionIds = setting('reports_advertisers_journal_provisions');
+        $journalProvisionIds = collect(setting('reports_advertisers_journal_provisions', []))->flatten()->filter()->values()->all();
 
-        abort_if(! $journalProvisionIds, '401');
+        abort_if(empty($journalProvisionIds), '401');
 
         $provisions = ProvisionElement::with(['recipient.category', 'provision'])
             ->where('edition_id', $edition->id)
@@ -377,9 +377,9 @@ class ReportsController extends Controller
 
         $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
 
-        $bannerProvisionIds = setting('reports_banners_provisions');
+        $bannerProvisionIds = collect(setting('reports_banners_provisions', []))->flatten()->filter()->values()->all();
 
-        abort_if(! $bannerProvisionIds, '401');
+        abort_if(empty($bannerProvisionIds), '401');
 
         $provisions = ProvisionElement::with(['recipient', 'recipient.category', 'provision'])
             ->where('edition_id', $edition->id)
@@ -423,13 +423,13 @@ class ReportsController extends Controller
 
         $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
 
-        $bannerProvisionIds = setting('reports_screens_provisions');
+        $screenProvisionIds = collect(setting('reports_screens_provisions', []))->flatten()->filter()->values()->all();
 
-        abort_if(! $bannerProvisionIds, '401');
+        abort_if(empty($screenProvisionIds), '401');
 
         $provisions = ProvisionElement::with(['recipient', 'recipient.category', 'provision'])
             ->where('edition_id', $edition->id)
-            ->whereIn('provision_id', $bannerProvisionIds)
+            ->whereIn('provision_id', $screenProvisionIds)
             ->get();
 
         $provisions->each(function ($provision) {

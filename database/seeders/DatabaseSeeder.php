@@ -484,15 +484,8 @@ class DatabaseSeeder extends Seeder
     private function updateSetting(string $key, mixed $value): void
     {
         $table = config('settings.database_table_name', 'settings');
-
-        DB::table($table)->updateOrInsert(
-            ['key' => $key],
-            [
-                'value'      => json_encode($value),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
+        DB::table($table)->where('key', $key)->orWhere('key', 'like', $key.'.%')->delete();
+        setting([$key => $value]);
     }
 
     private function ensureEngagement($client, $edition, $stage, $status = null)
