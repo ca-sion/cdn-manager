@@ -2,44 +2,43 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Actions\ReplicateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\ProvisionResource\Pages\ListProvisions;
-use App\Filament\Resources\ProvisionResource\Pages\CreateProvision;
-use App\Filament\Resources\ProvisionResource\Pages\EditProvision;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Provision;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Tables\Filters\Filter;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\ReplicateAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Tables\Columns\ToggleColumn;
 use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\ProvisionResource\Pages;
+use Filament\Schemas\Components\Utilities\Get;
+use App\Filament\Resources\ProvisionResource\Pages\EditProvision;
+use App\Filament\Resources\ProvisionResource\Pages\ListProvisions;
+use App\Filament\Resources\ProvisionResource\Pages\CreateProvision;
 
 class ProvisionResource extends Resource
 {
     protected static ?string $model = Provision::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $pluralModelLabel = 'Prestations';
 
     protected static ?string $modelLabel = 'Prestation';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Collections';
+    protected static string|\UnitEnum|null $navigationGroup = 'Collections';
 
     public static function form(Schema $schema): Schema
     {

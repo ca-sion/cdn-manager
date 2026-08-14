@@ -2,32 +2,30 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\EditionResource\Pages\ListEditions;
-use App\Filament\Resources\EditionResource\Pages\CreateEdition;
-use App\Filament\Resources\EditionResource\Pages\EditEdition;
-use Filament\Tables;
 use App\Models\Edition;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
-use App\Filament\Resources\EditionResource\Pages;
+use App\Filament\Resources\EditionResource\Pages\EditEdition;
+use App\Filament\Resources\EditionResource\Pages\ListEditions;
+use App\Filament\Resources\EditionResource\Pages\CreateEdition;
 
 class EditionResource extends Resource
 {
     protected static ?string $model = Edition::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $pluralModelLabel = 'Éditions';
 
     protected static ?string $modelLabel = 'Édition';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Collections';
+    protected static string|\UnitEnum|null $navigationGroup = 'Collections';
 
     public static function form(Schema $schema): Schema
     {

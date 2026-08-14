@@ -2,72 +2,69 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Group;
-use Filament\Forms\Components\MorphToSelect;
-use Filament\Forms\Components\MorphToSelect\Type;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\DatePicker;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TimePicker;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Forms\Components\Toggle;
-use Filament\Actions\Action;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\TagsInput;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Actions\ReplicateAction;
-use Filament\Actions\DeleteAction;
-use Filament\Tables\Enums\RecordActionsPosition;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkAction;
-use Filament\Actions\ExportAction;
-use App\Filament\Resources\ProvisionElementResource\Pages\ListProvisionElements;
-use App\Filament\Resources\ProvisionElementResource\Pages\CreateProvisionElement;
-use App\Filament\Resources\ProvisionElementResource\Pages\EditProvisionElement;
-use Filament\Forms;
-use Filament\Tables;
 use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Contact;
 use Livewire\Component;
 use App\Models\Provision;
 use Filament\Tables\Table;
+use Filament\Actions\Action;
+use Filament\Schemas\Schema;
 use App\Enums\MediaStatusEnum;
 use Illuminate\Support\Number;
 use App\Models\ProvisionElement;
 use App\Services\PricingService;
+use Filament\Actions\BulkAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ExportAction;
 use Illuminate\Support\HtmlString;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\ReplicateAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Schemas\Components\Group;
+use Filament\Forms\Components\Checkbox;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Filament\Tables\Columns\ColumnGroup;
 use App\Enums\ProvisionElementStatusEnum;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\MorphToSelect;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use App\Filament\Actions\ExportMediaBulkAction;
+use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Forms\Components\MorphToSelect\Type;
 use App\Filament\Exports\ProvisionElementExporter;
 use App\Notifications\ClientAdvertiserMediaMissing;
 use App\Filament\Actions\SendVipInvitationBulkAction;
-use App\Filament\Resources\ProvisionElementResource\Pages;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use App\Filament\Resources\ProvisionElementResource\Pages\EditProvisionElement;
+use App\Filament\Resources\ProvisionElementResource\Pages\ListProvisionElements;
+use App\Filament\Resources\ProvisionElementResource\Pages\CreateProvisionElement;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 
 class ProvisionElementResource extends Resource
 {
     protected static ?string $model = ProvisionElement::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-queue-list';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-queue-list';
 
     protected static ?string $modelLabel = 'Élément de prestations';
 
@@ -473,8 +470,9 @@ class ProvisionElementResource extends Resource
                         ->separator(',')
                         ->formatStateUsing(function ($state) {
                             if (is_array($state)) {
-                                return $state['name'] ?? $state['label'] ?? (count($state) ? implode(', ', array_map(fn($item) => is_array($item) ? ($item['name'] ?? $item['label'] ?? json_encode($item)) : $item, $state)) : null);
+                                return $state['name'] ?? $state['label'] ?? (count($state) ? implode(', ', array_map(fn ($item) => is_array($item) ? ($item['name'] ?? $item['label'] ?? json_encode($item)) : $item, $state)) : null);
                             }
+
                             return $state;
                         })
                         ->toggleable(),

@@ -2,12 +2,12 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Schemas\Schema;
 use Exception;
 use App\Models\Invoice;
 use Genkgo\Camt\Config;
 use Genkgo\Camt\Reader;
 use Filament\Pages\Page;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use App\Enums\InvoiceStatusEnum;
 use Illuminate\Support\Collection;
@@ -21,7 +21,7 @@ class CamtImport extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected string $view = 'filament.pages.camt-import';
 

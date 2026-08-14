@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\RunRegistrationElementResource\Pages;
 
-use App\Filament\Resources\RunRegistrationElementResource;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\RunRegistrationElementResource;
 
 class ListRunRegistrationElements extends ListRecords
 {

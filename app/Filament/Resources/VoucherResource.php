@@ -6,38 +6,38 @@ use Exception;
 use App\Models\Run;
 use App\Models\Client;
 use App\Models\Voucher;
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Toggle;
+use App\Helpers\AppHelper;
 use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
+use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
+use Filament\Resources\Resource;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Resources\Resource;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use App\Notifications\ClientSendVouchers;
-use Illuminate\Support\Collection;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 
 class VoucherResource extends Resource
 {
     protected static ?string $model = Voucher::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-ticket';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-ticket';
 
     protected static ?string $pluralModelLabel = 'Vouchers / Dossards offerts';
 
     protected static ?string $modelLabel = 'Voucher';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Courses';
+    protected static string|\UnitEnum|null $navigationGroup = 'Courses';
 
     public static function form(Schema $schema): Schema
     {
@@ -109,7 +109,7 @@ class VoucherResource extends Resource
 
                 TextColumn::make('usedByElement')
                     ->label('Utilisé par')
-                    ->getStateUsing(fn ($record) => $record->usedByElement ? ($record->usedByElement->first_name . ' ' . $record->usedByElement->last_name) : null)
+                    ->getStateUsing(fn ($record) => $record->usedByElement ? ($record->usedByElement->first_name.' '.$record->usedByElement->last_name) : null)
                     ->placeholder('-'),
 
                 TextColumn::make('created_at')
@@ -174,6 +174,7 @@ class VoucherResource extends Resource
 
                             if (Voucher::where('code', $cleanCode)->exists()) {
                                 $skipped++;
+
                                 continue;
                             }
 
@@ -181,7 +182,7 @@ class VoucherResource extends Resource
                                 'code'       => $cleanCode,
                                 'client_id'  => $data['client_id'] ?? null,
                                 'run_id'     => $data['run_id'] ?? null,
-                                'edition_id' => \App\Helpers\AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id'),
+                                'edition_id' => AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id'),
                                 'is_used'    => false,
                             ]);
 
@@ -189,7 +190,7 @@ class VoucherResource extends Resource
                         }
 
                         Notification::make()
-                            ->title("Importation terminée : {$imported} code(s) créé(s)" . ($skipped > 0 ? " ({$skipped} existants ignorés)" : ""))
+                            ->title("Importation terminée : {$imported} code(s) créé(s)".($skipped > 0 ? " ({$skipped} existants ignorés)" : ''))
                             ->success()
                             ->send();
                     }),
@@ -214,12 +215,14 @@ class VoucherResource extends Resource
                         $client = Client::find($data['client_id']);
                         if (! $client) {
                             Notification::make()->title('Client introuvable.')->danger()->send();
+
                             return;
                         }
 
                         $vouchers = Voucher::where('client_id', $client->id)->get();
                         if ($vouchers->isEmpty()) {
                             Notification::make()->title('Aucun voucher attribué à ce client.')->warning()->send();
+
                             return;
                         }
 

@@ -2,49 +2,45 @@
 
 namespace App\Filament\Resources;
 
+use Exception;
+use App\Models\Client;
+use Filament\Tables\Table;
+use Filament\Actions\Action;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
+use App\Models\RunRegistration;
+use Filament\Actions\BulkAction;
+use Filament\Actions\EditAction;
+use Filament\Resources\Resource;
+use Filament\Actions\ActionGroup;
+use App\Enums\RunRegistrationType;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\URL;
+use Rap2hpoutre\FastExcel\FastExcel;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Tabs;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Actions\Action;
-use Exception;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkAction;
-use Illuminate\Support\Collection;
-use App\Filament\Resources\RunRegistrationResource\RelationManagers\RunRegistrationElementsRelationManager;
-use App\Filament\Resources\RunRegistrationResource\Pages\ListRunRegistrations;
-use App\Filament\Resources\RunRegistrationResource\Pages\CreateRunRegistration;
-use App\Filament\Resources\RunRegistrationResource\Pages\EditRunRegistration;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Tables\Table;
-use App\Models\Client;
-use App\Models\RunRegistration;
-use App\Enums\RunRegistrationType;
-use Filament\Resources\Resource;
-use Rap2hpoutre\FastExcel\FastExcel;
 use App\Services\RunRegistrationService;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\URL;
-use App\Filament\Resources\RunRegistrationResource\Pages;
-use App\Filament\Resources\RunRegistrationResource\RelationManagers;
+use App\Filament\Resources\RunRegistrationResource\Pages\EditRunRegistration;
+use App\Filament\Resources\RunRegistrationResource\Pages\ListRunRegistrations;
+use App\Filament\Resources\RunRegistrationResource\Pages\CreateRunRegistration;
+use App\Filament\Resources\RunRegistrationResource\RelationManagers\RunRegistrationElementsRelationManager;
 
 class RunRegistrationResource extends Resource
 {
     protected static ?string $model = RunRegistration::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Courses';
+    protected static string|\UnitEnum|null $navigationGroup = 'Courses';
 
     protected static ?string $modelLabel = 'Inscription course';
 
@@ -310,100 +306,105 @@ class RunRegistrationResource extends Resource
             ])
             ->headerActions([
                 ActionGroup::make([
-                // Export Elite
-                Action::make('exportElite')
-                    ->label('Export Élite')
-                    ->icon('heroicon-o-sparkles')
-                    ->color('warning')
-                    ->action(function () {
-                        $records = RunRegistration::where('run_registration_type', 'elite')->get();
-                        $data = collect();
-                        foreach ($records as $registration) {
-                            foreach ($registration->runRegistrationElements as $element) {
-                                $data->push([
-                                    'ID Dossier'          => $registration->id,
-                                    'Nom'                 => $element->last_name,
-                                    'Prénom'              => $element->first_name,
-                                    'Date Naissance'      => $element->birthdate?->format('d.m.Y'),
-                                    'Sexe'                => $element->gender?->value ?? $element->gender,
-                                    'Nationalité'         => $element->nationality,
-                                    'Email'               => $element->email,
-                                    'Course'              => $element->run?->name ?? $element->run_name,
-                                    'Bloc'                => $element->bloc,
-                                    'Adresse'             => $element->address,
-                                    'Complément'          => $element->address_extension,
-                                    'Code Postal'         => $element->postal_code,
-                                    'Localité'            => $element->locality,
-                                    'Pays'                => $element->country,
-                                    'IBAN'                => $element->iban ?: $registration->payment_iban,
-                                    'Frais offerts'       => $element->has_free_registration_fee ? 'Oui' : 'Non',
-                                    'Prime départ'        => $element->has_bonus_start ? 'Oui' : 'Non',
-                                    'Montant départ'      => $element->bonus_start_amount,
-                                    'Montant classement'  => $element->bonus_ranking_amount,
-                                    'Montant arrivée'     => $element->bonus_arrival_amount,
-                                    'Hébergement'         => $element->has_accommodation ? 'Oui' : 'Non',
-                                    'Hébergement Ven'     => $element->accommodation_friday ? 'Oui' : 'Non',
-                                    'Hébergement Sam'     => $element->accommodation_saturday ? 'Oui' : 'Non',
-                                    'Précisions héb.'     => $element->accommodation_precision,
-                                    'Remboursement frais' => $element->has_expense_reimbursement ? 'Oui' : 'Non',
-                                    'Précisions frais'    => $element->expense_reimbursement_precision,
-                                ]);
+                    // Export Elite
+                    Action::make('exportElite')
+                        ->label('Export Élite')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('warning')
+                        ->action(function () {
+                            $records = RunRegistration::where('run_registration_type', 'elite')->get();
+                            $data = collect();
+                            foreach ($records as $registration) {
+                                foreach ($registration->runRegistrationElements as $element) {
+                                    $data->push([
+                                        'ID Dossier'          => $registration->id,
+                                        'Nom'                 => $element->last_name,
+                                        'Prénom'              => $element->first_name,
+                                        'Date Naissance'      => $element->birthdate?->format('d.m.Y'),
+                                        'Sexe'                => $element->gender?->value ?? $element->gender,
+                                        'Nationalité'         => $element->nationality,
+                                        'Email'               => $element->email,
+                                        'Course'              => $element->run?->name ?? $element->run_name,
+                                        'Bloc'                => $element->bloc,
+                                        'Adresse'             => $element->address,
+                                        'Complément'          => $element->address_extension,
+                                        'Code Postal'         => $element->postal_code,
+                                        'Localité'            => $element->locality,
+                                        'Pays'                => $element->country,
+                                        'IBAN'                => $element->iban ?: $registration->payment_iban,
+                                        'Frais offerts'       => $element->has_free_registration_fee ? 'Oui' : 'Non',
+                                        'Prime départ'        => $element->has_bonus_start ? 'Oui' : 'Non',
+                                        'Montant départ'      => $element->bonus_start_amount,
+                                        'Montant classement'  => $element->bonus_ranking_amount,
+                                        'Montant arrivée'     => $element->bonus_arrival_amount,
+                                        'Hébergement'         => $element->has_accommodation ? 'Oui' : 'Non',
+                                        'Hébergement Ven'     => $element->accommodation_friday ? 'Oui' : 'Non',
+                                        'Hébergement Sam'     => $element->accommodation_saturday ? 'Oui' : 'Non',
+                                        'Précisions héb.'     => $element->accommodation_precision,
+                                        'Remboursement frais' => $element->has_expense_reimbursement ? 'Oui' : 'Non',
+                                        'Précisions frais'    => $element->expense_reimbursement_precision,
+                                    ]);
+                                }
                             }
-                        }
 
-                        if ($data->isEmpty()) {
-                            Notification::make()->title('Aucune donnée Élite à exporter.')->warning()->send();
-                            return null;
-                        }
+                            if ($data->isEmpty()) {
+                                Notification::make()->title('Aucune donnée Élite à exporter.')->warning()->send();
 
-                        return (new FastExcel($data))->download('export_elite_'.date('Ymd_His').'.xlsx');
-                    }),
+                                return null;
+                            }
 
-                // Export Datasport Écoles
-                Action::make('exportDatasportSchool')
-                    ->label('Export Datasport interclasses')
-                    ->icon('heroicon-o-academic-cap')
-                    ->color('info')
-                    ->action(function () {
-                        $registrations = RunRegistration::where('run_registration_type', 'school')
-                            ->with('runRegistrationElements.run')
-                            ->get();
-                        return RunRegistrationResource::generateDatasportSchoolExcel($registrations);
-                    }),
+                            return (new FastExcel($data))->download('export_elite_'.date('Ymd_His').'.xlsx');
+                        }),
 
-                // Export Datasport Entreprises
-                Action::make('exportDatasportCompany')
-                    ->label('Export Datasport entreprises')
-                    ->icon('heroicon-o-building-office')
-                    ->color('warning')
-                    ->action(function () {
-                        $registrations = RunRegistration::where('run_registration_type', 'company')
-                            ->with('runRegistrationElements.run')
-                            ->get();
-                        return RunRegistrationResource::generateDatasportCompanyExcel($registrations);
-                    }),
+                    // Export Datasport Écoles
+                    Action::make('exportDatasportSchool')
+                        ->label('Export Datasport interclasses')
+                        ->icon('heroicon-o-academic-cap')
+                        ->color('info')
+                        ->action(function () {
+                            $registrations = RunRegistration::where('run_registration_type', 'school')
+                                ->with('runRegistrationElements.run')
+                                ->get();
 
-                // Export Datasport Groupes
-                Action::make('exportDatasportGroup')
-                    ->label('Export Datasport groupes')
-                    ->icon('heroicon-o-user-group')
-                    ->color('gray')
-                    ->action(function () {
-                        $registrations = RunRegistration::where('run_registration_type', 'group')
-                            ->with('runRegistrationElements.run')
-                            ->get();
-                        return RunRegistrationResource::generateDatasportGroupExcel($registrations);
-                    }),
+                            return RunRegistrationResource::generateDatasportSchoolExcel($registrations);
+                        }),
 
-                // Export Aggregated Data with Invoicing & Accounting details
-                Action::make('exportAggregatedData')
-                    ->label('Export agrégations')
-                    ->icon('heroicon-o-chart-bar')
-                    ->color('success')
-                    ->action(function () {
-                        $registrations = RunRegistration::with(['runRegistrationElements.run', 'client'])->get();
-                        return RunRegistrationResource::generateAggregatedExcel($registrations);
-                    }),
+                    // Export Datasport Entreprises
+                    Action::make('exportDatasportCompany')
+                        ->label('Export Datasport entreprises')
+                        ->icon('heroicon-o-building-office')
+                        ->color('warning')
+                        ->action(function () {
+                            $registrations = RunRegistration::where('run_registration_type', 'company')
+                                ->with('runRegistrationElements.run')
+                                ->get();
+
+                            return RunRegistrationResource::generateDatasportCompanyExcel($registrations);
+                        }),
+
+                    // Export Datasport Groupes
+                    Action::make('exportDatasportGroup')
+                        ->label('Export Datasport groupes')
+                        ->icon('heroicon-o-user-group')
+                        ->color('gray')
+                        ->action(function () {
+                            $registrations = RunRegistration::where('run_registration_type', 'group')
+                                ->with('runRegistrationElements.run')
+                                ->get();
+
+                            return RunRegistrationResource::generateDatasportGroupExcel($registrations);
+                        }),
+
+                    // Export Aggregated Data with Invoicing & Accounting details
+                    Action::make('exportAggregatedData')
+                        ->label('Export agrégations')
+                        ->icon('heroicon-o-chart-bar')
+                        ->color('success')
+                        ->action(function () {
+                            $registrations = RunRegistration::with(['runRegistrationElements.run', 'client'])->get();
+
+                            return RunRegistrationResource::generateAggregatedExcel($registrations);
+                        }),
                 ]),
             ])
             ->toolbarActions([
@@ -420,6 +421,7 @@ class RunRegistrationResource extends Resource
                                     ->title('Aucun client associé dans la sélection.')
                                     ->warning()
                                     ->send();
+
                                 return;
                             }
 
@@ -446,6 +448,7 @@ class RunRegistrationResource extends Resource
                         ->icon('heroicon-o-academic-cap')
                         ->action(function (Collection $records) {
                             $filtered = $records->filter(fn ($r) => ($r->run_registration_type?->value ?? $r->run_registration_type) === 'school');
+
                             return RunRegistrationResource::generateDatasportSchoolExcel($filtered);
                         }),
                     BulkAction::make('exportDatasportCompany')
@@ -453,6 +456,7 @@ class RunRegistrationResource extends Resource
                         ->icon('heroicon-o-building-office')
                         ->action(function (Collection $records) {
                             $filtered = $records->filter(fn ($r) => ($r->run_registration_type?->value ?? $r->run_registration_type) === 'company');
+
                             return RunRegistrationResource::generateDatasportCompanyExcel($filtered);
                         }),
                     BulkAction::make('exportDatasportGroup')
@@ -460,6 +464,7 @@ class RunRegistrationResource extends Resource
                         ->icon('heroicon-o-user-group')
                         ->action(function (Collection $records) {
                             $filtered = $records->filter(fn ($r) => ($r->run_registration_type?->value ?? $r->run_registration_type) === 'group');
+
                             return RunRegistrationResource::generateDatasportGroupExcel($filtered);
                         }),
                 ]),
@@ -474,35 +479,36 @@ class RunRegistrationResource extends Resource
             foreach ($registration->runRegistrationElements as $element) {
                 $gender = is_object($element->gender) ? $element->gender->value : ($element->gender ?? '');
                 $birthdate = $element->birthdate ? $element->birthdate->format('d.m.Y') : '';
-                $schoolEtClass = trim(($registration->school_name ?? '') . ' ' . ($registration->school_class_level ?? ''));
-                $maitre = trim(($registration->school_class_holder_first_name ?? '') . ' ' . ($registration->school_class_holder_last_name ?? ''));
+                $schoolEtClass = trim(($registration->school_name ?? '').' '.($registration->school_class_level ?? ''));
+                $maitre = trim(($registration->school_class_holder_first_name ?? '').' '.($registration->school_class_holder_last_name ?? ''));
 
                 $data->push([
-                    'Nom'                             => $element->last_name,
-                    'Prénom'                          => $element->first_name,
+                    'Nom'                            => $element->last_name,
+                    'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
-                    'Genre'                           => $gender,
-                    'Nationalité'                     => $element->nationality ?: ($element->country ?: 'Switzerland'),
-                    'E-mail'                          => $element->email ?: $registration->contact_email,
-                    'Code postal'                     => $element->postal_code ?: ($registration->school_postal_code ?: $registration->invoicing_postal_code),
-                    'Lieu'                            => $element->locality ?: ($registration->school_locality ?: $registration->invoicing_locality),
-                    'Pays'                            => $element->country ?: ($registration->school_country ?: 'Switzerland'),
-                    'Etablissement et classe'         => $schoolEtClass,
-                    'Prénom du responsable '          => $registration->contact_first_name,
-                    'Nom du responsable '             => $registration->contact_last_name,
-                    'Maître'                          => $maitre,
-                    'Etablissement'                   => $registration->school_name,
-                    'Degré'                           => $registration->school_class_level,
+                    'Genre'                          => $gender,
+                    'Nationalité'                    => $element->nationality ?: ($element->country ?: 'Switzerland'),
+                    'E-mail'                         => $element->email ?: $registration->contact_email,
+                    'Code postal'                    => $element->postal_code ?: ($registration->school_postal_code ?: $registration->invoicing_postal_code),
+                    'Lieu'                           => $element->locality ?: ($registration->school_locality ?: $registration->invoicing_locality),
+                    'Pays'                           => $element->country ?: ($registration->school_country ?: 'Switzerland'),
+                    'Etablissement et classe'        => $schoolEtClass,
+                    'Prénom du responsable '         => $registration->contact_first_name,
+                    'Nom du responsable '            => $registration->contact_last_name,
+                    'Maître'                         => $maitre,
+                    'Etablissement'                  => $registration->school_name,
+                    'Degré'                          => $registration->school_class_level,
                 ]);
             }
         }
 
         if ($data->isEmpty()) {
             Notification::make()->title('Aucune inscription École à exporter.')->warning()->send();
+
             return null;
         }
 
-        return (new FastExcel($data))->download('export_datasport_ecoles_' . date('Ymd_His') . '.xlsx');
+        return (new FastExcel($data))->download('export_datasport_ecoles_'.date('Ymd_His').'.xlsx');
     }
 
     public static function generateDatasportCompanyExcel($registrations)
@@ -523,25 +529,26 @@ class RunRegistrationResource extends Resource
                 $bloc = $element->bloc ?: ($element->run?->name ?? ($element->run_name ?? ''));
 
                 $data->push([
-                    'Nom'                             => $element->last_name,
-                    'Prénom'                          => $element->first_name,
+                    'Nom'                            => $element->last_name,
+                    'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
-                    'Genre'                           => $gender,
-                    'Nationalité'                     => $element->nationality ?: 'Switzerland',
-                    'E-mail'                          => $element->email ?: $registration->contact_email,
-                    'Nom de l\'entreprise'            => $companyName,
-                    'Bloc de départ souhaité'         => $bloc,
-                    'Vidéo'                           => $element->with_video ? 'oui' : 'non',
+                    'Genre'                          => $gender,
+                    'Nationalité'                    => $element->nationality ?: 'Switzerland',
+                    'E-mail'                         => $element->email ?: $registration->contact_email,
+                    'Nom de l\'entreprise'           => $companyName,
+                    'Bloc de départ souhaité'        => $bloc,
+                    'Vidéo'                          => $element->with_video ? 'oui' : 'non',
                 ]);
             }
         }
 
         if ($data->isEmpty()) {
             Notification::make()->title('Aucune inscription entreprise à exporter.')->warning()->send();
+
             return null;
         }
 
-        return (new FastExcel($data))->download('export_datasport_entreprises_' . date('Ymd_His') . '.xlsx');
+        return (new FastExcel($data))->download('export_datasport_entreprises_'.date('Ymd_His').'.xlsx');
     }
 
     public static function generateDatasportGroupExcel($registrations)
@@ -562,25 +569,26 @@ class RunRegistrationResource extends Resource
                 $runName = $element->run?->name ?? ($element->run_name ?? '');
 
                 $data->push([
-                    'Nom'                             => $element->last_name,
-                    'Prénom'                          => $element->first_name,
+                    'Nom'                            => $element->last_name,
+                    'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
-                    'Genre'                           => $gender,
-                    'Nationalité'                     => $element->nationality ?: 'Switzerland',
-                    'E-mail'                          => $element->email ?: $registration->contact_email,
-                    'Nom du club'                     => $clubName,
-                    'Course'                          => $runName,
-                    'Vidéo'                           => $element->with_video ? 'oui' : 'non',
+                    'Genre'                          => $gender,
+                    'Nationalité'                    => $element->nationality ?: 'Switzerland',
+                    'E-mail'                         => $element->email ?: $registration->contact_email,
+                    'Nom du club'                    => $clubName,
+                    'Course'                         => $runName,
+                    'Vidéo'                          => $element->with_video ? 'oui' : 'non',
                 ]);
             }
         }
 
         if ($data->isEmpty()) {
             Notification::make()->title('Aucune inscription Groupe à exporter.')->warning()->send();
+
             return null;
         }
 
-        return (new FastExcel($data))->download('export_datasport_groupes_' . date('Ymd_His') . '.xlsx');
+        return (new FastExcel($data))->download('export_datasport_groupes_'.date('Ymd_His').'.xlsx');
     }
 
     public static function generateAggregatedExcel($registrations)
@@ -615,10 +623,11 @@ class RunRegistrationResource extends Resource
 
         if ($data->isEmpty()) {
             Notification::make()->title('Aucune donnée à exporter.')->warning()->send();
+
             return null;
         }
 
-        return (new FastExcel($data))->download('export_inscriptions_comptabilite_' . date('Ymd_His') . '.xlsx');
+        return (new FastExcel($data))->download('export_inscriptions_comptabilite_'.date('Ymd_His').'.xlsx');
     }
 
     public static function getRelations(): array

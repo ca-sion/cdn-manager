@@ -6,8 +6,8 @@ use App\Enums\RunRegistrationType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RunRegistration extends Model
 {
@@ -99,7 +99,7 @@ class RunRegistration extends Model
         if ($type === 'company') {
             $companyRun = Run::where(function ($q) {
                 $q->whereJsonContains('available_for_types', 'company')
-                  ->orWhereNull('available_for_types');
+                    ->orWhereNull('available_for_types');
             })->first();
             $companyCost = (float) ($companyRun?->provision?->product?->price?->amount ?? $companyRun?->cost ?? 0);
         }
@@ -118,12 +118,12 @@ class RunRegistration extends Model
             if ($type === 'company') {
                 $total += $companyCost;
             } else {
-                $runId = ! empty($rowArr['run_id']) ? $rowArr['run_id'] : setting('default_run_' . $type);
+                $runId = ! empty($rowArr['run_id']) ? $rowArr['run_id'] : setting('default_run_'.$type);
                 $run = $runId ? (is_object($row) && isset($row->run) ? $row->run : Run::find($runId)) : null;
                 if (! $run) {
                     $run = Run::where(function ($q) use ($type) {
                         $q->whereJsonContains('available_for_types', $type)
-                          ->orWhereNull('available_for_types');
+                            ->orWhereNull('available_for_types');
                     })->first();
                 }
                 if ($run) {
@@ -142,6 +142,7 @@ class RunRegistration extends Model
     public function calculateEstimatedTotal(): float
     {
         $type = is_object($this->run_registration_type) ? $this->run_registration_type->value : (string) $this->run_registration_type;
+
         return static::calculateElementsEstimatedTotal($this->runRegistrationElements, $type);
     }
 
@@ -169,14 +170,15 @@ class RunRegistration extends Model
         $type = is_object($this->run_registration_type) ? $this->run_registration_type->value : $this->run_registration_type;
 
         if ($type === 'company') {
-            return $this->company_name ?: (trim($this->contact_first_name . ' ' . $this->contact_last_name) ?: 'Entreprise #' . $this->id);
+            return $this->company_name ?: (trim($this->contact_first_name.' '.$this->contact_last_name) ?: 'Entreprise #'.$this->id);
         }
 
         if ($type === 'school') {
             $name = $this->school_name ?: 'Centre Scolaire';
             if ($this->school_class_level) {
-                $name .= ' (' . $this->school_class_level . ')';
+                $name .= ' ('.$this->school_class_level.')';
             }
+
             return $name;
         }
 
@@ -184,6 +186,6 @@ class RunRegistration extends Model
             return $this->company_name;
         }
 
-        return trim($this->contact_first_name . ' ' . $this->contact_last_name) ?: ('Dossier #' . $this->id);
+        return trim($this->contact_first_name.' '.$this->contact_last_name) ?: ('Dossier #'.$this->id);
     }
 }

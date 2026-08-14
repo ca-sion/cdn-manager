@@ -16,7 +16,7 @@ class Reports extends Page
         return 'Rapports';
     }
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-arrow-down';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-arrow-down';
 
     protected string $view = 'filament.pages.reports';
 }

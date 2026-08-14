@@ -4,10 +4,11 @@ namespace Database\Factories;
 
 use App\Models\Run;
 use App\Models\RunRegistration;
+use App\Models\RunRegistrationElement;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\RunRegistrationElement>
+ * @extends Factory<RunRegistrationElement>
  */
 class RunRegistrationElementFactory extends Factory
 {

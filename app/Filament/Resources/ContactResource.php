@@ -2,51 +2,49 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Tables\Filters\TrashedFilter;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\BulkAction;
-use Filament\Schemas\Components\Fieldset;
 use Exception;
-use Filament\Support\Enums\Width;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
-use Filament\Actions\ExportAction;
-use App\Filament\Resources\ContactResource\Pages\ListContacts;
-use App\Filament\Resources\ContactResource\Pages\CreateContact;
-use App\Filament\Resources\ContactResource\Pages\EditContact;
-use Filament\Tables;
 use App\Models\Contact;
 use App\Models\Edition;
 use Livewire\Component;
 use App\Models\Provision;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
 use App\Models\ProvisionElement;
+use Filament\Actions\BulkAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\Width;
+use Filament\Actions\ExportAction;
 use Filament\Forms\Components\Radio;
 use App\Services\ContactMergeService;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use App\Enums\ProvisionElementStatusEnum;
 use App\Filament\Exports\ContactExporter;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\TrashedFilter;
 use App\Notifications\ContactDonorFormLink;
+use Filament\Actions\ForceDeleteBulkAction;
 use Illuminate\Database\Eloquent\Collection;
-use App\Filament\Resources\ContactResource\Pages;
 use App\Notifications\RecipientSendVipInvitation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\ContactResource\Pages\EditContact;
+use App\Filament\Resources\ContactResource\Pages\ListContacts;
+use App\Filament\Resources\ContactResource\Pages\CreateContact;
 use App\Filament\Resources\ClientResource\RelationManagers\ProvisionElementsRelationManager;
 
 class ContactResource extends Resource
 {
     protected static ?string $model = Contact::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $pluralModelLabel = 'Contacts';
 

@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\VoucherResource\Pages;
 
-use App\Filament\Resources\VoucherResource;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\VoucherResource;
 
 class ListVouchers extends ListRecords
 {

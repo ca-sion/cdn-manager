@@ -2,15 +2,14 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use Filament\Tables\Table;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Tables;
-use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use App\Filament\Resources\DocumentResource;
 use Filament\Resources\RelationManagers\RelationManager;
 

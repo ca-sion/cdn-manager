@@ -2,34 +2,32 @@
 
 namespace App\Livewire;
 
-use App\Helpers\CountryHelper;
 use App\Models\Run;
-use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
-use App\Notifications\RunRegistrationLink;
-use Carbon\Carbon;
-use Filament\Actions\Concerns\InteractsWithActions;
-use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\DatePicker;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\ViewField;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Schemas\Components\Utilities\Get;
+use Livewire\Component;
 use Filament\Schemas\Schema;
+use App\Helpers\CountryHelper;
+use App\Models\RunRegistration;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\URL;
-use Livewire\Component;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\DatePicker;
+use App\Notifications\EliteRunnerFormLink;
+use App\Notifications\RunRegistrationLink;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Concerns\InteractsWithForms;
+use App\Notifications\EliteRunnerContractFinalized;
+use Filament\Actions\Concerns\InteractsWithActions;
 
-class FrontEliteRegistration extends Component implements HasForms, HasActions
+class FrontEliteRegistration extends Component implements HasActions, HasForms
 {
-    use InteractsWithForms;
     use InteractsWithActions;
+    use InteractsWithForms;
 
     public ?RunRegistration $registration = null;
 
@@ -158,7 +156,7 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
                             ->searchable()
                             ->default('SUI')
                             ->columnSpan(3),
-                        
+
                         TextInput::make('payment_iban')
                             ->label('IBAN')
                             ->hint('Pour le versement des primes')
@@ -272,16 +270,16 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
         $isNew = ! $this->registration || ! $this->registration->exists;
 
         if ($isNew) {
-            $this->registration = new RunRegistration();
+            $this->registration = new RunRegistration;
         }
 
-        $firstRunner = $this->registration->exists 
-            ? $this->registration->runRegistrationElements()->withTrashed()->first() 
+        $firstRunner = $this->registration->exists
+            ? $this->registration->runRegistrationElements()->withTrashed()->first()
             : null;
 
         $firstName = ! empty($formData['elite_first_name']) ? $formData['elite_first_name'] : ($firstRunner?->first_name ?? $this->registration->contact_first_name ?? '');
-        $lastName  = ! empty($formData['elite_last_name']) ? $formData['elite_last_name'] : ($firstRunner?->last_name ?? $this->registration->contact_last_name ?? '');
-        $email     = ! empty($formData['elite_email']) ? $formData['elite_email'] : ($firstRunner?->email ?? $this->registration->contact_email ?? '');
+        $lastName = ! empty($formData['elite_last_name']) ? $formData['elite_last_name'] : ($firstRunner?->last_name ?? $this->registration->contact_last_name ?? '');
+        $email = ! empty($formData['elite_email']) ? $formData['elite_email'] : ($firstRunner?->email ?? $this->registration->contact_email ?? '');
 
         $this->registration->fill([
             'run_registration_type' => 'elite',
@@ -296,32 +294,32 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
         $eliteRun = Run::where('name', 'LIKE', '%Elite%')->first();
 
         $runnerData = [
-            'first_name'                       => $firstName,
-            'last_name'                        => $lastName,
-            'birthdate'                        => $formData['elite_birthdate'] ?? $firstRunner?->birthdate,
-            'gender'                           => $formData['elite_gender'] ?? $firstRunner?->gender ?? 'M',
-            'nationality'                      => $formData['elite_nationality'] ?? $firstRunner?->nationality ?? 'SUI',
-            'team'                             => $formData['elite_team'] ?? $firstRunner?->team,
-            'email'                            => $email,
-            'run_id'                           => $eliteRun?->id,
-            'run_name'                         => $eliteRun?->name ?? 'Course Élite',
-            'address'                          => $formData['elite_address'] ?? $firstRunner?->address,
-            'address_extension'                => $formData['elite_address_extension'] ?? $firstRunner?->address_extension,
-            'postal_code'                      => $formData['elite_postal_code'] ?? $firstRunner?->postal_code,
-            'locality'                         => $formData['elite_locality'] ?? $firstRunner?->locality,
-            'country'                          => $formData['elite_country'] ?? $firstRunner?->country ?? 'SUI',
-            'iban'                             => $formData['payment_iban'] ?? $firstRunner?->iban,
-            'has_free_registration_fee'        => $formData['has_free_registration_fee'] ?? $firstRunner?->has_free_registration_fee ?? false,
-            'has_bonus_start'                  => $formData['has_bonus_start'] ?? $firstRunner?->has_bonus_start ?? false,
-            'bonus_start_amount'               => $formData['bonus_start_amount'] ?? $firstRunner?->bonus_start_amount,
-            'bonus_ranking_amount'             => $formData['bonus_ranking_amount'] ?? $firstRunner?->bonus_ranking_amount,
-            'bonus_arrival_amount'             => $formData['bonus_arrival_amount'] ?? $firstRunner?->bonus_arrival_amount,
-            'has_accommodation'                => $formData['has_accommodation'] ?? $firstRunner?->has_accommodation ?? false,
-            'accommodation_friday'             => $formData['accommodation_friday'] ?? $firstRunner?->accommodation_friday ?? false,
-            'accommodation_saturday'           => $formData['accommodation_saturday'] ?? $firstRunner?->accommodation_saturday ?? false,
-            'accommodation_precision'          => $formData['accommodation_precision'] ?? $firstRunner?->accommodation_precision,
-            'has_expense_reimbursement'        => $formData['has_expense_reimbursement'] ?? $firstRunner?->has_expense_reimbursement ?? false,
-            'expense_reimbursement_precision'  => $formData['expense_reimbursement_precision'] ?? $firstRunner?->expense_reimbursement_precision,
+            'first_name'                      => $firstName,
+            'last_name'                       => $lastName,
+            'birthdate'                       => $formData['elite_birthdate'] ?? $firstRunner?->birthdate,
+            'gender'                          => $formData['elite_gender'] ?? $firstRunner?->gender ?? 'M',
+            'nationality'                     => $formData['elite_nationality'] ?? $firstRunner?->nationality ?? 'SUI',
+            'team'                            => $formData['elite_team'] ?? $firstRunner?->team,
+            'email'                           => $email,
+            'run_id'                          => $eliteRun?->id,
+            'run_name'                        => $eliteRun?->name ?? 'Course Élite',
+            'address'                         => $formData['elite_address'] ?? $firstRunner?->address,
+            'address_extension'               => $formData['elite_address_extension'] ?? $firstRunner?->address_extension,
+            'postal_code'                     => $formData['elite_postal_code'] ?? $firstRunner?->postal_code,
+            'locality'                        => $formData['elite_locality'] ?? $firstRunner?->locality,
+            'country'                         => $formData['elite_country'] ?? $firstRunner?->country ?? 'SUI',
+            'iban'                            => $formData['payment_iban'] ?? $firstRunner?->iban,
+            'has_free_registration_fee'       => $formData['has_free_registration_fee'] ?? $firstRunner?->has_free_registration_fee ?? false,
+            'has_bonus_start'                 => $formData['has_bonus_start'] ?? $firstRunner?->has_bonus_start ?? false,
+            'bonus_start_amount'              => $formData['bonus_start_amount'] ?? $firstRunner?->bonus_start_amount,
+            'bonus_ranking_amount'            => $formData['bonus_ranking_amount'] ?? $firstRunner?->bonus_ranking_amount,
+            'bonus_arrival_amount'            => $formData['bonus_arrival_amount'] ?? $firstRunner?->bonus_arrival_amount,
+            'has_accommodation'               => $formData['has_accommodation'] ?? $firstRunner?->has_accommodation ?? false,
+            'accommodation_friday'            => $formData['accommodation_friday'] ?? $firstRunner?->accommodation_friday ?? false,
+            'accommodation_saturday'          => $formData['accommodation_saturday'] ?? $firstRunner?->accommodation_saturday ?? false,
+            'accommodation_precision'         => $formData['accommodation_precision'] ?? $firstRunner?->accommodation_precision,
+            'has_expense_reimbursement'       => $formData['has_expense_reimbursement'] ?? $firstRunner?->has_expense_reimbursement ?? false,
+            'expense_reimbursement_precision' => $formData['expense_reimbursement_precision'] ?? $firstRunner?->expense_reimbursement_precision,
         ];
 
         $firstRunner = $this->registration->runRegistrationElements()->withTrashed()->first();
@@ -336,7 +334,7 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
 
         if ($isNew) {
             try {
-                $this->registration->notify(new RunRegistrationLink());
+                $this->registration->notify(new RunRegistrationLink);
             } catch (\Throwable $e) {
                 // Ignore
             }
@@ -377,11 +375,11 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
         }
 
         try {
-            $this->registration->notify(new \App\Notifications\EliteRunnerFormLink($element));
+            $this->registration->notify(new EliteRunnerFormLink($element));
             $recipient = $this->registration->contact_email ?: ($this->data['elite_email'] ?? 'le coureur');
-            session()->flash('message', 'Le lien vers la fiche a été envoyé par e-mail à ' . $recipient . '.');
+            session()->flash('message', 'Le lien vers la fiche a été envoyé par e-mail à '.$recipient.'.');
         } catch (\Throwable $e) {
-            session()->flash('message', 'Erreur lors de l\'envoi de l\'e-mail : ' . $e->getMessage());
+            session()->flash('message', 'Erreur lors de l\'envoi de l\'e-mail : '.$e->getMessage());
         }
     }
 
@@ -397,11 +395,11 @@ class FrontEliteRegistration extends Component implements HasForms, HasActions
         }
 
         try {
-            $this->registration->notify(new \App\Notifications\EliteRunnerContractFinalized($element));
+            $this->registration->notify(new EliteRunnerContractFinalized($element));
             $recipient = $this->registration->contact_email ?: ($this->data['elite_email'] ?? 'le coureur');
-            session()->flash('message', 'Le contrat PDF finalisé a été envoyé par e-mail à ' . $recipient . '.');
+            session()->flash('message', 'Le contrat PDF finalisé a été envoyé par e-mail à '.$recipient.'.');
         } catch (\Throwable $e) {
-            session()->flash('message', 'Erreur lors de l\'envoi de l\'e-mail : ' . $e->getMessage());
+            session()->flash('message', 'Erreur lors de l\'envoi de l\'e-mail : '.$e->getMessage());
         }
     }
 

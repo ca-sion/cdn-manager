@@ -2,17 +2,16 @@
 
 namespace Tests\Unit\Services;
 
-use Tests\TestCase;
 use App\Models\Run;
+use Tests\TestCase;
+use App\Enums\Gender;
 use App\Models\Client;
 use App\Models\Edition;
 use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
 use App\Enums\RunRegistrationType;
-use App\Enums\Gender;
-use App\Filament\Resources\RunRegistrationResource;
+use App\Models\RunRegistrationElement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Filament\Resources\RunRegistrationResource;
 
 class RunRegistrationExportsTest extends TestCase
 {

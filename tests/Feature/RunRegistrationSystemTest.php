@@ -2,20 +2,20 @@
 
 namespace Tests\Feature;
 
-use App\Enums\RunRegistrationType;
-use App\Models\Client;
-use App\Models\Edition;
 use App\Models\Run;
-use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
-use App\Notifications\RunRegistrationLink;
-use App\Services\RunRegistrationService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\URL;
-use Livewire\Livewire;
-use App\Livewire\FrontRunRegistration;
 use Tests\TestCase;
+use App\Models\Client;
+use Livewire\Livewire;
+use App\Models\Edition;
+use App\Models\RunRegistration;
+use App\Enums\RunRegistrationType;
+use Illuminate\Support\Facades\URL;
+use App\Livewire\FrontRunRegistration;
+use App\Models\RunRegistrationElement;
+use App\Services\RunRegistrationService;
+use App\Notifications\RunRegistrationLink;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class RunRegistrationSystemTest extends TestCase
 {
@@ -79,15 +79,15 @@ class RunRegistrationSystemTest extends TestCase
     {
         $registration = RunRegistration::factory()->create([
             'run_registration_type' => RunRegistrationType::Company,
-            'contact_first_name' => 'Jean',
-            'contact_last_name' => 'Dupont',
-            'contact_email' => 'jean@test.ch',
+            'contact_first_name'    => 'Jean',
+            'contact_last_name'     => 'Dupont',
+            'contact_email'         => 'jean@test.ch',
         ]);
 
         $element = RunRegistrationElement::factory()->create([
             'run_registration_id' => $registration->id,
-            'first_name' => 'Alice',
-            'last_name' => 'Bernard',
+            'first_name'          => 'Alice',
+            'last_name'           => 'Bernard',
         ]);
 
         $url = URL::signedRoute('front.run-registration.edit', [
@@ -125,7 +125,7 @@ class RunRegistrationSystemTest extends TestCase
 
         $result = $component->call('gridOps', 'elements', [
             'baseVersion' => 0,
-            'ops' => [
+            'ops'         => [
                 ['seq' => 1, 't' => 'set', 'row' => $rowKey, 'col' => 'first_name', 'v' => 'Alice'],
             ],
         ]);
@@ -137,7 +137,7 @@ class RunRegistrationSystemTest extends TestCase
     public function create_invoice_service_generates_invoice_for_linked_client()
     {
         $client = Client::create([
-            'name' => 'Test Client SA',
+            'name'  => 'Test Client SA',
             'email' => 'client@test.ch',
         ]);
 
@@ -148,8 +148,8 @@ class RunRegistrationSystemTest extends TestCase
         ]);
 
         RunRegistrationElement::factory()->create([
-            'run_registration_id' => $registration->id,
-            'run_id' => $run->id,
+            'run_registration_id'       => $registration->id,
+            'run_id'                    => $run->id,
             'has_free_registration_fee' => false,
         ]);
 

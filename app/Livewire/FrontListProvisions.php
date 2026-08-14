@@ -2,8 +2,6 @@
 
 namespace App\Livewire;
 
-use Filament\Actions\Contracts\HasActions;
-use Filament\Actions\Concerns\InteractsWithActions;
 use Carbon\Carbon;
 use App\Classes\Price;
 use Livewire\Component;
@@ -19,11 +17,13 @@ use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Actions\Concerns\InteractsWithActions;
 
-class FrontListProvisions extends Component implements HasForms, HasTable, HasActions
+class FrontListProvisions extends Component implements HasActions, HasForms, HasTable
 {
     use InteractsWithActions;
     use InteractsWithForms;
@@ -232,8 +232,9 @@ class FrontListProvisions extends Component implements HasForms, HasTable, HasAc
                     ->separator(',')
                     ->formatStateUsing(function ($state) {
                         if (is_array($state)) {
-                            return $state['name'] ?? $state['label'] ?? (count($state) ? implode(', ', array_map(fn($item) => is_array($item) ? ($item['name'] ?? $item['label'] ?? json_encode($item)) : $item, $state)) : null);
+                            return $state['name'] ?? $state['label'] ?? (count($state) ? implode(', ', array_map(fn ($item) => is_array($item) ? ($item['name'] ?? $item['label'] ?? json_encode($item)) : $item, $state)) : null);
                         }
+
                         return $state;
                     })
                     ->visible($this->isFieldInUrl('vip_guests')),

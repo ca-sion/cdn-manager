@@ -3,16 +3,15 @@
 namespace Database\Seeders;
 
 use App\Models\Run;
+use App\Enums\Gender;
 use App\Models\Client;
 use App\Models\Voucher;
-use App\Models\Edition;
 use App\Helpers\AppHelper;
 use App\Models\RunRegistration;
+use Illuminate\Database\Seeder;
+use App\Enums\RunRegistrationType;
 use App\Models\RunRegistrationElement;
 use App\Services\RunRegistrationService;
-use App\Enums\RunRegistrationType;
-use App\Enums\Gender;
-use Illuminate\Database\Seeder;
 
 class RunRegistrationSeeder extends Seeder
 {
@@ -45,15 +44,15 @@ class RunRegistrationSeeder extends Seeder
         $clientUbs = Client::firstOrCreate(
             ['name' => 'UBS SA Sion'],
             [
-                'address'            => 'Place du Midi 12',
-                'postal_code'        => '1950',
-                'locality'           => 'Sion',
-                'email'              => 'sponsoring@ubs-valais.ch',
-                'phone'              => '+41 27 324 11 11',
-                'invoicing_email'    => 'comptabilite@ubs-valais.ch',
-                'invoicing_address'  => 'Place du Midi 12',
+                'address'               => 'Place du Midi 12',
+                'postal_code'           => '1950',
+                'locality'              => 'Sion',
+                'email'                 => 'sponsoring@ubs-valais.ch',
+                'phone'                 => '+41 27 324 11 11',
+                'invoicing_email'       => 'comptabilite@ubs-valais.ch',
+                'invoicing_address'     => 'Place du Midi 12',
                 'invoicing_postal_code' => '1950',
-                'invoicing_locality' => 'Sion',
+                'invoicing_locality'    => 'Sion',
             ]
         );
 
@@ -112,20 +111,20 @@ class RunRegistrationSeeder extends Seeder
         );
 
         $regSchool = RunRegistration::create([
-            'client_id'                       => $clientSchool->id,
-            'run_registration_type'           => RunRegistrationType::School,
-            'school_name'                     => 'École du Sacré-Cœur',
-            'school_postal_code'              => '1950',
-            'school_locality'                 => 'Sion',
-            'school_country'                  => 'SUI',
-            'school_class_level'              => '8H',
-            'school_class_holder_first_name'  => 'Isabelle',
-            'school_class_holder_last_name'   => 'Emery',
-            'school_class_holder_email'       => 'isabelle.emery@sacrecoeur-sion.ch',
-            'contact_first_name'              => 'Isabelle',
-            'contact_last_name'               => 'Emery',
-            'contact_email'                   => 'isabelle.emery@sacrecoeur-sion.ch',
-            'contact_phone'                   => '+41 27 322 00 11',
+            'client_id'                      => $clientSchool->id,
+            'run_registration_type'          => RunRegistrationType::School,
+            'school_name'                    => 'École du Sacré-Cœur',
+            'school_postal_code'             => '1950',
+            'school_locality'                => 'Sion',
+            'school_country'                 => 'SUI',
+            'school_class_level'             => '8H',
+            'school_class_holder_first_name' => 'Isabelle',
+            'school_class_holder_last_name'  => 'Emery',
+            'school_class_holder_email'      => 'isabelle.emery@sacrecoeur-sion.ch',
+            'contact_first_name'             => 'Isabelle',
+            'contact_last_name'              => 'Emery',
+            'contact_email'                  => 'isabelle.emery@sacrecoeur-sion.ch',
+            'contact_phone'                  => '+41 27 322 00 11',
         ]);
 
         $students = [
@@ -172,47 +171,47 @@ class RunRegistrationSeeder extends Seeder
         // 5. CAS 4 : Coureurs Élite (Tadesse Abraham, Julien Wanders)
         $elites = [
             [
-                'first_name'                       => 'Tadesse',
-                'last_name'                        => 'Abraham',
-                'birthdate'                        => '1982-08-12',
-                'gender'                           => Gender::Male,
-                'nationality'                      => 'SUI',
-                'email'                            => 'tadesse.abraham@running.ch',
-                'address'                          => 'Avenue de la Gare 15',
-                'postal_code'                      => '1201',
-                'locality'                         => 'Genève',
-                'country'                          => 'SUI',
-                'iban'                             => 'CH93 0000 0000 0000 1234 A',
-                'has_bonus_start'                  => true,
-                'bonus_start_amount'               => 1500.00,
-                'bonus_ranking_amount'             => 800.00,
-                'bonus_arrival_amount'             => 500.00,
-                'has_accommodation'                => true,
-                'accommodation_friday'             => true,
-                'accommodation_saturday'           => true,
-                'accommodation_precision'          => 'Hôtel Elite Sion - Chambre Simple avec petit déjeuner',
-                'has_expense_reimbursement'        => true,
-                'expense_reimbursement_precision'  => 'Billet de train 1ère classe A/R',
+                'first_name'                      => 'Tadesse',
+                'last_name'                       => 'Abraham',
+                'birthdate'                       => '1982-08-12',
+                'gender'                          => Gender::Male,
+                'nationality'                     => 'SUI',
+                'email'                           => 'tadesse.abraham@running.ch',
+                'address'                         => 'Avenue de la Gare 15',
+                'postal_code'                     => '1201',
+                'locality'                        => 'Genève',
+                'country'                         => 'SUI',
+                'iban'                            => 'CH93 0000 0000 0000 1234 A',
+                'has_bonus_start'                 => true,
+                'bonus_start_amount'              => 1500.00,
+                'bonus_ranking_amount'            => 800.00,
+                'bonus_arrival_amount'            => 500.00,
+                'has_accommodation'               => true,
+                'accommodation_friday'            => true,
+                'accommodation_saturday'          => true,
+                'accommodation_precision'         => 'Hôtel Elite Sion - Chambre Simple avec petit déjeuner',
+                'has_expense_reimbursement'       => true,
+                'expense_reimbursement_precision' => 'Billet de train 1ère classe A/R',
             ],
             [
-                'first_name'                       => 'Helen',
-                'last_name'                        => 'Bekele',
-                'birthdate'                        => '1994-11-21',
-                'gender'                           => Gender::Female,
-                'nationality'                      => 'ETH',
-                'email'                            => 'helen.bekele@athletics.org',
-                'address'                          => 'Rue de Lausanne 40',
-                'postal_code'                      => '1000',
-                'locality'                         => 'Lausanne',
-                'country'                          => 'SUI',
-                'iban'                             => 'CH44 0070 0000 9876 5432 B',
-                'has_bonus_start'                  => true,
-                'bonus_start_amount'               => 1200.00,
-                'bonus_ranking_amount'             => 600.00,
-                'has_accommodation'                => true,
-                'accommodation_saturday'           => true,
-                'accommodation_precision'          => 'Hôtel Ibis Sion - Chambre double',
-                'has_expense_reimbursement'        => false,
+                'first_name'                => 'Helen',
+                'last_name'                 => 'Bekele',
+                'birthdate'                 => '1994-11-21',
+                'gender'                    => Gender::Female,
+                'nationality'               => 'ETH',
+                'email'                     => 'helen.bekele@athletics.org',
+                'address'                   => 'Rue de Lausanne 40',
+                'postal_code'               => '1000',
+                'locality'                  => 'Lausanne',
+                'country'                   => 'SUI',
+                'iban'                      => 'CH44 0070 0000 9876 5432 B',
+                'has_bonus_start'           => true,
+                'bonus_start_amount'        => 1200.00,
+                'bonus_ranking_amount'      => 600.00,
+                'has_accommodation'         => true,
+                'accommodation_saturday'    => true,
+                'accommodation_precision'   => 'Hôtel Ibis Sion - Chambre double',
+                'has_expense_reimbursement' => false,
             ],
         ];
 

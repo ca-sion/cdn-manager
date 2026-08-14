@@ -2,21 +2,20 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Pages\Dashboard;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
-use Filament\Pages;
 use Filament\Panel;
-use Filament\Widgets;
 use Filament\PanelProvider;
+use Filament\Pages\Dashboard;
 use App\Filament\Pages\Settings;
 use App\Http\Middleware\Edition;
 use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
+use Filament\Widgets\AccountWidget;
 use Illuminate\Support\Facades\Blade;
+use Filament\Widgets\FilamentInfoWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Support\Facades\FilamentView;
 use Filament\Support\Facades\FilamentColor;
+use Outerweb\FilamentSettings\SettingsPlugin;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -26,7 +25,6 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use Outerweb\FilamentSettings\SettingsPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {

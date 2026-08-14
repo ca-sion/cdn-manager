@@ -4,26 +4,30 @@ namespace App\Livewire;
 
 use Exception;
 use App\Models\Client;
-use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
-use App\Notifications\RunRegistrationLink;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Facades\URL;
-use Rap2hpoutre\FastExcel\FastExcel;
+use App\Models\RunRegistration;
+use App\Notifications\RunRegistrationLink;
+use App\Filament\Resources\RunRegistrationResource;
 
 class FrontGroupManager extends Component
 {
     use WithPagination;
 
     public string $search = '';
+
     public string $typeFilter = '';
+
     public string $invoiceFilter = '';
+
     public string $sortField = 'created_at';
+
     public string $sortDirection = 'desc';
 
     public bool $showLinkClientModal = false;
+
     public ?int $selectedRegistrationId = null;
+
     public ?int $selectedClientId = null;
 
     protected $queryString = ['search', 'typeFilter', 'invoiceFilter', 'sortField', 'sortDirection'];
@@ -61,14 +65,15 @@ class FrontGroupManager extends Component
         $targetEmail = $registration->routeNotificationForMail();
         if (! $targetEmail) {
             session()->flash('error', 'Aucune adresse email de contact disponible pour ce dossier.');
+
             return;
         }
 
         try {
-            $registration->notify(new RunRegistrationLink());
+            $registration->notify(new RunRegistrationLink);
             session()->flash('message', "Lien d'accès permanent envoyé avec succès à {$targetEmail} !");
         } catch (Exception $e) {
-            session()->flash('error', "Erreur lors de l'envoi de l'e-mail : " . $e->getMessage());
+            session()->flash('error', "Erreur lors de l'envoi de l'e-mail : ".$e->getMessage());
         }
     }
 
@@ -119,7 +124,8 @@ class FrontGroupManager extends Component
         $registrations = RunRegistration::where('run_registration_type', 'school')
             ->with('runRegistrationElements.run')
             ->get();
-        return \App\Filament\Resources\RunRegistrationResource::generateDatasportSchoolExcel($registrations);
+
+        return RunRegistrationResource::generateDatasportSchoolExcel($registrations);
     }
 
     public function exportDatasportCompany()
@@ -127,7 +133,8 @@ class FrontGroupManager extends Component
         $registrations = RunRegistration::where('run_registration_type', 'company')
             ->with('runRegistrationElements.run')
             ->get();
-        return \App\Filament\Resources\RunRegistrationResource::generateDatasportCompanyExcel($registrations);
+
+        return RunRegistrationResource::generateDatasportCompanyExcel($registrations);
     }
 
     public function exportDatasportGroup()
@@ -135,7 +142,8 @@ class FrontGroupManager extends Component
         $registrations = RunRegistration::where('run_registration_type', 'group')
             ->with('runRegistrationElements.run')
             ->get();
-        return \App\Filament\Resources\RunRegistrationResource::generateDatasportGroupExcel($registrations);
+
+        return RunRegistrationResource::generateDatasportGroupExcel($registrations);
     }
 
     public function exportAggregatedData()
@@ -143,7 +151,8 @@ class FrontGroupManager extends Component
         $registrations = RunRegistration::where('run_registration_type', '!=', 'elite')
             ->with(['runRegistrationElements.run', 'client'])
             ->get();
-        return \App\Filament\Resources\RunRegistrationResource::generateAggregatedExcel($registrations);
+
+        return RunRegistrationResource::generateAggregatedExcel($registrations);
     }
 
     public function render()
@@ -153,12 +162,12 @@ class FrontGroupManager extends Component
 
         if (! empty($this->search)) {
             $query->where(function ($q) {
-                $q->where('run_registrations.company_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('run_registrations.school_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('run_registrations.contact_first_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('run_registrations.contact_last_name', 'like', '%' . $this->search . '%')
-                  ->orWhere('run_registrations.contact_email', 'like', '%' . $this->search . '%')
-                  ->orWhere('run_registrations.school_locality', 'like', '%' . $this->search . '%');
+                $q->where('run_registrations.company_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('run_registrations.school_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('run_registrations.contact_first_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('run_registrations.contact_last_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('run_registrations.contact_email', 'like', '%'.$this->search.'%')
+                    ->orWhere('run_registrations.school_locality', 'like', '%'.$this->search.'%');
             });
         }
 
@@ -191,25 +200,25 @@ class FrontGroupManager extends Component
             ->with(['runRegistrationElements.run.provision.product.price'])
             ->get();
 
-        $companies = $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'company');
-        $schools   = $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'school');
-        $groups    = $allRegistrations->filter(fn($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'group');
+        $companies = $allRegistrations->filter(fn ($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'company');
+        $schools = $allRegistrations->filter(fn ($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'school');
+        $groups = $allRegistrations->filter(fn ($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'group');
 
         $stats = [
-            'total_dossiers'          => $allRegistrations->count(),
-            'total_participants'      => $allRegistrations->sum(fn($r) => $r->participants_count),
+            'total_dossiers'     => $allRegistrations->count(),
+            'total_participants' => $allRegistrations->sum(fn ($r) => $r->participants_count),
 
-            'companies_dossiers'      => $companies->count(),
-            'companies_participants'  => $companies->sum(fn($r) => $r->participants_count),
+            'companies_dossiers'     => $companies->count(),
+            'companies_participants' => $companies->sum(fn ($r) => $r->participants_count),
 
-            'schools_dossiers'        => $schools->count(),
-            'schools_participants'    => $schools->sum(fn($r) => $r->participants_count),
+            'schools_dossiers'     => $schools->count(),
+            'schools_participants' => $schools->sum(fn ($r) => $r->participants_count),
 
-            'groups_dossiers'         => $groups->count(),
-            'groups_participants'     => $groups->sum(fn($r) => $r->participants_count),
+            'groups_dossiers'     => $groups->count(),
+            'groups_participants' => $groups->sum(fn ($r) => $r->participants_count),
 
-            'filtered_estimated'      => $registrations->getCollection()->sum(fn($r) => $r->estimated_total),
-            'total_estimated'         => $allRegistrations->sum(fn($r) => $r->estimated_total),
+            'filtered_estimated' => $registrations->getCollection()->sum(fn ($r) => $r->estimated_total),
+            'total_estimated'    => $allRegistrations->sum(fn ($r) => $r->estimated_total),
         ];
 
         $clients = Client::orderBy('name')->get();

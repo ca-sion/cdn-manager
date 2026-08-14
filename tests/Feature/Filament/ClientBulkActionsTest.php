@@ -2,14 +2,14 @@
 
 namespace Tests\Feature\Filament;
 
-use App\Helpers\AppHelper;
+use Tests\TestCase;
 use App\Models\Client;
+use App\Models\Edition;
+use App\Helpers\AppHelper;
 use App\Models\ClientCategory;
 use App\Models\ClientEngagement;
-use App\Models\Edition;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
-use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ClientBulkActionsTest extends TestCase
 {

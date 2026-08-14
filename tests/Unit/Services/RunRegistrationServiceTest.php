@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use App\Models\Run;
 use Tests\TestCase;
 use App\Models\RunRegistration;
+use App\Enums\RunRegistrationType;
 use App\Models\RunRegistrationElement;
 use App\Services\RunRegistrationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,7 +29,7 @@ class RunRegistrationServiceTest extends TestCase
         $run2 = Run::factory()->create(['cost' => 35.00]);
 
         $registration = RunRegistration::factory()->create([
-            'run_registration_type' => \App\Enums\RunRegistrationType::Group,
+            'run_registration_type' => RunRegistrationType::Group,
         ]);
 
         RunRegistrationElement::factory()->create([

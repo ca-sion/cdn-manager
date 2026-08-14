@@ -2,41 +2,38 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Toggle;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Filters\TrashedFilter;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
-use App\Filament\Resources\RunResource\Pages\ListRuns;
-use App\Filament\Resources\RunResource\Pages\CreateRun;
-use App\Filament\Resources\RunResource\Pages\EditRun;
 use App\Models\Run;
-use Filament\Forms;
-use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use App\Enums\RunRegistrationType;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\Repeater;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 use Illuminate\Database\Eloquent\Builder;
-use App\Filament\Resources\RunResource\Pages;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Forms\Components\DateTimePicker;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\RunResource\Pages\EditRun;
+use App\Filament\Resources\RunResource\Pages\ListRuns;
+use App\Filament\Resources\RunResource\Pages\CreateRun;
 
 class RunResource extends Resource
 {
     protected static ?string $model = Run::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-flag';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-flag';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Courses';
+    protected static string|\UnitEnum|null $navigationGroup = 'Courses';
 
     protected static ?string $modelLabel = 'Course';
 

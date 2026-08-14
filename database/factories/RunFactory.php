@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Enums\RunRegistrationType;
+use App\Models\Run;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Run>
+ * @extends Factory<Run>
  */
 class RunFactory extends Factory
 {
@@ -18,11 +18,11 @@ class RunFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'                   => 'Course ' . $this->faker->city . ' ' . $this->faker->numberBetween(5, 20) . 'km',
-            'distance'               => $this->faker->randomFloat(2, 5, 42),
-            'cost'                   => $this->faker->randomElement([20.00, 25.00, 30.00, 35.00, 45.00, 50.00]),
-            'available_for_types'    => ['company', 'school', 'group', 'elite'],
-            'start_blocs'            => [
+            'name'                => 'Course '.$this->faker->city.' '.$this->faker->numberBetween(5, 20).'km',
+            'distance'            => $this->faker->randomFloat(2, 5, 42),
+            'cost'                => $this->faker->randomElement([20.00, 25.00, 30.00, 35.00, 45.00, 50.00]),
+            'available_for_types' => ['company', 'school', 'group', 'elite'],
+            'start_blocs'         => [
                 ['label' => 'Bloc A - Élite', 'time' => '09:30'],
                 ['label' => 'Bloc B - Populaire', 'time' => '10:00'],
                 ['label' => 'Bloc C - Débutant', 'time' => '10:30'],

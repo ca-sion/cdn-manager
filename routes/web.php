@@ -6,20 +6,18 @@ use App\Livewire\AdvertiserForm;
 use App\Livewire\AdvertiserStart;
 use App\Livewire\FrontEditClient;
 use App\Livewire\FrontListClients;
+use App\Livewire\FrontEliteManager;
+use App\Livewire\FrontGroupManager;
 use App\Livewire\FrontListProvisions;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\FrontRunRegistration;
 use App\Http\Controllers\PdfController;
+use App\Livewire\FrontEliteRegistration;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\TrackingController;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
-
-use App\Models\RunRegistration;
-use App\Livewire\FrontEliteManager;
-use App\Livewire\FrontEliteRegistration;
-use App\Livewire\FrontGroupManager;
 
 Route::get('registrations/manager', FrontGroupManager::class)->middleware(SiteProtection::class)->name('front.run-registration.manager');
 Route::get('registrations/elite-manager', FrontEliteManager::class)->middleware(SiteProtection::class)->name('front.elite-manager');
@@ -36,7 +34,6 @@ Route::get('/pdf/provisions', [PdfController::class, 'provisions'])->middleware(
 Route::get('/pdf/clients', [PdfController::class, 'clients'])->middleware(SiteProtection::class)->name('pdf.clients');
 Route::get('/pdf/client/{client}', [PdfController::class, 'client'])->middleware('signed')->name('pdf.client');
 Route::get('/pdf/elite-contract/{registration}', [PdfController::class, 'eliteContract'])->middleware('signed')->name('pdf.elite-contract');
-
 
 Route::get('provisions', FrontListProvisions::class)->middleware(SiteProtection::class)->name('front.provisions');
 Route::get('clients', FrontListClients::class)->middleware(SiteProtection::class)->name('front.clients');

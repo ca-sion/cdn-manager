@@ -2,9 +2,6 @@
 
 namespace App\Livewire;
 
-use Filament\Actions\Contracts\HasActions;
-use Filament\Actions\Concerns\InteractsWithActions;
-use Filament\Support\Enums\IconSize;
 use Carbon\Carbon;
 use App\Models\Client;
 use Livewire\Component;
@@ -13,6 +10,7 @@ use Livewire\Attributes\Url;
 use App\Enums\EngagementStageEnum;
 use Illuminate\Support\HtmlString;
 use App\Enums\EngagementStatusEnum;
+use Filament\Support\Enums\IconSize;
 use Filament\Support\Enums\Alignment;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Support\Enums\FontWeight;
@@ -23,10 +21,12 @@ use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Actions\Concerns\InteractsWithActions;
 
-class FrontListClients extends Component implements HasForms, HasTable, HasActions
+class FrontListClients extends Component implements HasActions, HasForms, HasTable
 {
     use InteractsWithActions;
     use InteractsWithForms;

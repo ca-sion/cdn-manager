@@ -2,12 +2,11 @@
 
 namespace Tests\Unit\Models;
 
-use Tests\TestCase;
 use App\Models\Run;
+use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Edition;
 use App\Models\Voucher;
-use App\Helpers\AppHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class VoucherTest extends TestCase
@@ -18,9 +17,9 @@ class VoucherTest extends TestCase
     public function it_can_create_a_voucher_and_verify_initial_state()
     {
         $voucher = Voucher::create([
-            'code'       => 'CDN2026-TEST',
-            'is_used'    => false,
-            'used_at'    => null,
+            'code'    => 'CDN2026-TEST',
+            'is_used' => false,
+            'used_at' => null,
         ]);
 
         $this->assertDatabaseHas('vouchers', [

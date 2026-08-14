@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\EditionResource\Pages;
 
 use Filament\Actions\DeleteAction;
-use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\EditionResource;
 

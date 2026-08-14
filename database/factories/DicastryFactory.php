@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Dicastry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Dicastry>
+ * @extends Factory<Dicastry>
  */
 class DicastryFactory extends Factory
 {

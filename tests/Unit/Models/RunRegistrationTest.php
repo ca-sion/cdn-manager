@@ -2,13 +2,13 @@
 
 namespace Tests\Unit\Models;
 
-use Tests\TestCase;
 use App\Models\Run;
+use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Edition;
 use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
 use App\Enums\RunRegistrationType;
+use App\Models\RunRegistrationElement;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class RunRegistrationTest extends TestCase

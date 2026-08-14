@@ -2,63 +2,61 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\TrashedFilter;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\BulkAction;
 use Exception;
-use Filament\Support\Enums\Width;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
-use Filament\Actions\ExportAction;
-use App\Filament\Resources\ClientResource\Pages\ListClients;
-use App\Filament\Resources\ClientResource\Pages\CreateClient;
-use App\Filament\Resources\ClientResource\Pages\EditClient;
 use Filament\Forms;
-use Filament\Tables;
 use App\Models\Client;
 use App\Models\Edition;
 use Livewire\Component;
 use App\Models\Provision;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
+use Filament\Actions\Action;
+use Filament\Schemas\Schema;
 use App\Models\ClientCategory;
 use App\Models\ClientEngagement;
+use Filament\Actions\BulkAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
+use Filament\Actions\ActionGroup;
+use Filament\Support\Enums\Width;
 use App\Enums\EngagementStageEnum;
+use Filament\Actions\ExportAction;
 use App\Enums\EngagementStatusEnum;
 use Illuminate\Contracts\View\View;
 use App\Services\ClientMergeService;
 use Filament\Forms\Components\Radio;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Tabs;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use App\Filament\Exports\ClientExporter;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use App\Enums\ProvisionElementStatusEnum;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Tables\Columns\TextInputColumn;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
 use App\Notifications\ClientAdvertiserFormLink;
-use App\Filament\Resources\ClientResource\Pages;
 use App\Notifications\RecipientSendVipInvitation;
 use App\Notifications\ClientAdvertiserFormRelaunch;
 use App\Notifications\ClientAdvertiserMediaMissing;
 use App\Notifications\ClientInterclassDonorRequest;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
+use App\Filament\Resources\ClientResource\Pages\EditClient;
 use App\Notifications\ClientInterclassDonorRequestRelaunch;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use App\Filament\Resources\ClientResource\Pages\ListClients;
+use App\Filament\Resources\ClientResource\Pages\CreateClient;
 use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\DocumentsRelationManager;
@@ -68,7 +66,7 @@ class ClientResource extends Resource
 {
     protected static ?string $model = Client::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-home-modern';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-home-modern';
 
     protected static ?string $pluralModelLabel = 'Clients';
 
@@ -384,7 +382,7 @@ class ClientResource extends Resource
                                 try {
                                     $client->notify(new ClientSendVouchers(
                                         $client->vouchers,
-                                        "Veuillez utiliser ce lien pré-rempli pour compléter l'inscription de vos coureurs d'entreprise :\n" . $signedUrl
+                                        "Veuillez utiliser ce lien pré-rempli pour compléter l'inscription de vos coureurs d'entreprise :\n".$signedUrl
                                     ));
                                     $sentCount++;
                                 } catch (Exception $e) {

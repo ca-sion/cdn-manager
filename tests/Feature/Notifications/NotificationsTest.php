@@ -2,18 +2,19 @@
 
 namespace Tests\Feature\Notifications;
 
-use Tests\TestCase;
 use App\Models\Run;
+use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Edition;
 use App\Models\Voucher;
 use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
 use App\Enums\RunRegistrationType;
-use App\Notifications\RunRegistrationLink;
-use App\Notifications\EliteRunnerFormLink;
+use App\Models\RunRegistrationElement;
 use App\Notifications\ClientSendVouchers;
+use App\Notifications\EliteRunnerFormLink;
+use App\Notifications\RunRegistrationLink;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Notifications\EliteRunnerContractFinalized;
 
 class NotificationsTest extends TestCase
 {
@@ -29,7 +30,7 @@ class NotificationsTest extends TestCase
             'contact_email'         => 'isabelle@sacrecoeur.ch',
         ]);
 
-        $notification = new RunRegistrationLink();
+        $notification = new RunRegistrationLink;
         $mail = $notification->toMail($reg);
 
         $this->assertStringContainsString('Course de Noël', $mail->subject);
@@ -48,7 +49,7 @@ class NotificationsTest extends TestCase
         $signedUrl = 'https://cdn-manager.test/registrations/elite/edit/1?signature=test';
 
         $notification = new EliteRunnerFormLink($element, $signedUrl);
-        $mail = $notification->toMail(new Client());
+        $mail = $notification->toMail(new Client);
 
         $this->assertStringContainsString('Course de Noël', $mail->subject);
         $this->assertEquals('Bonjour Julien,', $mail->greeting);
@@ -63,8 +64,8 @@ class NotificationsTest extends TestCase
             'last_name'  => 'Wanders',
         ]);
 
-        $notification = new \App\Notifications\EliteRunnerContractFinalized($element);
-        $mail = $notification->toMail(new Client());
+        $notification = new EliteRunnerContractFinalized($element);
+        $mail = $notification->toMail(new Client);
 
         $this->assertStringContainsString('Confirmation course Élite et contrat', $mail->subject);
         $this->assertEquals('Bonjour Julien,', $mail->greeting);

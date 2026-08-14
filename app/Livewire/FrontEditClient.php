@@ -3,25 +3,24 @@
 namespace App\Livewire;
 
 use App\Models\Client;
-use Filament\Actions\Concerns\InteractsWithActions;
-use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Concerns\InteractsWithForms;
+use Livewire\Component;
+use Filament\Schemas\Schema;
+use Illuminate\Contracts\View\View;
+use Filament\Support\Enums\TextSize;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Enums\FontWeight;
+use Filament\Forms\Components\Repeater;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Support\Enums\FontWeight;
-use Filament\Support\Enums\TextSize;
-use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\HtmlString;
-use Livewire\Component;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 
-class FrontEditClient extends Component implements HasForms, HasActions
+class FrontEditClient extends Component implements HasActions, HasForms
 {
     use InteractsWithActions;
     use InteractsWithForms;

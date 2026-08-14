@@ -96,7 +96,7 @@ class RunRegistrationService
                 $qty = $items->count();
 
                 $positions->push([
-                    'name'        => $name . ' (' . $qty . ' participant' . ($qty > 1 ? 's' : '') . ')',
+                    'name'        => $name.' ('.$qty.' participant'.($qty > 1 ? 's' : '').')',
                     'quantity'    => $qty,
                     'unit'        => 'pce',
                     'cost'        => $unitCost,
@@ -111,7 +111,7 @@ class RunRegistrationService
         if ($freeElements->isNotEmpty()) {
             $freeQty = $freeElements->count();
             $positions->push([
-                'name'        => 'Dossards offerts / Vouchers déduits (' . $freeQty . ' participant' . ($freeQty > 1 ? 's' : '') . ')',
+                'name'        => 'Dossards offerts / Vouchers déduits ('.$freeQty.' participant'.($freeQty > 1 ? 's' : '').')',
                 'quantity'    => $freeQty,
                 'unit'        => 'pce',
                 'cost'        => 0.00,
@@ -122,9 +122,9 @@ class RunRegistrationService
         }
 
         $client = $registrations->first()->client;
-        $clientName = $client ? $client->name : 'Client #' . $clientId;
+        $clientName = $client ? $client->name : 'Client #'.$clientId;
         $dossierNumbers = $registrationIds->implode(', #');
-        $invoiceTitle = 'Facture Inscriptions Courses - ' . $clientName . ' (Dossiers #' . $dossierNumbers . ')';
+        $invoiceTitle = 'Facture Inscriptions Courses - '.$clientName.' (Dossiers #'.$dossierNumbers.')';
 
         // Recherche d'une facture non-payée existante pour ce client dans l'édition courante
         $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
@@ -150,7 +150,7 @@ class RunRegistrationService
             $invoice->date = now();
             $invoice->due_date = now()->addDays(30);
             $invoice->positions = $positions->toArray();
-            $invoice->note = 'Facture Inscriptions Courses regroupant les dossiers #' . $dossierNumbers;
+            $invoice->note = 'Facture Inscriptions Courses regroupant les dossiers #'.$dossierNumbers;
             $invoice->currency = 'CHF';
             $invoice->qr_reference = QrPaymentReferenceGenerator::generate(null, $invoiceNumber);
             $invoice->save();

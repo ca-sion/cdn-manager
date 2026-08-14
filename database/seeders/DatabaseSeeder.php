@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Run;
 use App\Models\User;
 use App\Models\Client;
 use App\Models\Contact;
@@ -17,7 +18,6 @@ use App\Enums\InvoiceStatusEnum;
 use App\Models\ClientEngagement;
 use App\Models\ProvisionElement;
 use App\Models\ProvisionCategory;
-use App\Models\Run;
 use Illuminate\Support\Facades\DB;
 use App\Enums\ProvisionElementStatusEnum;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
@@ -182,12 +182,12 @@ class DatabaseSeeder extends Seeder
 
         // 8. Runs (Courses)
         Run::create([
-            'name'                   => 'Course Entreprises 10km',
-            'distance'               => 10.00,
-            'cost'                   => 35.00,
-            'provision_id'           => $provCompany->id,
-            'available_for_types'    => ['company', 'group'],
-            'start_blocs'            => [
+            'name'                => 'Course Entreprises 10km',
+            'distance'            => 10.00,
+            'cost'                => 35.00,
+            'provision_id'        => $provCompany->id,
+            'available_for_types' => ['company', 'group'],
+            'start_blocs'         => [
                 ['label' => 'Bloc A', 'time' => '10:00'],
                 ['label' => 'Bloc B', 'time' => '10:15'],
             ],
@@ -200,12 +200,12 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Run::create([
-            'name'                   => 'Course des Écoles 3km',
-            'distance'               => 3.00,
-            'cost'                   => 20.00,
-            'provision_id'           => $provSchool->id,
-            'available_for_types'    => ['school'],
-            'start_blocs'            => [
+            'name'                => 'Course des Écoles 3km',
+            'distance'            => 3.00,
+            'cost'                => 20.00,
+            'provision_id'        => $provSchool->id,
+            'available_for_types' => ['school'],
+            'start_blocs'         => [
                 ['label' => 'Bloc Écoles 1', 'time' => '11:00'],
                 ['label' => 'Bloc Écoles 2', 'time' => '11:20'],
             ],
@@ -218,11 +218,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Run::create([
-            'name'                   => 'Trail des Châteaux 20km',
-            'distance'               => 20.00,
-            'cost'                   => 50.00,
-            'available_for_types'    => ['company', 'group', 'elite'],
-            'start_blocs'            => [
+            'name'                => 'Trail des Châteaux 20km',
+            'distance'            => 20.00,
+            'cost'                => 50.00,
+            'available_for_types' => ['company', 'group', 'elite'],
+            'start_blocs'         => [
                 ['label' => 'Bloc Départ Spécial', 'time' => '08:30'],
             ],
             'registrations_deadline' => now()->addDays(45),
@@ -234,11 +234,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Run::create([
-            'name'                   => 'Course Élite Hommes / Dames',
-            'distance'               => 7.50,
-            'cost'                   => 0.00,
-            'available_for_types'    => ['elite'],
-            'start_blocs'            => [
+            'name'                => 'Course Élite Hommes / Dames',
+            'distance'            => 7.50,
+            'cost'                => 0.00,
+            'available_for_types' => ['elite'],
+            'start_blocs'         => [
                 ['label' => 'Bloc Élite', 'time' => '16:00'],
             ],
             'registrations_deadline' => now()->addDays(45),

@@ -14,6 +14,7 @@ use App\Models\ProvisionElement;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
 use Rap2hpoutre\FastExcel\FastExcel;
+use App\Models\RunRegistrationElement;
 use App\Services\ProvisionComparisonService;
 
 class ReportsController extends Controller
@@ -576,15 +577,15 @@ class ReportsController extends Controller
 
         if (request()->input('export')) {
             $exportData = $invoices->map(fn ($inv) => [
-                'N° Facture'     => '#' . $inv->number,
-                'Client'         => $inv->client?->name ?? $inv->invoicing_company_name,
-                'Date'           => $inv->created_at?->format('d.m.Y'),
-                'Échéance'       => $inv->due_at?->format('d.m.Y'),
-                'Statut'         => is_object($inv->status) && method_exists($inv->status, 'getLabel') ? $inv->status->getLabel() : (string) ($inv->status?->value ?? $inv->status),
-                'Montant Total'  => $inv->total,
+                'N° Facture'    => '#'.$inv->number,
+                'Client'        => $inv->client?->name ?? $inv->invoicing_company_name,
+                'Date'          => $inv->created_at?->format('d.m.Y'),
+                'Échéance'      => $inv->due_at?->format('d.m.Y'),
+                'Statut'        => is_object($inv->status) && method_exists($inv->status, 'getLabel') ? $inv->status->getLabel() : (string) ($inv->status?->value ?? $inv->status),
+                'Montant Total' => $inv->total,
             ]);
 
-            return (new FastExcel($exportData))->download($edition?->year . '-invoices.xlsx');
+            return (new FastExcel($exportData))->download($edition?->year.'-invoices.xlsx');
         }
 
         $view = View::make('pdf.invoices', ['invoices' => $invoices, 'edition' => $edition, 'grandTotal' => $grandTotal]);
@@ -593,7 +594,7 @@ class ReportsController extends Controller
         return Pdf::loadHTML($html)
             ->setPaper('A4', 'landscape')
             ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
-            ->stream(str($edition->year)->slug() . '-invoices.pdf');
+            ->stream(str($edition->year)->slug().'-invoices.pdf');
     }
 
     public function elites()
@@ -601,7 +602,7 @@ class ReportsController extends Controller
         $editionYear = request()->input('edition');
         $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
 
-        $elements = \App\Models\RunRegistrationElement::whereHas('runRegistration', fn ($q) => $q->where('run_registration_type', 'elite'))
+        $elements = RunRegistrationElement::whereHas('runRegistration', fn ($q) => $q->where('run_registration_type', 'elite'))
             ->with(['run', 'runRegistration'])
             ->get();
 
@@ -611,26 +612,26 @@ class ReportsController extends Controller
 
         if (request()->input('export')) {
             $exportData = $elements->map(fn ($el) => [
-                'Nom'                 => $el->last_name,
-                'Prénom'              => $el->first_name,
-                'Date Naissance'      => $el->birthdate?->format('d.m.Y'),
-                'Genre'               => is_object($el->gender) ? $el->gender->value : $el->gender,
-                'Nationalité'         => $el->nationality,
-                'Email'               => $el->email,
-                'Course'              => $el->run?->name ?? $el->run_name,
-                'Bloc'                => $el->bloc,
-                'IBAN'                => $el->iban ?: $el->runRegistration?->payment_iban,
-                'Prime départ'        => $el->bonus_start_amount,
-                'Prime arrivée'       => $el->bonus_arrival_amount,
-                'Prime classement'    => $el->bonus_ranking_amount,
-                'Hébergement'         => $el->has_accommodation ? 'Oui' : 'Non',
-                'Nuitée Vendredi'     => $el->accommodation_friday ? 'Oui' : 'Non',
-                'Nuitée Samedi'       => $el->accommodation_saturday ? 'Oui' : 'Non',
-                'Précisions héb.'     => $el->accommodation_precision,
-                'Defraiement frais'   => $el->has_expense_reimbursement ? 'Oui' : 'Non',
+                'Nom'               => $el->last_name,
+                'Prénom'            => $el->first_name,
+                'Date Naissance'    => $el->birthdate?->format('d.m.Y'),
+                'Genre'             => is_object($el->gender) ? $el->gender->value : $el->gender,
+                'Nationalité'       => $el->nationality,
+                'Email'             => $el->email,
+                'Course'            => $el->run?->name ?? $el->run_name,
+                'Bloc'              => $el->bloc,
+                'IBAN'              => $el->iban ?: $el->runRegistration?->payment_iban,
+                'Prime départ'      => $el->bonus_start_amount,
+                'Prime arrivée'     => $el->bonus_arrival_amount,
+                'Prime classement'  => $el->bonus_ranking_amount,
+                'Hébergement'       => $el->has_accommodation ? 'Oui' : 'Non',
+                'Nuitée Vendredi'   => $el->accommodation_friday ? 'Oui' : 'Non',
+                'Nuitée Samedi'     => $el->accommodation_saturday ? 'Oui' : 'Non',
+                'Précisions héb.'   => $el->accommodation_precision,
+                'Defraiement frais' => $el->has_expense_reimbursement ? 'Oui' : 'Non',
             ]);
 
-            return (new FastExcel($exportData))->download($edition?->year . '-elites.xlsx');
+            return (new FastExcel($exportData))->download($edition?->year.'-elites.xlsx');
         }
 
         $view = View::make('pdf.elites', ['elements' => $elements, 'edition' => $edition, 'totalStartBonus' => $totalStartBonus, 'totalArrivalBonus' => $totalArrivalBonus, 'totalRankingBonus' => $totalRankingBonus]);
@@ -639,14 +640,14 @@ class ReportsController extends Controller
         return Pdf::loadHTML($html)
             ->setPaper('A4', 'landscape')
             ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
-            ->stream(str($edition->year)->slug() . '-coureurs-elite.pdf');
+            ->stream(str($edition->year)->slug().'-coureurs-elite.pdf');
     }
 
     /**
      * Aplatit les attributs de relations spécifiées sur chaque élément d'une collection.
      * Gère les relations BelongsTo/HasOne et agrège les relations HasMany.
      *
-     * @param Collection $collection La collection Eloquent à transformer.
+     * @param  Collection  $collection  La collection Eloquent à transformer.
      * @param  array  $relations  Les relations à aplatir (ex: ['provision', 'items']).
      */
     protected function flattenRelations(Collection $collection, array $relations): Collection

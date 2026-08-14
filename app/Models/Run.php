@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Run extends Model
 {
@@ -44,6 +44,7 @@ class Run extends Model
                 if (! $this->registrations_limit || $this->registrations_limit <= 0) {
                     return 0;
                 }
+
                 return min(100, round(($this->registrations_number / $this->registrations_limit) * 100, 1));
             }
         );

@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\RunRegistration;
 use App\Enums\RunRegistrationType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\RunRegistration>
+ * @extends Factory<RunRegistration>
  */
 class RunRegistrationFactory extends Factory
 {

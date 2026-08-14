@@ -2,16 +2,15 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Schemas\Components\Section;
-use Closure;
+use App\Models\Run;
 use App\Models\Edition;
 use App\Models\Provision;
+use Filament\Schemas\Schema;
 use App\Models\ClientCategory;
 use App\Models\ProvisionCategory;
 use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Section;
 use Outerweb\FilamentSettings\Pages\Settings as BaseSettings;
-
-use Filament\Schemas\Schema;
 
 class Settings extends BaseSettings
 {
@@ -86,17 +85,17 @@ class Settings extends BaseSettings
                     ->schema([
                         Select::make('default_run_school')
                             ->label('Course par défaut : Écoles / Interclasses')
-                            ->options(\App\Models\Run::all()->pluck('name', 'id'))
+                            ->options(Run::all()->pluck('name', 'id'))
                             ->searchable()
                             ->nullable(),
                         Select::make('default_run_company')
                             ->label('Course par défaut : Entreprises')
-                            ->options(\App\Models\Run::all()->pluck('name', 'id'))
+                            ->options(Run::all()->pluck('name', 'id'))
                             ->searchable()
                             ->nullable(),
                         Select::make('default_run_elite')
                             ->label('Course par défaut : Élite')
-                            ->options(\App\Models\Run::all()->pluck('name', 'id'))
+                            ->options(Run::all()->pluck('name', 'id'))
                             ->searchable()
                             ->nullable(),
                     ]),

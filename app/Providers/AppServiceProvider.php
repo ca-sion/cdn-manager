@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use Filament\Tables\Table;
 use Illuminate\Support\ServiceProvider;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\FileUpload;
+use Filament\Infolists\Components\ImageEntry;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,16 +25,16 @@ class AppServiceProvider extends ServiceProvider
     {
         require_once app_path('Helpers/AppHelper.php');
 
-        \Filament\Tables\Table::configureUsing(fn (\Filament\Tables\Table $table) => $table
+        Table::configureUsing(fn (Table $table) => $table
             ->deferFilters(false));
 
-        \Filament\Forms\Components\FileUpload::configureUsing(fn (\Filament\Forms\Components\FileUpload $fileUpload) => $fileUpload
+        FileUpload::configureUsing(fn (FileUpload $fileUpload) => $fileUpload
             ->visibility('public'));
 
-        \Filament\Tables\Columns\ImageColumn::configureUsing(fn (\Filament\Tables\Columns\ImageColumn $imageColumn) => $imageColumn
+        ImageColumn::configureUsing(fn (ImageColumn $imageColumn) => $imageColumn
             ->visibility('public'));
 
-        \Filament\Infolists\Components\ImageEntry::configureUsing(fn (\Filament\Infolists\Components\ImageEntry $imageEntry) => $imageEntry
+        ImageEntry::configureUsing(fn (ImageEntry $imageEntry) => $imageEntry
             ->visibility('public'));
     }
 }

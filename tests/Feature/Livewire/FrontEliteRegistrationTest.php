@@ -2,16 +2,16 @@
 
 namespace Tests\Feature\Livewire;
 
-use Tests\TestCase;
-use Livewire\Livewire;
 use App\Models\Run;
+use Tests\TestCase;
+use App\Enums\Gender;
+use Livewire\Livewire;
 use App\Models\RunRegistration;
+use App\Enums\RunRegistrationType;
+use Illuminate\Support\Facades\URL;
 use App\Models\RunRegistrationElement;
 use App\Livewire\FrontEliteRegistration;
-use App\Enums\RunRegistrationType;
-use App\Enums\Gender;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\URL;
 
 class FrontEliteRegistrationTest extends TestCase
 {

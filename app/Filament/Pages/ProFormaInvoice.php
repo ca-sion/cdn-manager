@@ -2,27 +2,27 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Schemas\Components\Grid;
-use Filament\Actions\Action;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Actions;
 use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Invoice;
 use Filament\Pages\Page;
+use Filament\Actions\Action;
+use Filament\Schemas\Schema;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\View;
 use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Grid;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -30,13 +30,13 @@ class ProFormaInvoice extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected string $view = 'filament.pages.pro-forma-invoice';
 
     protected ?string $heading = 'Générer une facture proforma';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Facturation';
+    protected static string|\UnitEnum|null $navigationGroup = 'Facturation';
 
     protected static ?string $navigationLabel = 'Facture proforma';
 

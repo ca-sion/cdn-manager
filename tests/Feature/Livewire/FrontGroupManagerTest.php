@@ -4,16 +4,13 @@ namespace Tests\Feature\Livewire;
 
 use Tests\TestCase;
 use Livewire\Livewire;
-use App\Models\Run;
-use App\Models\Client;
-use App\Models\Edition;
 use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
-use App\Livewire\FrontGroupManager;
 use App\Enums\RunRegistrationType;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
+use App\Livewire\FrontGroupManager;
+use App\Models\RunRegistrationElement;
 use App\Notifications\RunRegistrationLink;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class FrontGroupManagerTest extends TestCase
 {

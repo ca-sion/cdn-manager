@@ -90,7 +90,7 @@ class RunRegistrationElement extends Model
                     if (! $defaultRunId) {
                         $defaultRun = Run::where(function ($q) use ($type) {
                             $q->whereJsonContains('available_for_types', $type)
-                              ->orWhereNull('available_for_types');
+                                ->orWhereNull('available_for_types');
                         })->first();
                         $defaultRunId = $defaultRun?->id;
                     }

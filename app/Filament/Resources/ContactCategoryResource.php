@@ -2,29 +2,26 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Tables\Table;
 use Filament\Schemas\Schema;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\ColorPicker;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ColorColumn;
+use App\Models\ContactCategory;
 use Filament\Actions\EditAction;
+use Filament\Resources\Resource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\ContactCategoryResource\Pages\ListContactCategories;
-use App\Filament\Resources\ContactCategoryResource\Pages\CreateContactCategory;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ColorColumn;
+use Filament\Forms\Components\ColorPicker;
 use App\Filament\Resources\ContactCategoryResource\Pages\EditContactCategory;
-use Filament\Forms;
-use Filament\Tables;
-use Filament\Tables\Table;
-use App\Models\ContactCategory;
-use Filament\Resources\Resource;
-use App\Filament\Resources\ContactCategoryResource\Pages;
+use App\Filament\Resources\ContactCategoryResource\Pages\CreateContactCategory;
+use App\Filament\Resources\ContactCategoryResource\Pages\ListContactCategories;
 
 class ContactCategoryResource extends Resource
 {
     protected static ?string $model = ContactCategory::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $modelLabel = 'Catégorie de contacts';
 
@@ -32,7 +29,7 @@ class ContactCategoryResource extends Resource
 
     protected static bool $hasTitleCaseModelLabel = false;
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Collections';
+    protected static string|\UnitEnum|null $navigationGroup = 'Collections';
 
     public static function form(Schema $schema): Schema
     {

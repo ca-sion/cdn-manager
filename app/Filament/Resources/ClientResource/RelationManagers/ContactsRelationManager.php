@@ -2,22 +2,20 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\CreateAction;
-use Filament\Actions\AttachAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\DetachAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DetachBulkAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Forms;
-use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
 use App\Enums\ContactRoleEnum;
+use Filament\Actions\EditAction;
+use Filament\Actions\AttachAction;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DetachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\DetachBulkAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 
 class ContactsRelationManager extends RelationManager

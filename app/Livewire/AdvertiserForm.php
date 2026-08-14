@@ -2,33 +2,34 @@
 
 namespace App\Livewire;
 
-use Filament\Actions\Contracts\HasActions;
-use Filament\Actions\Concerns\InteractsWithActions;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Wizard;
-use Filament\Schemas\Components\Wizard\Step;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
 use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Contact;
 use Livewire\Component;
 use App\Models\Provision;
+use Filament\Schemas\Schema;
 use App\Models\ProvisionElement;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Blade;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Support\Enums\FontWeight;
 use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Wizard;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Forms\Concerns\InteractsWithForms;
 use App\Notifications\ClientAdvertiserFormCreated;
+use Filament\Actions\Concerns\InteractsWithActions;
 
-class AdvertiserForm extends Component implements HasForms, HasActions
+class AdvertiserForm extends Component implements HasActions, HasForms
 {
     use InteractsWithActions;
     use InteractsWithForms;
@@ -94,7 +95,7 @@ class AdvertiserForm extends Component implements HasForms, HasActions
                                 ->label('Nom de l\'annonceur')
                                 ->state(fn (AdvertiserForm $livewire) => $livewire->client?->name)
                                 ->icon('heroicon-m-building-office')
-                                ->weight(\Filament\Support\Enums\FontWeight::Bold),
+                                ->weight(FontWeight::Bold),
                             TextEntry::make('previous_order_details')
                                 ->label('Commande de l\'édition précédente')
                                 ->icon('heroicon-m-clock')
@@ -106,6 +107,7 @@ class AdvertiserForm extends Component implements HasForms, HasActions
                                     if (empty($details)) {
                                         return 'Aucune commande passée l\'année dernière.';
                                     }
+
                                     return implode(' • ', $details);
                                 })
                                 ->badge()

@@ -2,43 +2,38 @@
 
 namespace App\Livewire;
 
-use App\Enums\SchoolClassLevel;
-use App\Helpers\CountryHelper;
-use App\Models\Client;
 use App\Models\Run;
+use App\Models\Client;
+use Livewire\Component;
+use Filament\Schemas\Schema;
+use LaraGrid\Actions\Action;
+use App\Helpers\CountryHelper;
+use Illuminate\Support\Carbon;
+use LaraGrid\Grid as LaraGrid;
+use App\Enums\SchoolClassLevel;
 use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
-use App\Notifications\RunRegistrationLink;
-use Filament\Actions\Concerns\InteractsWithActions;
-use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\DatePicker;
+use LaraGrid\Columns\TextColumn;
+use LaraGrid\Columns\SelectColumn;
+use LaraGrid\Columns\SerialColumn;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\URL;
+use LaraGrid\Livewire\WithLaraGrid;
+use LaraGrid\Columns\CheckboxColumn;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Illuminate\Contracts\View\View;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\URL;
-use LaraGrid\Actions\Action;
-use LaraGrid\Columns\CheckboxColumn;
-use LaraGrid\Columns\DateColumn;
-use LaraGrid\Columns\DecimalColumn;
-use LaraGrid\Columns\SelectColumn;
-use LaraGrid\Columns\SerialColumn;
-use LaraGrid\Columns\TextColumn;
-use LaraGrid\Grid as LaraGrid;
-use LaraGrid\Livewire\WithLaraGrid;
-use Livewire\Component;
+use App\Notifications\RunRegistrationLink;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Actions\Concerns\InteractsWithActions;
 
-class FrontRunRegistration extends Component implements HasForms, HasActions
+class FrontRunRegistration extends Component implements HasActions, HasForms
 {
-    use InteractsWithForms;
     use InteractsWithActions;
+    use InteractsWithForms;
     use WithLaraGrid;
 
     public ?array $data = [];
@@ -121,14 +116,14 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
 
         $this->type = in_array($type, ['company', 'school', 'group', 'elite']) ? $type : 'company';
 
-        $elementsList = $this->registration 
-            ? $this->registration->runRegistrationElements()->withTrashed()->get() 
+        $elementsList = $this->registration
+            ? $this->registration->runRegistrationElements()->withTrashed()->get()
             : collect();
 
         if ($elementsList->isNotEmpty()) {
             $this->elements = $elementsList->map(function ($el) {
                 $arr = array_merge($this->emptyElement(), $el->toArray());
-                $arr['_k'] = 'el_' . $el->id;
+                $arr['_k'] = 'el_'.$el->id;
                 if ($el->birthdate) {
                     $arr['birthdate'] = $el->birthdate->format('Y-m-d');
                 }
@@ -136,6 +131,7 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
                     $arr['gender'] = is_object($el->gender) ? $el->gender->value : $el->gender;
                 }
                 $arr['run_id'] = $el->run_id ? (string) $el->run_id : '';
+
                 return $arr;
             })->toArray();
         } else {
@@ -158,12 +154,12 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
         $runOptions = [];
         foreach ($runs as $r) {
             $cost = $r->provision?->product?->price?->amount ?? $r->cost;
-            $runOptions[$r->id] = $r->name . ' (' . ($cost ? $cost . ' CHF' : 'Gratuit') . ')';
+            $runOptions[$r->id] = $r->name.' ('.($cost ? $cost.' CHF' : 'Gratuit').')';
         }
 
         $companyRun = Run::where(function ($q) {
             $q->whereJsonContains('available_for_types', 'company')
-              ->orWhereNull('available_for_types');
+                ->orWhereNull('available_for_types');
         })->first();
 
         $rawBlocs = $companyRun?->start_blocs ?? [];
@@ -172,7 +168,7 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
         if (is_array($rawBlocs)) {
             foreach ($rawBlocs as $b) {
                 if (is_array($b)) {
-                    $label = ($b['label'] ?? '') . (! empty($b['time']) ? ' (' . $b['time'] . ')' : '');
+                    $label = ($b['label'] ?? '').(! empty($b['time']) ? ' ('.$b['time'].')' : '');
                     $val = $b['label'] ?? $label;
                     if ($val) {
                         $companyBlocOptions[$val] = $label;
@@ -364,25 +360,25 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
     private function emptyElement(): array
     {
         return [
-            '_k'                         => 'l' . bin2hex(random_bytes(4)),
-            '_actions'                   => ['delete' => true],
-            'first_name'                 => '',
-            'last_name'                  => '',
-            'birthdate'                  => null,
-            'gender'                     => 'M',
-            'nationality'                => 'SUI',
-            'email'                      => '',
-            'team'                       => '',
-            'run_id'                     => '',
-            'run_name'                   => '',
-            'bloc'                       => '',
-            'with_video'                 => false,
-            'voucher_code'               => '',
-            'address'                    => '',
-            'address_extension'          => '',
-            'postal_code'                => '',
-            'locality'                   => '',
-            'country'                    => 'SUI',
+            '_k'                => 'l'.bin2hex(random_bytes(4)),
+            '_actions'          => ['delete' => true],
+            'first_name'        => '',
+            'last_name'         => '',
+            'birthdate'         => null,
+            'gender'            => 'M',
+            'nationality'       => 'SUI',
+            'email'             => '',
+            'team'              => '',
+            'run_id'            => '',
+            'run_name'          => '',
+            'bloc'              => '',
+            'with_video'        => false,
+            'voucher_code'      => '',
+            'address'           => '',
+            'address_extension' => '',
+            'postal_code'       => '',
+            'locality'          => '',
+            'country'           => 'SUI',
         ];
     }
 
@@ -481,7 +477,7 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
             $runOptions = [];
             foreach ($runs as $r) {
                 $cost = $r->provision?->product?->price?->amount ?? $r->cost;
-                $runOptions[(string) $r->id] = $r->name . ' (' . ($cost ? $cost . ' CHF' : 'Gratuit') . ')';
+                $runOptions[(string) $r->id] = $r->name.' ('.($cost ? $cost.' CHF' : 'Gratuit').')';
             }
 
             $columns = array_merge($columns, [
@@ -544,7 +540,7 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
     {
         if (! $this->isGridLocked()) {
             $newRow = $this->emptyElement();
-            $newRow['_k'] = 'l' . bin2hex(random_bytes(4));
+            $newRow['_k'] = 'l'.bin2hex(random_bytes(4));
             $this->elements[] = $newRow;
             $this->reseedGrid('elements', $this->elements);
         }
@@ -591,7 +587,8 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
     {
         $errors = $this->verifyIntegrity();
         if (count($errors) > 0) {
-            session()->flash('message', '⚠️ Impossible d\'enregistrer : ' . count($errors) . ' participant(s) contiennent des anomalies. Veuillez consulter le rapport d\'intégrité ci-dessous.');
+            session()->flash('message', '⚠️ Impossible d\'enregistrer : '.count($errors).' participant(s) contiennent des anomalies. Veuillez consulter le rapport d\'intégrité ci-dessous.');
+
             return;
         }
 
@@ -599,7 +596,7 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
         $isNew = ! $this->registration || ! $this->registration->exists;
 
         if ($isNew) {
-            $this->registration = new RunRegistration();
+            $this->registration = new RunRegistration;
         }
 
         $this->registration->fill(array_merge($formData, [
@@ -625,13 +622,13 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
         if (! $this->isGridLocked()) {
             $teamName = ($formData['company_name'] ?? null)
                 ?: (($formData['school_name'] ?? null)
-                ?: (($formData['contact_first_name'] ?? '') . ' ' . ($formData['contact_last_name'] ?? '')));
+                ?: (($formData['contact_first_name'] ?? '').' '.($formData['contact_last_name'] ?? '')));
 
             $companyBloc = $formData['company_bloc'] ?? null;
-            $companyRun = $this->type === 'company' 
+            $companyRun = $this->type === 'company'
                 ? Run::where(function ($q) {
                     $q->whereJsonContains('available_for_types', 'company')
-                      ->orWhereNull('available_for_types');
+                        ->orWhereNull('available_for_types');
                 })->first()
                 : null;
 
@@ -683,7 +680,7 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
 
         if ($isNew) {
             try {
-                $this->registration->notify(new RunRegistrationLink());
+                $this->registration->notify(new RunRegistrationLink);
             } catch (\Throwable $e) {
                 // Ignore mail dispatch errors
             }
@@ -693,7 +690,7 @@ class FrontRunRegistration extends Component implements HasForms, HasActions
             ]))->with('message', 'Votre inscription a été créée et un email de confirmation contenant votre lien permanent d\'édition vous a été envoyé.');
         }
 
-        session()->flash('message', $this->isGridLocked() 
+        session()->flash('message', $this->isGridLocked()
             ? 'Les coordonnées générales ont été mises à jour. La liste des participants est verrouillée (délai dépassé).'
             : 'Inscription enregistrée avec succès.');
     }

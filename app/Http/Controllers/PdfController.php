@@ -7,10 +7,10 @@ use App\Models\Contact;
 use App\Models\Edition;
 use App\Models\Provision;
 use App\Models\ClientCategory;
+use App\Models\RunRegistration;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProvisionElement;
 use App\Models\ProvisionCategory;
-use App\Models\RunRegistration;
 use Illuminate\Support\Facades\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -129,11 +129,11 @@ class PdfController extends Controller
         ]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
 
-        $runnerName = $element ? str($element->first_name . ' ' . $element->last_name)->slug() : 'elite';
+        $runnerName = $element ? str($element->first_name.' '.$element->last_name)->slug() : 'elite';
 
         return Pdf::loadHTML($html)
             ->setPaper('A4', 'portrait')
             ->setOption(['defaultFont' => 'sans-serif'])
-            ->stream('contrat-elite-' . $runnerName . '.pdf');
+            ->stream('contrat-elite-'.$runnerName.'.pdf');
     }
 }

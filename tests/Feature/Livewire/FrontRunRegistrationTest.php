@@ -4,13 +4,11 @@ namespace Tests\Feature\Livewire;
 
 use Tests\TestCase;
 use Livewire\Livewire;
-use App\Models\Run;
 use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
-use App\Livewire\FrontRunRegistration;
 use App\Enums\RunRegistrationType;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\URL;
+use App\Livewire\FrontRunRegistration;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class FrontRunRegistrationTest extends TestCase
 {

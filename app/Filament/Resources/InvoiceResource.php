@@ -2,59 +2,56 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Actions\Action;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Forms\Components\DatePicker;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\SelectColumn;
-use Filament\Support\Enums\TextSize;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Tables\Enums\RecordActionsPosition;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkAction;
-use App\Filament\Resources\InvoiceResource\Pages\ListInvoices;
-use App\Filament\Resources\InvoiceResource\Pages\CreateInvoice;
-use App\Filament\Resources\InvoiceResource\Pages\EditInvoice;
-use Filament\Forms;
-use Filament\Tables;
 use App\Models\Invoice;
 use Filament\Tables\Table;
+use Filament\Actions\Action;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Number;
 use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
 use App\Services\PricingService;
+use Filament\Actions\BulkAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
+use Filament\Actions\ActionGroup;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
+use Filament\Support\Enums\TextSize;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\RichEditor;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Placeholder;
 use Filament\Tables\Columns\TextInputColumn;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use App\Notifications\ClientSendInvoiceRelaunch;
-use App\Filament\Resources\InvoiceResource\Pages;
+use Filament\Tables\Enums\RecordActionsPosition;
 use App\Filament\Actions\ExportInvoicesPdfBulkAction;
+use App\Filament\Resources\InvoiceResource\Pages\EditInvoice;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
+use App\Filament\Resources\InvoiceResource\Pages\ListInvoices;
+use App\Filament\Resources\InvoiceResource\Pages\CreateInvoice;
 use App\Filament\Resources\ClientResource\RelationManagers\InvoicesRelationManager;
 
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
 
     protected static ?string $pluralModelLabel = 'Factures';
 
