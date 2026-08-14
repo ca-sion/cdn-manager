@@ -490,11 +490,11 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                                     <label class="inline-flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
                                         <input type="checkbox" wire:model="formData.accommodation_friday" class="rounded border-gray-300 text-slate-800 focus:ring-slate-500">
-                                        <span>Nuitée du Vendredi</span>
+                                        <span>Nuitée du vendredi</span>
                                     </label>
                                     <label class="inline-flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
                                         <input type="checkbox" wire:model="formData.accommodation_saturday" class="rounded border-gray-300 text-slate-800 focus:ring-slate-500">
-                                        <span>Nuitée du Samedi</span>
+                                        <span>Nuitée du samedi</span>
                                     </label>
                                     <div class="sm:col-span-2">
                                         <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-0.5">Précisions sur l'hôtel / chambre</label>
