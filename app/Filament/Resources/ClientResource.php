@@ -588,6 +588,96 @@ class ClientResource extends Resource
                                 ->success()
                                 ->send();
                         }),
+                    BulkAction::make('bulkEdit')
+                        ->label('Éditer en masse')
+                        ->icon('heroicon-m-pencil-square')
+                        ->schema([
+                            Select::make('category_id')
+                                ->label('Catégorie')
+                                ->relationship('category', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->nullable(),
+                            TextInput::make('locality')
+                                ->label('Localité')
+                                ->nullable(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $updatedCount = 0;
+                            foreach ($records as $record) {
+                                $changed = false;
+                                foreach (collect($data)->keys() as $key) {
+                                    if (! empty($data[$key])) {
+                                        $record->$key = $data[$key];
+                                        $changed = true;
+                                    }
+                                }
+                                if ($changed) {
+                                    $record->save();
+                                    $updatedCount++;
+                                }
+                            }
+
+                            Notification::make()
+                                ->title('Clients mis à jour')
+                                ->body("{$updatedCount} client(s) ont été mis à jour.")
+                                ->success()
+                                ->send();
+                        }),
+                    BulkAction::make('copy_previous_responsible')
+                        ->label('Reprendre les responsables (édition précédente)')
+                        ->icon('heroicon-o-arrow-path')
+                        ->schema([
+                            Forms\Components\Toggle::make('only_if_empty')
+                                ->label('Remplacer uniquement si le responsable actuel est vide')
+                                ->default(true),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $currentEditionId = AppHelper::getCurrentEditionId();
+                            $currentEdition = Edition::find($currentEditionId);
+                            $previousEdition = Edition::where('year', '<', $currentEdition?->year)
+                                ->orderBy('year', 'desc')
+                                ->first();
+
+                            if (! $previousEdition) {
+                                Notification::make()
+                                    ->title('Aucune édition précédente trouvée')
+                                    ->warning()
+                                    ->send();
+
+                                return;
+                            }
+
+                            $updatedCount = 0;
+                            foreach ($records as $client) {
+                                $prevEngagement = $client->clientEngagements()
+                                    ->where('edition_id', $previousEdition->id)
+                                    ->first();
+
+                                if (! $prevEngagement || (! $prevEngagement->responsible && ! $prevEngagement->responsible_contact_id)) {
+                                    continue;
+                                }
+
+                                $currentEngagement = $client->currentEngagement()->firstOrCreate([
+                                    'edition_id' => $currentEditionId,
+                                ]);
+
+                                if ($data['only_if_empty'] && $currentEngagement->responsible) {
+                                    continue;
+                                }
+
+                                $currentEngagement->responsible = $prevEngagement->responsible;
+                                $currentEngagement->responsible_contact_id = $prevEngagement->responsible_contact_id;
+                                $currentEngagement->save();
+                                $updatedCount++;
+                            }
+
+                            Notification::make()
+                                ->title('Responsables copiés')
+                                ->body("Le responsable a été repris de l'édition {$previousEdition->year} pour {$updatedCount} client(s).")
+                                ->success()
+                                ->send();
+                        }),
                     BulkAction::make('export_logos')
                         ->label('Exporter les logos (.zip)')
                         ->icon('heroicon-o-arrow-down-on-square-stack')
