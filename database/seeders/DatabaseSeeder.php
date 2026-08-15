@@ -180,29 +180,125 @@ class DatabaseSeeder extends Seeder
             'has_vip'     => true,
         ]);
 
-        // 8. Runs (Courses)
-        Run::create([
-            'name'                => 'Course Entreprises 10km',
-            'distance'            => 10.00,
-            'cost'                => 35.00,
-            'provision_id'        => $provCompany->id,
-            'available_for_types' => ['company', 'group'],
-            'start_blocs'         => [
-                ['label' => 'Bloc A', 'time' => '10:00'],
-                ['label' => 'Bloc B', 'time' => '10:15'],
-            ],
+        // 8. Runs (Courses réelles selon horaire Course de Noël Sion / Datasport)
+        $runTrailChateaux = Run::create([
+            'name'                   => 'Trail des Châteaux',
+            'distance'               => 20.00,
+            'cost'                   => 50.00,
+            'min_age'                => 18,
+            'max_age'                => null,
+            'available_for_types'    => ['group', 'company', 'elite'],
             'registrations_deadline' => now()->addDays(45),
-            'registrations_limit'    => 300,
-            'registrations_number'   => 45,
-            'datasport_code'         => 'DS-10K',
-            'code'                   => 'RUN-10K-ENT',
+            'datasport_code'         => 'DS-TRAIL-20K',
+            'code'                   => 'RUN-TRAIL-20K',
+            'accepts_voucher'        => true,
+        ]);
+
+        $runTrailChatelets = Run::create([
+            'name'                   => 'Trail des Châtelets',
+            'distance'               => 10.00,
+            'cost'                   => 35.00,
+            'min_age'                => 16,
+            'max_age'                => null,
+            'available_for_types'    => ['group', 'company'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-TRAIL-10K',
+            'code'                   => 'RUN-TRAIL-10K',
+            'accepts_voucher'        => true,
+        ]);
+
+        $runHommes = Run::create([
+            'name'                   => 'Course Hommes',
+            'distance'               => 7.30,
+            'cost'                   => 30.00,
+            'min_age'                => 18,
+            'max_age'                => null,
+            'available_for_types'    => ['group', 'elite'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-HOMMES',
+            'code'                   => 'RUN-HOMMES',
+            'accepts_voucher'        => true,
+        ]);
+
+        $runDames = Run::create([
+            'name'                   => 'Course Dames',
+            'distance'               => 5.20,
+            'cost'                   => 30.00,
+            'min_age'                => 18,
+            'max_age'                => null,
+            'available_for_types'    => ['group', 'elite'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-DAMES',
+            'code'                   => 'RUN-DAMES',
             'accepts_voucher'        => true,
         ]);
 
         Run::create([
-            'name'                => 'Course des Écoles 3km',
+            'name'                   => 'Populaires et Médaille sportive sédunoise Walking + Nordic',
+            'distance'               => 5.00,
+            'cost'                   => 25.00,
+            'min_age'                => 10,
+            'max_age'                => null,
+            'available_for_types'    => ['group'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-WALK',
+            'code'                   => 'RUN-WALK',
+            'accepts_voucher'        => true,
+        ]);
+
+        Run::create([
+            'name'                   => 'Course adaptée (personnes en situation d\'handicap)',
+            'distance'               => 2.00,
+            'cost'                   => 0.00,
+            'min_age'                => null,
+            'max_age'                => null,
+            'available_for_types'    => ['group'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-ADAPTEE',
+            'code'                   => 'RUN-ADAPTEE',
+            'accepts_voucher'        => true,
+        ]);
+
+        Run::create([
+            'name'                   => 'Course des Pères/Mères Noël',
+            'distance'               => 2.50,
+            'cost'                   => 15.00,
+            'min_age'                => null,
+            'max_age'                => null,
+            'available_for_types'    => ['group'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-NOEL',
+            'code'                   => 'RUN-NOEL',
+            'accepts_voucher'        => true,
+        ]);
+
+        $runEntreprises = Run::create([
+            'name'                => 'Challenge Entreprises',
+            'distance'            => 5.00,
+            'cost'                => 35.00,
+            'min_age'             => 16,
+            'max_age'             => null,
+            'provision_id'        => $provCompany->id,
+            'available_for_types' => ['company', 'group'],
+            'start_blocs'         => [
+                ['label' => 'Bloc 1 - 18h10', 'time' => '18:10'],
+                ['label' => 'Bloc 2 - 18h25', 'time' => '18:25'],
+                ['label' => 'Bloc 3 - 18h40', 'time' => '18:40'],
+            ],
+            'registrations_deadline' => now()->addDays(45),
+            'registrations_limit'    => 500,
+            'registrations_number'   => 45,
+            'datasport_code'         => 'DS-ENTREPRISES',
+            'code'                   => 'RUN-ENTREPRISES',
+            'accepts_voucher'        => true,
+        ]);
+
+        $runInterclasses = Run::create([
+            'name'                => 'Interclasses',
             'distance'            => 3.00,
             'cost'                => 20.00,
+            'min_age'             => 6,
+            'max_age'             => 16,
             'provision_id'        => $provSchool->id,
             'available_for_types' => ['school'],
             'start_blocs'         => [
@@ -210,47 +306,77 @@ class DatabaseSeeder extends Seeder
                 ['label' => 'Bloc Écoles 2', 'time' => '11:20'],
             ],
             'registrations_deadline' => now()->addDays(45),
-            'registrations_limit'    => 600,
+            'registrations_limit'    => 1000,
             'registrations_number'   => 150,
-            'datasport_code'         => 'DS-3K',
-            'code'                   => 'RUN-3K-SCH',
+            'datasport_code'         => 'DS-INTERCLASSES',
+            'code'                   => 'RUN-INTERCLASSES',
             'accepts_voucher'        => true,
         ]);
 
         Run::create([
-            'name'                => 'Trail des Châteaux 20km',
-            'distance'            => 20.00,
-            'cost'                => 50.00,
-            'available_for_types' => ['company', 'group', 'elite'],
-            'start_blocs'         => [
-                ['label' => 'Bloc Départ Spécial', 'time' => '08:30'],
-            ],
+            'name'                   => 'Famigros Run & Win',
+            'distance'               => 1.00,
+            'cost'                   => 0.00,
+            'min_age'                => null,
+            'max_age'                => null,
+            'available_for_types'    => ['group'],
             'registrations_deadline' => now()->addDays(45),
-            'registrations_limit'    => 400,
-            'registrations_number'   => 80,
-            'datasport_code'         => 'DS-20K',
-            'code'                   => 'RUN-20K-TRAIL',
+            'datasport_code'         => 'DS-FAMIGROS',
+            'code'                   => 'RUN-FAMIGROS',
             'accepts_voucher'        => true,
         ]);
 
         Run::create([
-            'name'                => 'Course Élite Hommes / Dames',
-            'distance'            => 7.50,
-            'cost'                => 0.00,
-            'available_for_types' => ['elite'],
-            'start_blocs'         => [
-                ['label' => 'Bloc Élite', 'time' => '16:00'],
-            ],
+            'name'                   => 'Course des enfants - 1 Tour',
+            'distance'               => 1.10,
+            'cost'                   => 15.00,
+            'min_age'                => 5,
+            'max_age'                => 9,
+            'available_for_types'    => ['group'],
             'registrations_deadline' => now()->addDays(45),
-            'registrations_limit'    => 100,
-            'registrations_number'   => 25,
-            'datasport_code'         => 'DS-ELITE',
-            'code'                   => 'RUN-ELITE',
+            'datasport_code'         => 'DS-ENF-1T',
+            'code'                   => 'RUN-ENF-1T',
             'accepts_voucher'        => true,
         ]);
 
-        // Additional random runs via factory
-        Run::factory(3)->create();
+        Run::create([
+            'name'                   => 'Course des enfants - 2 Tours',
+            'distance'               => 2.20,
+            'cost'                   => 15.00,
+            'min_age'                => 10,
+            'max_age'                => 13,
+            'available_for_types'    => ['group'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-ENF-2T',
+            'code'                   => 'RUN-ENF-2T',
+            'accepts_voucher'        => true,
+        ]);
+
+        Run::create([
+            'name'                   => 'Course des Cadets/Juniors - 3 Tours',
+            'distance'               => 3.30,
+            'cost'                   => 20.00,
+            'min_age'                => 14,
+            'max_age'                => 17,
+            'available_for_types'    => ['group'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-CAD-3T',
+            'code'                   => 'RUN-CAD-3T',
+            'accepts_voucher'        => true,
+        ]);
+
+        Run::create([
+            'name'                   => 'Course des Cadets/Juniors - 4 Tours',
+            'distance'               => 4.40,
+            'cost'                   => 20.00,
+            'min_age'                => 16,
+            'max_age'                => 19,
+            'available_for_types'    => ['group'],
+            'registrations_deadline' => now()->addDays(45),
+            'datasport_code'         => 'DS-CAD-4T',
+            'code'                   => 'RUN-CAD-4T',
+            'accepts_voucher'        => true,
+        ]);
 
         // 9. POPULATE SETTINGS TABLE
         $this->updateSetting('edition_id', $currentEdition->id);
@@ -266,6 +392,9 @@ class DatabaseSeeder extends Seeder
         $this->updateSetting('reports_advertisers_journal_provisions', [$provPage1->id, $provPageHalf->id]);
         $this->updateSetting('reports_interclass_donor_provision', $provDonation->id);
         $this->updateSetting('registrations_deadline', now()->addDays(45)->format('Y-m-d H:i:s'));
+        $this->updateSetting('default_run_school', $runInterclasses->id);
+        $this->updateSetting('default_run_company', $runEntreprises->id);
+        $this->updateSetting('default_run_elite', $runHommes->id);
 
         // ==========================================
         // SCENARIOS

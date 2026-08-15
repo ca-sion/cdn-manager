@@ -12,6 +12,7 @@ use Illuminate\Support\Carbon;
 use LaraGrid\Grid as LaraGrid;
 use App\Enums\SchoolClassLevel;
 use App\Models\RunRegistration;
+use LaraGrid\Editing\RowContext;
 use LaraGrid\Columns\TextColumn;
 use LaraGrid\Columns\SelectColumn;
 use LaraGrid\Columns\SerialColumn;
@@ -25,6 +26,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Section;
+use LaraGrid\Columns\SearchSelectColumn;
+use Livewire\WithFileUploads;
+use Rap2hpoutre\FastExcel\FastExcel;
 use App\Notifications\RunRegistrationLink;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -34,6 +38,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 {
     use InteractsWithActions;
     use InteractsWithForms;
+    use WithFileUploads;
     use WithLaraGrid;
 
     public ?array $data = [];
@@ -50,6 +55,12 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
     public bool $integrityChecked = false;
 
     public array $integrityErrors = [];
+
+    public bool $showImportModal = false;
+
+    public string $pasteTextData = '';
+
+    public $importFile = null;
 
     public function mount($type = null, ?RunRegistration $registration = null)
     {
@@ -131,6 +142,14 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                     $arr['gender'] = is_object($el->gender) ? $el->gender->value : $el->gender;
                 }
                 $arr['run_id'] = $el->run_id ? (string) $el->run_id : '';
+                if ($el->run) {
+                    $cost = $el->run->provision?->product?->price?->amount ?? $el->run->cost;
+                    $label = $el->run->name.' ('.($cost ? $cost.' CHF' : 'Gratuit').')';
+                    if ($el->run->age_range_label) {
+                        $label .= ' — '.$el->run->age_range_label;
+                    }
+                    $arr['_labels'] = ['run_id' => $label];
+                }
 
                 return $arr;
             })->toArray();
@@ -413,14 +432,19 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 $rowErrors[] = 'Date de naissance manquante';
             } else {
                 $validDate = false;
-                if (preg_match('/^(\d{2})\.(\d{2})\.(\d{4})$/', $birthdate, $m)) {
+                if (preg_match('/^(\d{1,2})[\.\/-](\d{1,2})[\.\/-](\d{4})$/', $birthdate, $m)) {
                     $validDate = checkdate((int) $m[2], (int) $m[1], (int) $m[3]);
-                } elseif (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $birthdate, $m)) {
+                } elseif (preg_match('/^(\d{4})[\.\/-](\d{1,2})[\.\/-](\d{1,2})$/', $birthdate, $m)) {
                     $validDate = checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
+                } elseif (preg_match('/^(\d{4})$/', $birthdate, $m)) {
+                    $year = (int) $m[1];
+                    $validDate = ($year >= 1900 && $year <= (int) now()->format('Y') + 1);
+                } elseif (preg_match('/^(\d{2})$/', $birthdate, $m)) {
+                    $validDate = true;
                 }
 
                 if (! $validDate) {
-                    $rowErrors[] = 'Date de naissance invalide (format attendu : jj.mm.aaaa)';
+                    $rowErrors[] = 'Date de naissance invalide (ex: jj.mm.aaaa ou aaaa)';
                 }
             }
 
@@ -445,6 +469,35 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 }
             }
 
+            // Age verification against target Run (for all types: group, company, school)
+            $calculatedAge = $this->calculateAge($birthdate);
+            if ($calculatedAge !== null) {
+                $targetRunId = $runId !== '' ? (int) $runId : null;
+                if (! $targetRunId) {
+                    if ($this->type === 'company') {
+                        $targetRunId = setting('default_run_company') ?: Run::where(function ($q) {
+                            $q->whereJsonContains('available_for_types', 'company')->orWhereNull('available_for_types');
+                        })->first()?->id;
+                    } elseif ($this->type === 'school') {
+                        $targetRunId = setting('default_run_school') ?: Run::where(function ($q) {
+                            $q->whereJsonContains('available_for_types', 'school')->orWhereNull('available_for_types');
+                        })->first()?->id;
+                    }
+                }
+
+                if ($targetRunId) {
+                    $selectedRun = Run::find((int) $targetRunId);
+                    if ($selectedRun) {
+                        if ($selectedRun->min_age !== null && $calculatedAge < $selectedRun->min_age) {
+                            $rowErrors[] = "Âge insuffisant pour la course \"{$selectedRun->name}\" (âge minimum : {$selectedRun->min_age} ans, âge calculé : {$calculatedAge} ans)";
+                        }
+                        if ($selectedRun->max_age !== null && $calculatedAge > $selectedRun->max_age) {
+                            $rowErrors[] = "Âge supérieur à la limite pour la course \"{$selectedRun->name}\" (âge maximum : {$selectedRun->max_age} ans, âge calculé : {$calculatedAge} ans)";
+                        }
+                    }
+                }
+            }
+
             if (! empty($rowErrors)) {
                 $label = ($firstName || $lastName) ? "$firstName $lastName" : "Ligne #$rowNum";
                 $this->integrityErrors[] = [
@@ -456,6 +509,67 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         }
 
         return $this->integrityErrors;
+    }
+
+    public function calculateAge(?string $birthdate): ?int
+    {
+        if (empty($birthdate)) {
+            return null;
+        }
+
+        $birthdate = trim($birthdate);
+        $eventYear = (int) now()->format('Y');
+
+        if (preg_match('/^(\d{1,2})[\.\/-](\d{1,2})[\.\/-](\d{4})$/', $birthdate, $m)) {
+            if (checkdate((int) $m[2], (int) $m[1], (int) $m[3])) {
+                return max(0, $eventYear - (int) $m[3]);
+            }
+        } elseif (preg_match('/^(\d{4})[\.\/-](\d{1,2})[\.\/-](\d{1,2})$/', $birthdate, $m)) {
+            if (checkdate((int) $m[2], (int) $m[3], (int) $m[1])) {
+                return max(0, $eventYear - (int) $m[1]);
+            }
+        } elseif (preg_match('/^(\d{4})$/', $birthdate, $m)) {
+            $year = (int) $m[1];
+            if ($year >= 1900 && $year <= $eventYear + 1) {
+                return max(0, $eventYear - $year);
+            }
+        } elseif (preg_match('/^(\d{2})$/', $birthdate, $m)) {
+            $year = (int) $m[1];
+            $fullYear = $year <= (int) now()->format('y') ? 2000 + $year : 1900 + $year;
+
+            return max(0, $eventYear - $fullYear);
+        }
+
+        return null;
+    }
+
+    public function getRunsForBirthdate(?string $birthdate): array
+    {
+        $age = $this->calculateAge($birthdate);
+
+        $runs = Run::where(function ($query) {
+            $query->whereJsonContains('available_for_types', 'group')
+                ->orWhereNull('available_for_types');
+        })->get();
+
+        $options = [];
+        foreach ($runs as $r) {
+            if ($age !== null && ! $r->matchesAge($age)) {
+                continue;
+            }
+
+            $cost = $r->provision?->product?->price?->amount ?? $r->cost;
+            $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
+
+            $label = $r->name.' ('.$costLabel.')';
+            if ($r->age_range_label) {
+                $label .= ' — '.$r->age_range_label;
+            }
+
+            $options[(string) $r->id] = $label;
+        }
+
+        return $options;
     }
 
     protected function grids(): array
@@ -477,13 +591,85 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $runOptions = [];
             foreach ($runs as $r) {
                 $cost = $r->provision?->product?->price?->amount ?? $r->cost;
-                $runOptions[(string) $r->id] = $r->name.' ('.($cost ? $cost.' CHF' : 'Gratuit').')';
+                $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
+
+                $label = $r->name.' ('.$costLabel.')';
+                if ($r->age_range_label) {
+                    $label .= ' — '.$r->age_range_label;
+                }
+
+                $runOptions[(string) $r->id] = $label;
             }
+
+            $runColumn = SearchSelectColumn::make('run_id')
+                ->label('Course')
+                ->minChars(0)
+                ->options($runOptions)
+                ->optionsUsing(function (string $term, array $row) {
+                    $birthdate = trim((string) ($row['birthdate'] ?? ''));
+                    $age = $this->calculateAge($birthdate);
+
+                    $term = trim($term);
+                    $currentLabel = trim((string) ($row['_labels']['run_id'] ?? ''));
+
+                    if ($term === $currentLabel || preg_match('/^\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{4}$/', $term) || preg_match('/^\d{2,4}$/', $term)) {
+                        $term = '';
+                    } else {
+                        foreach (Run::pluck('name') as $runName) {
+                            if (str_starts_with(mb_strtolower($term), mb_strtolower($runName))) {
+                                $term = '';
+                                break;
+                            }
+                        }
+                    }
+
+                    $runs = Run::where(function ($query) {
+                        $query->whereJsonContains('available_for_types', 'group')
+                            ->orWhereNull('available_for_types');
+                    })->get();
+
+                    $options = [];
+                    foreach ($runs as $r) {
+                        if ($age !== null && ! $r->matchesAge($age)) {
+                            continue;
+                        }
+
+                        $cost = $r->provision?->product?->price?->amount ?? $r->cost;
+                        $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
+                        $label = $r->name.' ('.$costLabel.')';
+                        if ($r->age_range_label) {
+                            $label .= ' — '.$r->age_range_label;
+                        }
+
+                        if ($term === '' || str_contains(mb_strtolower($label), mb_strtolower($term))) {
+                            $options[] = ['value' => (string) $r->id, 'label' => $label];
+                        }
+                    }
+
+                    return $options;
+                })
+                ->onSelect(function (RowContext $context, mixed $value) {
+                    if ($value) {
+                        $run = Run::find((int) $value);
+                        if ($run) {
+                            $cost = $run->provision?->product?->price?->amount ?? $run->cost;
+                            $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
+                            $label = $run->name.' ('.$costLabel.')';
+                            if ($run->age_range_label) {
+                                $label .= ' — '.$run->age_range_label;
+                            }
+                            $context->setLabel('run_id', $label);
+                        }
+                    } else {
+                        $context->setLabel('run_id', '');
+                    }
+                })
+                ->grow();
 
             $columns = array_merge($columns, [
                 SelectColumn::make('nationality')->label('Nationalité')->options(CountryHelper::getOptions())->width(160),
                 TextColumn::make('email')->label('Email')->grow(),
-                SelectColumn::make('run_id')->label('Course')->options($runOptions)->grow(),
+                $runColumn,
                 CheckboxColumn::make('with_video')->label('Vidéo')->width(80),
             ]);
         } elseif ($this->type === 'company') {
@@ -527,6 +713,53 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         return ['elements' => $grid];
     }
 
+    public function updatedElements(): void
+    {
+        if (! is_array($this->elements)) {
+            return;
+        }
+
+        $changed = false;
+        foreach ($this->elements as &$row) {
+            $runId = trim((string) ($row['run_id'] ?? ''));
+            $birthdate = trim((string) ($row['birthdate'] ?? ''));
+
+            if ($runId !== '') {
+                $run = Run::find((int) $runId);
+                if ($run) {
+                    $cost = $run->provision?->product?->price?->amount ?? $run->cost;
+                    $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
+                    $label = $run->name.' ('.$costLabel.')';
+                    if ($run->age_range_label) {
+                        $label .= ' — '.$run->age_range_label;
+                    }
+                    $row['_labels']['run_id'] = $label;
+                }
+            }
+
+            if ($runId !== '' && $birthdate !== '') {
+                $age = $this->calculateAge($birthdate);
+                if ($age !== null) {
+                    $selectedRun = Run::find((int) $runId);
+                    if ($selectedRun && ! $selectedRun->matchesAge($age)) {
+                        $row['run_id'] = '';
+                        $row['_labels']['run_id'] = '';
+                        $changed = true;
+                    }
+                }
+            }
+        }
+        unset($row);
+
+        if ($this->integrityChecked) {
+            $this->verifyIntegrity();
+        }
+
+        if ($changed) {
+            $this->reseedGrid('elements', $this->elements);
+        }
+    }
+
     public function deleteRowByRow(array $row): void
     {
         $key = $row['_k'] ?? null;
@@ -551,6 +784,149 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         if (! $this->isGridLocked() && isset($this->elements[$index])) {
             array_splice($this->elements, $index, 1);
             $this->reseedGrid('elements', $this->elements);
+        }
+    }
+
+    public function openImportModal(): void
+    {
+        $this->showImportModal = true;
+    }
+
+    public function closeImportModal(): void
+    {
+        $this->showImportModal = false;
+        $this->pasteTextData = '';
+        $this->importFile = null;
+    }
+
+    public function processPasteText(): void
+    {
+        if (empty(trim($this->pasteTextData))) {
+            return;
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', trim($this->pasteTextData));
+        $newRows = [];
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) {
+                continue;
+            }
+
+            if (str_contains($line, "\t")) {
+                $parts = explode("\t", $line);
+            } elseif (str_contains($line, "|")) {
+                $parts = explode("|", $line);
+            } elseif (str_contains($line, ";")) {
+                $parts = explode(";", $line);
+            } elseif (str_contains($line, ",")) {
+                $parts = explode(",", $line);
+            } else {
+                $parts = preg_split('/\s+/', $line);
+            }
+
+            $parts = array_values(array_filter(array_map('trim', $parts), fn ($v) => $v !== ''));
+
+            if (count($parts) < 2) {
+                continue;
+            }
+
+            $row = $this->emptyElement();
+            $row['_k'] = 'l'.bin2hex(random_bytes(4));
+
+            $row['first_name'] = $parts[0] ?? '';
+            $row['last_name'] = $parts[1] ?? '';
+            $row['birthdate'] = $parts[2] ?? '';
+
+            if (isset($parts[3]) && in_array(strtoupper($parts[3]), ['M', 'F'])) {
+                $row['gender'] = strtoupper($parts[3]);
+            }
+
+            if (isset($parts[4]) && str_contains($parts[4], '@')) {
+                $row['email'] = $parts[4];
+                if (isset($parts[5])) {
+                    $row['nationality'] = strtoupper(substr($parts[5], 0, 3));
+                }
+            } elseif (isset($parts[4])) {
+                $row['nationality'] = strtoupper(substr($parts[4], 0, 3));
+            }
+
+            $availableRuns = $this->getRunsForBirthdate($row['birthdate']);
+            if (! empty($availableRuns) && count($availableRuns) === 1) {
+                $row['run_id'] = (string) array_key_first($availableRuns);
+            }
+
+            $newRows[] = $row;
+        }
+
+        if (! empty($newRows)) {
+            $this->elements = array_values(array_filter($this->elements, function ($r) {
+                return ! empty(trim($r['first_name'] ?? '')) ||
+                       ! empty(trim($r['last_name'] ?? '')) ||
+                       ! empty(trim($r['birthdate'] ?? '')) ||
+                       ! empty(trim($r['email'] ?? ''));
+            }));
+            $this->elements = array_merge($this->elements, $newRows);
+            $this->reseedGrid('elements', $this->elements);
+            $this->closeImportModal();
+        }
+    }
+
+    public function processExcelImport(): void
+    {
+        if (! $this->importFile) {
+            return;
+        }
+
+        $filePath = $this->importFile->getRealPath();
+        $rows = (new FastExcel)->import($filePath);
+
+        $newRows = [];
+        foreach ($rows as $item) {
+            $normalized = [];
+            foreach ($item as $k => $v) {
+                $cleanKey = mb_strtolower(trim((string) $k));
+                $normalized[$cleanKey] = trim((string) $v);
+            }
+
+            $firstName = $normalized['prenom'] ?? $normalized['prénom'] ?? $normalized['first_name'] ?? $normalized['first name'] ?? '';
+            $lastName = $normalized['nom'] ?? $normalized['last_name'] ?? $normalized['last name'] ?? '';
+
+            if (empty($firstName) && empty($lastName)) {
+                continue;
+            }
+
+            $row = $this->emptyElement();
+            $row['_k'] = 'l'.bin2hex(random_bytes(4));
+            $row['first_name'] = $firstName;
+            $row['last_name'] = $lastName;
+            $row['birthdate'] = $normalized['date_de_naissance'] ?? $normalized['birthdate'] ?? $normalized['date de naissance'] ?? $normalized['date'] ?? '';
+
+            $gender = strtoupper($normalized['genre'] ?? $normalized['gender'] ?? $normalized['sexe'] ?? 'M');
+            $row['gender'] = in_array($gender, ['M', 'F']) ? $gender : 'M';
+
+            $row['email'] = $normalized['email'] ?? $normalized['courriel'] ?? '';
+            $row['nationality'] = strtoupper(substr($normalized['nationalite'] ?? $normalized['nationalité'] ?? $normalized['country'] ?? 'SUI', 0, 3));
+
+            $availableRuns = $this->getRunsForBirthdate($row['birthdate']);
+            if (! empty($availableRuns) && count($availableRuns) === 1) {
+                $row['run_id'] = (string) array_key_first($availableRuns);
+            }
+
+            $newRows[] = $row;
+        }
+
+        if (! empty($newRows)) {
+            $this->elements = array_values(array_filter($this->elements, function ($r) {
+                return ! empty(trim($r['first_name'] ?? '')) ||
+                       ! empty(trim($r['last_name'] ?? '')) ||
+                       ! empty(trim($r['birthdate'] ?? '')) ||
+                       ! empty(trim($r['email'] ?? ''));
+            }));
+            $this->elements = array_merge($this->elements, $newRows);
+            $this->reseedGrid('elements', $this->elements);
+            $this->closeImportModal();
         }
     }
 

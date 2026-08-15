@@ -21,6 +21,8 @@ return new class extends Migration
             $table->dateTime('registrations_deadline')->nullable();
             $table->integer('registrations_limit')->nullable();
             $table->integer('registrations_number')->default(0);
+            $table->integer('min_age')->nullable();
+            $table->integer('max_age')->nullable();
             $table->string('datasport_code')->nullable();
             $table->string('code')->nullable();
             $table->boolean('accepts_voucher')->default(false);

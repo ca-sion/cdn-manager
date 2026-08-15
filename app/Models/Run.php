@@ -20,6 +20,8 @@ class Run extends Model
         'registrations_deadline',
         'registrations_limit',
         'registrations_number',
+        'min_age',
+        'max_age',
         'datasport_code',
         'code',
         'accepts_voucher',
@@ -33,9 +35,47 @@ class Run extends Model
         'accepts_voucher'        => 'boolean',
         'registrations_limit'    => 'integer',
         'registrations_number'   => 'integer',
+        'min_age'                => 'integer',
+        'max_age'                => 'integer',
         'cost'                   => 'decimal:2',
         'distance'               => 'decimal:2',
     ];
+
+    public function matchesAge(?int $age): bool
+    {
+        if ($age === null) {
+            return true;
+        }
+
+        if ($this->min_age !== null && $age < $this->min_age) {
+            return false;
+        }
+
+        if ($this->max_age !== null && $age > $this->max_age) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function ageRangeLabel(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if ($this->min_age !== null && $this->max_age !== null) {
+                    return "{$this->min_age} à {$this->max_age} ans";
+                }
+                if ($this->min_age !== null) {
+                    return "dès {$this->min_age} ans";
+                }
+                if ($this->max_age !== null) {
+                    return "jusqu'à {$this->max_age} ans";
+                }
+
+                return null;
+            }
+        );
+    }
 
     protected function fillRate(): Attribute
     {

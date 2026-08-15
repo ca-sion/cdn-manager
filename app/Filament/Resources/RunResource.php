@@ -42,6 +42,7 @@ class RunResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 Section::make('Informations de base')
                     ->schema([
@@ -66,13 +67,14 @@ class RunResource extends Resource
 
                 Section::make('Logistique et Limites')
                     ->schema([
-                        Repeater::make('start_blocs')
-                            ->label('Blocs de départ')
-                            ->schema([
-                                TextInput::make('label')->label('Nom du bloc')->required(),
-                                TextInput::make('time')->label('Heure')->type('time'),
-                            ])
-                            ->columns(2),
+                        TextInput::make('min_age')
+                            ->label('Âge minimum')
+                            ->numeric()
+                            ->suffix('ans'),
+                        TextInput::make('max_age')
+                            ->label('Âge maximum')
+                            ->numeric()
+                            ->suffix('ans'),
                         DateTimePicker::make('registrations_deadline')
                             ->label('Délai d\'inscription'),
                         TextInput::make('registrations_limit')
@@ -84,6 +86,14 @@ class RunResource extends Resource
                             ->default(0)
                             ->disabled()
                             ->dehydrated(false),
+
+                        Repeater::make('start_blocs')
+                            ->label('Blocs de départ')
+                            ->schema([
+                                TextInput::make('label')->label('Nom du bloc')->required(),
+                                TextInput::make('time')->label('Heure')->type('time'),
+                            ])
+                            ->columnSpanFull(),
                     ])->columns(2),
 
                 Section::make('Codes et Provision')
@@ -124,6 +134,10 @@ class RunResource extends Resource
                     ->label('Types')
                     ->badge()
                     ->formatStateUsing(fn ($state) => is_array($state) ? collect($state)->map(fn ($type) => RunRegistrationType::tryFrom($type)?->getLabel() ?? $type)->implode(', ') : $state),
+                TextColumn::make('age_range_label')
+                    ->label('Tranche d\'âge')
+                    ->placeholder('Tous âges')
+                    ->badge(),
                 TextColumn::make('registrations_deadline')
                     ->label('Délai')
                     ->dateTime('d.m.Y H:i')

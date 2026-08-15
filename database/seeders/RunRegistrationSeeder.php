@@ -20,24 +20,24 @@ class RunRegistrationSeeder extends Seeder
         $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
 
         // 1. Récupérer ou créer les courses de référence
-        $runSchool = Run::where('name', 'like', '%Écoles%')->first() ?? Run::firstOrCreate(
-            ['name' => 'Course des Écoles 3km'],
+        $runSchool = Run::where('name', 'like', '%Interclasses%')->first() ?? Run::firstOrCreate(
+            ['name' => 'Interclasses'],
             ['cost' => 20.00, 'available_for_types' => ['school'], 'registrations_deadline' => now()->addDays(30)]
         );
 
-        $runElite = Run::where('name', 'like', '%Élite%')->first() ?? Run::firstOrCreate(
-            ['name' => 'Course Élite Hommes / Dames'],
-            ['cost' => 0.00, 'available_for_types' => ['elite'], 'registrations_deadline' => now()->addDays(30)]
+        $runElite = Run::where('name', 'like', '%Course Hommes%')->orWhere('name', 'like', '%Trail des Châteaux%')->first() ?? Run::firstOrCreate(
+            ['name' => 'Course Hommes'],
+            ['cost' => 30.00, 'available_for_types' => ['group', 'elite'], 'registrations_deadline' => now()->addDays(30)]
         );
 
-        $runCompany = Run::where('name', 'like', '%Entreprises%')->first() ?? Run::firstOrCreate(
-            ['name' => 'Course Entreprises 10km'],
+        $runCompany = Run::where('name', 'like', '%Challenge Entreprises%')->orWhere('name', 'like', '%Entreprises%')->first() ?? Run::firstOrCreate(
+            ['name' => 'Challenge Entreprises'],
             ['cost' => 35.00, 'available_for_types' => ['company', 'group'], 'registrations_deadline' => now()->addDays(30)]
         );
 
-        $runGroup = Run::where('name', 'like', '%Trail%')->first() ?? Run::firstOrCreate(
-            ['name' => 'Course Populaire 5km / 10km'],
-            ['cost' => 30.00, 'available_for_types' => ['group'], 'registrations_deadline' => now()->addDays(30)]
+        $runGroup = Run::where('name', 'like', '%Trail des Châteaux%')->first() ?? Run::firstOrCreate(
+            ['name' => 'Trail des Châteaux'],
+            ['cost' => 50.00, 'available_for_types' => ['group', 'company'], 'registrations_deadline' => now()->addDays(30)]
         );
 
         // 2. CAS 1 : Entreprise liée à un Client ("UBS SA") avec Facture Consolidée
