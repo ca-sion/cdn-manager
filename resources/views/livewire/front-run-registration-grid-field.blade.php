@@ -3,7 +3,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800/60 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
         <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
             <span class="text-base">📋</span>
-            <span>Naviguez avec <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded font-mono text-2xs shadow-2xs">Tab</kbd> ou <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded font-mono text-2xs shadow-2xs">Entrée</kbd>. Dates au format <code class="font-mono text-indigo-600 dark:text-indigo-400 font-bold">jj.mm.aaaa</code>.</span>
+            <span>Naviguez avec <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded font-mono text-2xs shadow-2xs">Tab</kbd>, <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded font-mono text-2xs shadow-2xs">Entrée</kbd> ou <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded font-mono text-2xs shadow-2xs">⬆⬇</kbd>.</span>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 shrink-0">
@@ -14,8 +14,9 @@
                     color="gray"
                     size="sm"
                     icon="heroicon-m-document-duplicate"
+                    title="Importer des participants depuis un fichier Excel ou par copier/coller"
                 >
-                    Coller / Importer Excel
+                    Importer
                 </x-filament::button>
 
                 <x-filament::button
@@ -24,8 +25,9 @@
                     color="gray"
                     size="sm"
                     icon="heroicon-m-sparkles"
+                    title="Nettoyer les lignes vides"
                 >
-                    Nettoyer les lignes vides
+                    Nettoyer
                 </x-filament::button>
             @endif
 
@@ -36,7 +38,7 @@
                 size="sm"
                 icon="heroicon-m-magnifying-glass-circle"
             >
-                Vérifier les données
+                Vérifier données
             </x-filament::button>
 
             @if (! $this->isGridLocked())
@@ -74,14 +76,14 @@
                     <th class="px-3 py-2.5 w-10 text-center">#</th>
                     <th class="px-3 py-2.5 min-w-[140px]">Prénom</th>
                     <th class="px-3 py-2.5 min-w-[140px]">Nom</th>
-                    <th class="px-3 py-2.5 min-w-[170px]">Date de naissance</th>
+                    <th class="px-3 py-2.5 min-w-[140px]">Date de naiss.</th>
                     <th class="px-3 py-2.5 w-24">Genre</th>
-                    <th class="px-3 py-2.5 min-w-[150px]">Nationalité</th>
+                    <th class="px-3 py-2.5 min-w-[140px]">Nationalité</th>
                     @if(in_array($this->type, ['group', 'company']))
-                        <th class="px-3 py-2.5 min-w-[180px]">Email</th>
+                        <th class="px-3 py-2.5 min-w-[140px]">Email</th>
                     @endif
                     @if($this->type === 'group')
-                        <th class="px-3 py-2.5 min-w-[280px]">Course</th>
+                        <th class="px-3 py-2.5 min-w-[250px]">Course</th>
                     @endif
                     @if(in_array($this->type, ['group', 'company']))
                         <th class="px-3 py-2.5 w-16 text-center">Vidéo</th>
@@ -212,7 +214,7 @@
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40">
                     <h3 class="text-base font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                         <span>📊</span>
-                        <span>Importer ou Coller des Participants</span>
+                        <span>Importer des participants</span>
                     </h3>
                     <button type="button" wire:click="closeImportModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold">×</button>
                 </div>
@@ -239,7 +241,7 @@
                                 @click="activeTab = 'paste'"
                                 :class="activeTab === 'paste' ? 'border-primary-600 text-primary-600 border-b-2' : 'text-gray-500 hover:text-gray-700'"
                                 class="px-4 py-2.5 transition-colors">
-                            📋 Copier-Coller du Texte
+                            📋 Copier-coller du texte
                         </button>
                         <button type="button"
                                 @click="activeTab = 'file'"
@@ -264,7 +266,7 @@
                                 Annuler
                             </x-filament::button>
                             <x-filament::button type="button" wire:click="processPasteText" color="primary" size="sm" icon="heroicon-m-check">
-                                Importer les lignes
+                                Importer les participants
                             </x-filament::button>
                         </div>
                     </div>
@@ -284,7 +286,7 @@
                                 Annuler
                             </x-filament::button>
                             <x-filament::button type="button" wire:click="processExcelImport" color="primary" size="sm" icon="heroicon-m-arrow-up-tray">
-                                Téléverser et Traiter
+                                Téléverser et importer
                             </x-filament::button>
                         </div>
                     </div>

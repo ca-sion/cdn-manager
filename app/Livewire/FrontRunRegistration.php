@@ -136,7 +136,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 $arr = array_merge($this->emptyElement(), $el->toArray());
                 $arr['_k'] = 'el_'.$el->id;
                 if ($el->birthdate) {
-                    $arr['birthdate'] = $el->birthdate->format('Y-m-d');
+                    $arr['birthdate'] = $el->birthdate->format('d.m.Y');
                 }
                 if ($el->gender) {
                     $arr['gender'] = is_object($el->gender) ? $el->gender->value : $el->gender;
