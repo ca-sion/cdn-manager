@@ -25,7 +25,7 @@
     <h3 class="font-bold text-lg mt-6 mb-2">Interfaces de gestion</h3>
     <ul class="space-y-1">
         <li><x-filament::link :href="route('front.elite-manager')" target="_blank" class="underline">Gestion des coureurs Élite</x-filament::link></li>
-        <li><x-filament::link :href="route('front.run-registration.manager')" target="_blank" class="underline">Gestion des dossiers d'isncription</x-filament::link></li>
+        <li><x-filament::link :href="route('front.run-registration.manager')" target="_blank" class="underline">Gestion des dossiers d'inscription</x-filament::link></li>
         <li><x-filament::link :href="\App\Filament\Pages\ProFormaInvoice::getUrl()" class="underline">Générer un justificatif / Pro forma</x-filament::link></li>
     </ul>
 </div>
