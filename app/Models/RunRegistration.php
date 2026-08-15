@@ -88,20 +88,49 @@ class RunRegistration extends Model
         return ! empty($email) ? trim($email) : null;
     }
 
+    public static function getCompanyRun(): ?Run
+    {
+        $defaultId = setting('default_run_company');
+        if ($defaultId && ($run = Run::find($defaultId))) {
+            return $run;
+        }
+
+        return Run::where('name', 'like', '%Entreprise%')
+            ->orWhere(function ($q) {
+                $q->whereJsonContains('available_for_types', 'company')
+                    ->orWhereNull('available_for_types');
+            })->first();
+    }
+
+    public static function getSchoolRun(): ?Run
+    {
+        $defaultId = setting('default_run_school');
+        if ($defaultId && ($run = Run::find($defaultId))) {
+            return $run;
+        }
+
+        return Run::where('name', 'like', '%Interclasses%')
+            ->orWhere(function ($q) {
+                $q->whereJsonContains('available_for_types', 'school')
+                    ->orWhereNull('available_for_types');
+            })->first();
+    }
+
     /**
      * Calculate estimated total price for any collection or array of element rows (transversal reusable logic).
      */
     public static function calculateElementsEstimatedTotal(iterable $elements, string $type = 'company'): float
     {
         $total = 0.0;
-        $companyCost = null;
 
         if ($type === 'company') {
-            $companyRun = Run::where(function ($q) {
-                $q->whereJsonContains('available_for_types', 'company')
-                    ->orWhereNull('available_for_types');
-            })->first();
-            $companyCost = (float) ($companyRun?->provision?->product?->price?->amount ?? $companyRun?->cost ?? 0);
+            $companyRun = static::getCompanyRun();
+            $defaultCost = (float) ($companyRun?->provision?->product?->price?->amount ?? $companyRun?->cost ?? 0);
+        } elseif ($type === 'school') {
+            $schoolRun = static::getSchoolRun();
+            $defaultCost = (float) ($schoolRun?->provision?->product?->price?->amount ?? $schoolRun?->cost ?? 0);
+        } else {
+            $defaultCost = null;
         }
 
         foreach ($elements as $row) {
@@ -115,17 +144,11 @@ class RunRegistration extends Model
                 continue;
             }
 
-            if ($type === 'company') {
-                $total += $companyCost;
+            if ($defaultCost !== null && empty($rowArr['run_id'])) {
+                $total += $defaultCost;
             } else {
-                $runId = ! empty($rowArr['run_id']) ? $rowArr['run_id'] : setting('default_run_'.$type);
+                $runId = ! empty($rowArr['run_id']) ? $rowArr['run_id'] : null;
                 $run = $runId ? (is_object($row) && isset($row->run) ? $row->run : Run::find($runId)) : null;
-                if (! $run) {
-                    $run = Run::where(function ($q) use ($type) {
-                        $q->whereJsonContains('available_for_types', $type)
-                            ->orWhereNull('available_for_types');
-                    })->first();
-                }
                 if ($run) {
                     $cost = (float) ($run->provision?->product?->price?->amount ?? $run->cost ?? 0);
                     $total += $cost;

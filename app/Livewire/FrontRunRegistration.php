@@ -174,10 +174,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $runOptions[$r->id] = $r->name.' ('.($cost ? $cost.' CHF' : 'Gratuit').')';
         }
 
-        $companyRun = Run::where(function ($q) {
-            $q->whereJsonContains('available_for_types', 'company')
-                ->orWhereNull('available_for_types');
-        })->first();
+        $companyRun = RunRegistration::getCompanyRun();
 
         $rawBlocs = $companyRun?->start_blocs ?? [];
         $companyBlocOptions = [];
@@ -832,12 +829,11 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 ?: (($formData['contact_first_name'] ?? '').' '.($formData['contact_last_name'] ?? '')));
 
             $companyBloc = $formData['company_bloc'] ?? null;
-            $companyRun = $this->type === 'company'
-                ? Run::where(function ($q) {
-                    $q->whereJsonContains('available_for_types', 'company')
-                        ->orWhereNull('available_for_types');
-                })->first()
-                : null;
+            $defaultRun = match ($this->type) {
+                'company' => RunRegistration::getCompanyRun(),
+                'school' => RunRegistration::getSchoolRun(),
+                default => null,
+            };
 
             $cleanRows = $this->elements;
             $keptIds = [];
@@ -853,10 +849,10 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                     }
                 }
 
-                if ($this->type === 'company' && $companyRun) {
-                    $elementData['run_id'] = $companyRun->id;
-                    $elementData['run_name'] = $companyRun->name;
-                    if ($companyBloc) {
+                if ($defaultRun && empty($elementData['run_id'])) {
+                    $elementData['run_id'] = $defaultRun->id;
+                    $elementData['run_name'] = $defaultRun->name;
+                    if ($this->type === 'company' && $companyBloc) {
                         $elementData['bloc'] = $companyBloc;
                     }
                 } else {
