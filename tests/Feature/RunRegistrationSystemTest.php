@@ -117,20 +117,11 @@ class RunRegistrationSystemTest extends TestCase
     }
 
     /** @test */
-    public function laragrid_grid_ops_call_is_authorized()
+    public function reactive_elements_editing_is_authorized()
     {
         $component = Livewire::test(FrontRunRegistration::class, ['type' => 'group']);
-        $elements = $component->get('elements');
-        $rowKey = $elements[0]['_k'] ?? 'l1';
-
-        $result = $component->call('gridOps', 'elements', [
-            'baseVersion' => 0,
-            'ops'         => [
-                ['seq' => 1, 't' => 'set', 'row' => $rowKey, 'col' => 'first_name', 'v' => 'Alice'],
-            ],
-        ]);
-
-        $result->assertHasNoErrors();
+        $component->set('elements.0.first_name', 'Alice');
+        $component->assertSet('elements.0.first_name', 'Alice');
     }
 
     /** @test */

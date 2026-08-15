@@ -265,7 +265,7 @@
                                     <a 
                                         href="{{ URL::signedRoute('front.run-registration.edit', ['registration' => $reg->id]) }}" 
                                         target="_blank" 
-                                        title="Ouvrir le formulaire / LaraGrid" 
+                                        title="Ouvrir le formulaire" 
                                         class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded text-2xs font-medium border border-gray-200 dark:border-gray-600 transition"
                                     >
                                         ✏️ Ouvrir

@@ -6,27 +6,18 @@ use App\Models\Run;
 use App\Models\Client;
 use Livewire\Component;
 use Filament\Schemas\Schema;
-use LaraGrid\Actions\Action;
 use App\Helpers\CountryHelper;
 use Illuminate\Support\Carbon;
-use LaraGrid\Grid as LaraGrid;
 use App\Enums\SchoolClassLevel;
 use App\Models\RunRegistration;
-use LaraGrid\Editing\RowContext;
-use LaraGrid\Columns\TextColumn;
-use LaraGrid\Columns\SelectColumn;
-use LaraGrid\Columns\SerialColumn;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\URL;
-use LaraGrid\Livewire\WithLaraGrid;
-use LaraGrid\Columns\CheckboxColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Section;
-use LaraGrid\Columns\SearchSelectColumn;
 use Livewire\WithFileUploads;
 use Rap2hpoutre\FastExcel\FastExcel;
 use App\Notifications\RunRegistrationLink;
@@ -39,7 +30,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
     use InteractsWithActions;
     use InteractsWithForms;
     use WithFileUploads;
-    use WithLaraGrid;
 
     public ?array $data = [];
 
@@ -47,7 +37,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 
     public $registration = null;
 
-    // Grid elements array bound to LaraGrid ->rowsFrom('elements')
     public array $elements = [];
 
     public bool $isManager = false;
@@ -154,8 +143,17 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 return $arr;
             })->toArray();
         } else {
-            $this->elements = $this->gridMountRows('elements');
+            $this->elements = $this->defaultElements();
         }
+    }
+
+    public function defaultElements(): array
+    {
+        return [
+            array_merge($this->emptyElement(), ['_k' => 'l1']),
+            array_merge($this->emptyElement(), ['_k' => 'l2']),
+            array_merge($this->emptyElement(), ['_k' => 'l3']),
+        ];
     }
 
     public function getEstimatedTotalProperty(): float
@@ -364,7 +362,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                             ->columnSpanFull(),
                     ]),
 
-                // SECTION PARTICIPANTS LARAGRID
+                // SECTION PARTICIPANTS
                 Section::make('Participants à inscrire')
                     ->icon('heroicon-m-table-cells')
                     ->description('Remplissez les informations de chaque participant dans le tableau ci-dessous.')
@@ -572,170 +570,15 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         return $options;
     }
 
-    protected function grids(): array
-    {
-        $columns = [
-            SerialColumn::make(),
-            TextColumn::make('first_name')->label('Prénom')->width(150),
-            TextColumn::make('last_name')->label('Nom')->width(150),
-            TextColumn::make('birthdate')->label('Date de naissance (jj.mm.aaaa)')->width(200),
-            SelectColumn::make('gender')->label('Genre')->options(['M' => 'M', 'F' => 'F'])->width(80),
-        ];
-
-        if ($this->type === 'group') {
-            $runs = Run::where(function ($query) {
-                $query->whereJsonContains('available_for_types', 'group')
-                    ->orWhereNull('available_for_types');
-            })->get();
-
-            $runOptions = [];
-            foreach ($runs as $r) {
-                $cost = $r->provision?->product?->price?->amount ?? $r->cost;
-                $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
-
-                $label = $r->name.' ('.$costLabel.')';
-                if ($r->age_range_label) {
-                    $label .= ' — '.$r->age_range_label;
-                }
-
-                $runOptions[(string) $r->id] = $label;
-            }
-
-            $runColumn = SearchSelectColumn::make('run_id')
-                ->label('Course')
-                ->minChars(0)
-                ->options($runOptions)
-                ->optionsUsing(function (string $term, array $row) {
-                    $birthdate = trim((string) ($row['birthdate'] ?? ''));
-                    $age = $this->calculateAge($birthdate);
-
-                    $term = trim($term);
-                    $currentLabel = trim((string) ($row['_labels']['run_id'] ?? ''));
-
-                    if ($term === $currentLabel || preg_match('/^\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{4}$/', $term) || preg_match('/^\d{2,4}$/', $term)) {
-                        $term = '';
-                    } else {
-                        foreach (Run::pluck('name') as $runName) {
-                            if (str_starts_with(mb_strtolower($term), mb_strtolower($runName))) {
-                                $term = '';
-                                break;
-                            }
-                        }
-                    }
-
-                    $runs = Run::where(function ($query) {
-                        $query->whereJsonContains('available_for_types', 'group')
-                            ->orWhereNull('available_for_types');
-                    })->get();
-
-                    $options = [];
-                    foreach ($runs as $r) {
-                        if ($age !== null && ! $r->matchesAge($age)) {
-                            continue;
-                        }
-
-                        $cost = $r->provision?->product?->price?->amount ?? $r->cost;
-                        $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
-                        $label = $r->name.' ('.$costLabel.')';
-                        if ($r->age_range_label) {
-                            $label .= ' — '.$r->age_range_label;
-                        }
-
-                        if ($term === '' || str_contains(mb_strtolower($label), mb_strtolower($term))) {
-                            $options[] = ['value' => (string) $r->id, 'label' => $label];
-                        }
-                    }
-
-                    return $options;
-                })
-                ->onSelect(function (RowContext $context, mixed $value) {
-                    if ($value) {
-                        $run = Run::find((int) $value);
-                        if ($run) {
-                            $cost = $run->provision?->product?->price?->amount ?? $run->cost;
-                            $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
-                            $label = $run->name.' ('.$costLabel.')';
-                            if ($run->age_range_label) {
-                                $label .= ' — '.$run->age_range_label;
-                            }
-                            $context->setLabel('run_id', $label);
-                        }
-                    } else {
-                        $context->setLabel('run_id', '');
-                    }
-                })
-                ->grow();
-
-            $columns = array_merge($columns, [
-                SelectColumn::make('nationality')->label('Nationalité')->options(CountryHelper::getOptions())->width(160),
-                TextColumn::make('email')->label('Email')->grow(),
-                $runColumn,
-                CheckboxColumn::make('with_video')->label('Vidéo')->width(80),
-            ]);
-        } elseif ($this->type === 'company') {
-            $columns = array_merge($columns, [
-                SelectColumn::make('nationality')->label('Nationalité')->options(CountryHelper::getOptions())->width(160),
-                TextColumn::make('email')->label('Email')->grow(),
-                CheckboxColumn::make('with_video')->label('Vidéo')->width(80),
-            ]);
-        }
-
-        $grid = LaraGrid::make('elements')
-            ->rowsFrom('elements')
-            ->authorize(fn () => true);
-
-        $refreshCols = ['first_name', 'last_name', 'birthdate'];
-        if (in_array($this->type, ['group', 'company'])) {
-            $refreshCols[] = 'email';
-        }
-        if ($this->type === 'group') {
-            $refreshCols[] = 'run_id';
-        }
-
-        if (! $this->isGridLocked()) {
-            $grid->editable()
-                ->autoAppend()
-                ->minRows(1)
-                ->defaultRows(3)
-                ->refreshesHost($refreshCols)
-                ->actions([
-                    Action::make('delete')
-                        ->label('')
-                        ->icon('🗑️')
-                        ->confirm('Êtes-vous sûr de vouloir supprimer cette ligne ?')
-                        ->call(fn (array $row) => $this->deleteRowByRow($row)),
-                ])
-                ->newRowUsing(fn () => $this->emptyElement());
-        }
-
-        $grid->columns($columns);
-
-        return ['elements' => $grid];
-    }
-
     public function updatedElements(): void
     {
         if (! is_array($this->elements)) {
             return;
         }
 
-        $changed = false;
         foreach ($this->elements as &$row) {
             $runId = trim((string) ($row['run_id'] ?? ''));
             $birthdate = trim((string) ($row['birthdate'] ?? ''));
-
-            if ($runId !== '') {
-                $run = Run::find((int) $runId);
-                if ($run) {
-                    $cost = $run->provision?->product?->price?->amount ?? $run->cost;
-                    $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
-                    $label = $run->name.' ('.$costLabel.')';
-                    if ($run->age_range_label) {
-                        $label .= ' — '.$run->age_range_label;
-                    }
-                    $row['_labels']['run_id'] = $label;
-                }
-            }
 
             if ($runId !== '' && $birthdate !== '') {
                 $age = $this->calculateAge($birthdate);
@@ -743,8 +586,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                     $selectedRun = Run::find((int) $runId);
                     if ($selectedRun && ! $selectedRun->matchesAge($age)) {
                         $row['run_id'] = '';
-                        $row['_labels']['run_id'] = '';
-                        $changed = true;
                     }
                 }
             }
@@ -754,10 +595,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         if ($this->integrityChecked) {
             $this->verifyIntegrity();
         }
-
-        if ($changed) {
-            $this->reseedGrid('elements', $this->elements);
-        }
     }
 
     public function deleteRowByRow(array $row): void
@@ -765,7 +602,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         $key = $row['_k'] ?? null;
         if ($key) {
             $this->elements = array_values(array_filter($this->elements, fn ($r) => ($r['_k'] ?? null) !== $key));
-            $this->reseedGrid('elements', $this->elements);
         }
     }
 
@@ -775,7 +611,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $newRow = $this->emptyElement();
             $newRow['_k'] = 'l'.bin2hex(random_bytes(4));
             $this->elements[] = $newRow;
-            $this->reseedGrid('elements', $this->elements);
         }
     }
 
@@ -783,7 +618,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
     {
         if (! $this->isGridLocked() && isset($this->elements[$index])) {
             array_splice($this->elements, $index, 1);
-            $this->reseedGrid('elements', $this->elements);
         }
     }
 
@@ -868,7 +702,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                        ! empty(trim($r['email'] ?? ''));
             }));
             $this->elements = array_merge($this->elements, $newRows);
-            $this->reseedGrid('elements', $this->elements);
             $this->closeImportModal();
         }
     }
@@ -925,7 +758,6 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                        ! empty(trim($r['email'] ?? ''));
             }));
             $this->elements = array_merge($this->elements, $newRows);
-            $this->reseedGrid('elements', $this->elements);
             $this->closeImportModal();
         }
     }
@@ -940,10 +772,9 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         }));
 
         if (empty($this->elements)) {
-            $this->elements = $this->gridMountRows('elements');
+            $this->elements = $this->defaultElements();
         }
 
-        $this->reseedGrid('elements', $this->elements);
         $this->integrityChecked = false;
         $this->integrityErrors = [];
         session()->flash('message', 'Les lignes vides ont été nettoyées avec succès.');
@@ -1008,7 +839,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 })->first()
                 : null;
 
-            $cleanRows = $this->gridRows('elements');
+            $cleanRows = $this->elements;
             $keptIds = [];
 
             foreach ($cleanRows as $elementData) {
