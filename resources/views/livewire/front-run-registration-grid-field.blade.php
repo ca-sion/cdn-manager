@@ -25,7 +25,7 @@
                 size="sm"
                 icon="heroicon-m-magnifying-glass-circle"
             >
-                Vérifier l'intégrité des données
+                Vérifier les données
             </x-filament::button>
 
             @if (! $this->isGridLocked())
@@ -54,7 +54,7 @@
                 <div class="flex items-center justify-between font-bold text-amber-900 dark:text-amber-200">
                     <span class="flex items-center gap-1.5 text-sm">
                         <span>🔍</span>
-                        <span>Rapport d'intégrité : {{ count($this->integrityErrors) }} participant(s) non conforme(s)</span>
+                        <span>Rapport de vérification : {{ count($this->integrityErrors) }} participant(s) non conforme(s)</span>
                     </span>
                     <span class="text-xs font-normal text-amber-700 dark:text-amber-300">Veuillez corriger les anomalies avant d'enregistrer</span>
                 </div>
@@ -93,7 +93,7 @@
             <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-800 dark:text-emerald-200 flex items-center justify-between shadow-2xs">
                 <div class="flex items-center gap-2">
                     <span class="text-base">✅</span>
-                    <span><strong>Intégrité vérifiée avec succès :</strong> Aucune anomalie sur les données des participants.</span>
+                    <span><strong>Vérification réussie :</strong> Aucune anomalie sur les données des participants.</span>
                 </div>
                 <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ count(array_filter($this->elements, fn($r) => !empty($r['first_name']) || !empty($r['last_name']))) }} participant(s) conforme(s)</span>
             </div>

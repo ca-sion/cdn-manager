@@ -197,7 +197,7 @@ class FrontGroupManager extends Component
 
         // Calculate global statistics separated by type using transversal RunRegistration model helpers
         $allRegistrations = RunRegistration::where('run_registration_type', '!=', 'elite')
-            ->with(['runRegistrationElements.run.provision.product.price'])
+            ->with(['runRegistrationElements.run.provision.product'])
             ->get();
 
         $companies = $allRegistrations->filter(fn ($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'company');

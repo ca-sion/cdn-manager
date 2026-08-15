@@ -587,7 +587,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
     {
         $errors = $this->verifyIntegrity();
         if (count($errors) > 0) {
-            session()->flash('message', '⚠️ Impossible d\'enregistrer : '.count($errors).' participant(s) contiennent des anomalies. Veuillez consulter le rapport d\'intégrité ci-dessous.');
+            session()->flash('message', '⚠️ Impossible d\'enregistrer : '.count($errors).' participant(s) contiennent des anomalies. Veuillez consulter le rapport de vérification ci-dessous.');
 
             return;
         }
