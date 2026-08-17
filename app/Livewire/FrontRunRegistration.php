@@ -6,20 +6,20 @@ use App\Models\Run;
 use App\Models\Client;
 use Livewire\Component;
 use Filament\Schemas\Schema;
+use Livewire\WithFileUploads;
 use App\Helpers\CountryHelper;
 use Illuminate\Support\Carbon;
 use App\Enums\SchoolClassLevel;
 use App\Models\RunRegistration;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\URL;
+use Rap2hpoutre\FastExcel\FastExcel;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Section;
-use Livewire\WithFileUploads;
-use Rap2hpoutre\FastExcel\FastExcel;
 use App\Notifications\RunRegistrationLink;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -647,12 +647,12 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 
             if (str_contains($line, "\t")) {
                 $parts = explode("\t", $line);
-            } elseif (str_contains($line, "|")) {
-                $parts = explode("|", $line);
-            } elseif (str_contains($line, ";")) {
-                $parts = explode(";", $line);
-            } elseif (str_contains($line, ",")) {
-                $parts = explode(",", $line);
+            } elseif (str_contains($line, '|')) {
+                $parts = explode('|', $line);
+            } elseif (str_contains($line, ';')) {
+                $parts = explode(';', $line);
+            } elseif (str_contains($line, ',')) {
+                $parts = explode(',', $line);
             } else {
                 $parts = preg_split('/\s+/', $line);
             }
@@ -831,8 +831,8 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $companyBloc = $formData['company_bloc'] ?? null;
             $defaultRun = match ($this->type) {
                 'company' => RunRegistration::getCompanyRun(),
-                'school' => RunRegistration::getSchoolRun(),
-                default => null,
+                'school'  => RunRegistration::getSchoolRun(),
+                default   => null,
             };
 
             $cleanRows = $this->elements;
