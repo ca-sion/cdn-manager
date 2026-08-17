@@ -127,7 +127,9 @@
 
     <div class="title">
         Rapport comparatif des prestations
-        @if ($clientCategory)
+        @if (isset($clientCategories) && $clientCategories->isNotEmpty())
+            - {{ $clientCategories->pluck('name')->implode(', ') }}
+        @elseif (isset($clientCategory) && $clientCategory)
             - {{ $clientCategory->name }}
         @endif
     </div>

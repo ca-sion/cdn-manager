@@ -807,19 +807,25 @@ class ClientResource extends Resource
                                 ->options($editions)
                                 ->default($previousEdition?->id)
                                 ->required(),
-                            Select::make('client_category_id')
-                                ->label('Catégorie de client')
+                            Select::make('client_category_ids')
+                                ->label('Catégories de client')
                                 ->options($clientCategories)
+                                ->multiple()
                                 ->searchable()
                                 ->preload(),
                         ];
                     })
                     ->action(function (array $data) {
-                        $url = route('reports.provisions-comparison', [
+                        $params = [
                             'reference_edition_id'  => $data['reference_edition_id'],
                             'comparison_edition_id' => $data['comparison_edition_id'],
-                            'client_category_id'    => $data['client_category_id'] ?? null,
-                        ]);
+                        ];
+
+                        if (! empty($data['client_category_ids'])) {
+                            $params['client_category_ids'] = $data['client_category_ids'];
+                        }
+
+                        $url = route('reports.provisions-comparison', $params);
 
                         return redirect($url);
                     })

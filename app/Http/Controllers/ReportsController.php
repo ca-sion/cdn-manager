@@ -247,21 +247,32 @@ class ReportsController extends Controller
         $request->validate([
             'reference_edition_id'  => 'required|exists:editions,id',
             'comparison_edition_id' => 'required|exists:editions,id',
+            'client_category_ids'   => 'nullable|array',
+            'client_category_ids.*' => 'exists:client_categories,id',
             'client_category_id'    => 'nullable|exists:client_categories,id',
         ]);
 
         $referenceEdition = Edition::find($request->input('reference_edition_id'));
         $comparisonEdition = Edition::find($request->input('comparison_edition_id'));
-        $clientCategoryId = $request->input('client_category_id');
-        $clientCategory = $clientCategoryId ? ClientCategory::find($clientCategoryId) : null;
 
-        $comparisonData = $comparisonService->compareEditions($referenceEdition, $comparisonEdition, $clientCategoryId);
+        $clientCategoryIds = (array) $request->input('client_category_ids', []);
+        if (empty($clientCategoryIds) && $request->filled('client_category_id')) {
+            $clientCategoryIds = [(int) $request->input('client_category_id')];
+        }
+
+        $clientCategoryIds = array_values(array_filter($clientCategoryIds));
+        $clientCategories = ! empty($clientCategoryIds)
+            ? ClientCategory::whereIn('id', $clientCategoryIds)->orderBy('name')->get()
+            : collect();
+
+        $comparisonData = $comparisonService->compareEditions($referenceEdition, $comparisonEdition, $clientCategoryIds);
 
         $view = View::make('pdf.provisions-comparison', [
             'referenceEdition'  => $referenceEdition,
             'comparisonEdition' => $comparisonEdition,
             'comparisonData'    => $comparisonData,
-            'clientCategory'    => $clientCategory,
+            'clientCategories'  => $clientCategories,
+            'clientCategory'    => $clientCategories->first(),
         ]);
 
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
