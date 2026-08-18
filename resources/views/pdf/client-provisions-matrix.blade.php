@@ -89,7 +89,7 @@
         .th-provision-rotate {
             position: absolute;
             bottom: 12px;
-            left: 8px;
+            left: 12px;
             transform: rotate(-90deg);
             transform-origin: left bottom;
             width: 105px;
