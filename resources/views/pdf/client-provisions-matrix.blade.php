@@ -8,7 +8,7 @@
 
     <style>
         @page {
-            margin: 15px 15px 20px 35px;
+            margin: 15px 15px 20px 30px;
         }
 
         body {
@@ -25,7 +25,7 @@
             top: 0;
             left: 0;
             margin-top: -50px;
-            margin-left: -35px;
+            margin-left: -30px;
             width: 15px;
             height: 3000px;
             background-color: #BCDCF6;
@@ -79,21 +79,21 @@
             word-wrap: break-word;
         }
         .th-provision {
-            height: 145px;
+            height: 120px;
             vertical-align: bottom;
             padding: 3px 0px;
-            text-align: left;
+            text-align: center;
             position: relative;
         }
         .th-provision-rotate {
             transform: rotate(-90deg);
             transform-origin: left bottom;
-            width: 135px;
-            display: block;
-            font-size: 6.5px;
+            width: 110px;
+            display: inline-block;
+            font-size: 6.8px;
             font-weight: bold;
             line-height: 1.1;
-            margin-left: 6px;
+            margin-left: 9px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -128,13 +128,13 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th style="width: 50px; text-align: left;">Catégorie</th>
-                    <th style="width: 80px; text-align: left;">Client</th>
+                    <th style="width: 60px; text-align: left;">Catégorie</th>
+                    <th style="width: 110px; text-align: left;">Client</th>
                     <th style="width: 45px; text-align: left;">Statut</th>
                     @foreach ($activeProvisions as $provision)
                         @if ($activeProvisions->count() <= 10)
                             <th class="th-provision-horizontal">
-                                {{ $provision->name }}
+                                {{ str($provision->name)->limit(45) }}
                             </th>
                         @else
                             <th class="th-provision">
@@ -142,14 +142,14 @@
                             </th>
                         @endif
                     @endforeach
-                    <th style="width: 55px; text-align: right;">Montant</th>
+                    <th style="width: 60px; text-align: right;">Montant (CHF)</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($clients as $client)
                 <tr style="vertical-align: middle;">
-                    <td>{{ str($client->category?->name)->limit(14) }}</td>
-                    <td><strong>{{ str($client->name)->limit(24) }}</strong></td>
+                    <td>{{ str($client->category?->name)->limit(16) }}</td>
+                    <td><strong>{{ str($client->name)->limit(26) }}</strong></td>
                     <td style="color: #666666;">
                         {{ str($client->currentEngagement?->stage?->getLabel())->limit(12) }}
                     </td>
@@ -167,7 +167,7 @@
 
                     <td class="text-right" style="white-space: nowrap;">
                         @if ($client->advertiser_total > 0)
-                            {{ (new App\Classes\Price())->generateFormatted($client->advertiser_total, 'pdf') }}
+                            {{ (new App\Classes\Price())->generateFormatted($client->advertiser_total, 'npdf') }}
                         @endif
                     </td>
                 </tr>
@@ -184,7 +184,7 @@
                             {{ $count > 0 ? $count : '' }}
                         </td>
                     @endforeach
-                    <td class="text-right" style="white-space: nowrap;">{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'pdf') }}</td>
+                    <td class="text-right" style="white-space: nowrap;">{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'npdf') }}</td>
                 </tr>
             </tfoot>
         </table>
