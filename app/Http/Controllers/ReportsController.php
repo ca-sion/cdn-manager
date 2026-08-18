@@ -248,18 +248,35 @@ class ReportsController extends Controller
 
         $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
 
-        $clients = Client::whereHas('provisionElements', function ($query) use ($edition) {
+        $clientCategoryIds = (array) request()->input('client_category_ids', []);
+        if (empty($clientCategoryIds) && request()->filled('client_category_id')) {
+            $clientCategoryIds = [(int) request()->input('client_category_id')];
+        }
+        if (empty($clientCategoryIds) && request()->filled('category')) {
+            $clientCategoryIds = (array) request()->input('category');
+        }
+
+        $clientCategoryIds = array_values(array_filter($clientCategoryIds));
+        $selectedCategories = ! empty($clientCategoryIds)
+            ? ClientCategory::whereIn('id', $clientCategoryIds)->orderBy('name')->pluck('name')
+            : collect();
+
+        $query = Client::whereHas('provisionElements', function ($query) use ($edition) {
             $query->where('edition_id', $edition->id);
-        })
-            ->with([
-                'category',
-                'contacts',
-                'currentEngagement',
-                'provisionElements' => function ($query) use ($edition) {
-                    $query->where('edition_id', $edition->id)->with('provision.category');
-                },
-            ])
-            ->get();
+        });
+
+        if (! empty($clientCategoryIds)) {
+            $query->whereIn('category_id', $clientCategoryIds);
+        }
+
+        $clients = $query->with([
+            'category',
+            'contacts',
+            'currentEngagement',
+            'provisionElements' => function ($query) use ($edition) {
+                $query->where('edition_id', $edition->id)->with('provision.category');
+            },
+        ])->get();
 
         $grandTotal = 0;
         $clients->each(function ($client) use (&$grandTotal) {
@@ -377,11 +394,12 @@ class ReportsController extends Controller
         }
 
         $view = View::make('pdf.client-provisions-matrix', [
-            'clients'          => $clients,
-            'activeProvisions' => $activeProvisions,
-            'matrix'           => $matrix,
-            'edition'          => $edition,
-            'grandTotal'       => $grandTotal,
+            'clients'            => $clients,
+            'activeProvisions'   => $activeProvisions,
+            'matrix'             => $matrix,
+            'edition'            => $edition,
+            'grandTotal'         => $grandTotal,
+            'selectedCategories' => $selectedCategories,
         ]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
 

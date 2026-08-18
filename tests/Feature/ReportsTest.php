@@ -88,3 +88,33 @@ test('client provisions matrix report excel export works', function () {
     $response->assertStatus(200);
     $response->assertDownload('2026-client-provisions-matrice.xlsx');
 });
+
+test('client provisions matrix report supports category filtering', function () {
+    $this->withoutMiddleware([SiteProtection::class]);
+    $user = User::factory()->create();
+    $edition = Edition::factory()->create(['year' => 2026]);
+    $category1 = ClientCategory::factory()->create(['name' => 'Sponsor']);
+    $category2 = ClientCategory::factory()->create(['name' => 'Annonceur']);
+
+    $client1 = Client::factory()->create(['category_id' => $category1->id]);
+    $client2 = Client::factory()->create(['category_id' => $category2->id]);
+    $provision = Provision::factory()->create([
+        'edition_id'  => $edition->id,
+        'dicastry_id' => Dicastry::factory(),
+        'product_id'  => Product::factory(),
+    ]);
+
+    ProvisionElement::factory()->create([
+        'recipient_id'   => $client1->id,
+        'recipient_type' => Client::class,
+        'provision_id'   => $provision->id,
+        'edition_id'     => $edition->id,
+    ]);
+
+    $response = $this->actingAs($user)->get(route('reports.client-provisions-matrix', [
+        'edition'            => 2026,
+        'client_category_id' => $category1->id,
+    ]));
+
+    $response->assertStatus(200);
+});

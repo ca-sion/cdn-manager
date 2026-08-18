@@ -8,7 +8,7 @@
 
     <style>
         @page {
-            margin: 20px 20px 25px 40px;
+            margin: 15px 15px 20px 35px;
         }
 
         body {
@@ -25,8 +25,8 @@
             top: 0;
             left: 0;
             margin-top: -50px;
-            margin-left: -40px;
-            width: 20px;
+            margin-left: -35px;
+            width: 15px;
             height: 3000px;
             background-color: #BCDCF6;
         }
@@ -36,18 +36,19 @@
         }
         .title {
             font-weight: bold;
-            margin-top: 8px;
+            margin-top: 5px;
             margin-bottom: 2px;
-            font-size: 14px;
+            font-size: 13px;
         }
         .subtitle {
             font-weight: normal;
-            margin-bottom: 10px;
-            font-size: 9px;
+            margin-bottom: 8px;
+            font-size: 8.5px;
             color: #555555;
         }
         .table {
             width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             font-size: 7.5px;
         }
@@ -57,8 +58,9 @@
             background-color: #F4F6F8;
         }
         .table th, .table td {
-            padding: 4px 3px;
+            padding: 3px 2px;
             border-right: 1px solid #EAEAEA;
+            overflow: hidden;
         }
         .table th:last-child, .table td:last-child {
             border-right: none;
@@ -69,34 +71,36 @@
         .table tbody tr:nth-child(even) {
             background-color: #FAFAFA;
         }
-        .th-provision {
-            height: 120px;
+        .th-provision-horizontal {
+            font-size: 7.5px;
+            text-align: center;
             vertical-align: bottom;
-            padding: 4px 1px;
+            padding: 5px 3px;
+            word-wrap: break-word;
+        }
+        .th-provision {
+            height: 145px;
+            vertical-align: bottom;
+            padding: 3px 0px;
             text-align: left;
-            width: 18px;
-            max-width: 22px;
+            position: relative;
         }
         .th-provision-rotate {
             transform: rotate(-90deg);
             transform-origin: left bottom;
-            width: 110px;
+            width: 135px;
             display: block;
-            font-size: 7px;
+            font-size: 6.5px;
             font-weight: bold;
-            line-height: 1;
-            margin-left: 10px;
+            line-height: 1.1;
+            margin-left: 6px;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .cell-check {
             text-align: center;
             font-weight: bold;
-        }
-        .cell-detail {
-            font-size: 6.5px;
-            display: block;
-            color: #444444;
-            font-weight: normal;
         }
         .text-right {
             text-align: right;
@@ -112,31 +116,42 @@
     <div class="document-vertical-line"></div>
 
     <div class="title">Clients · Prestations (Matrice)</div>
-    <div class="subtitle">{{ $edition->year }} · {{ $edition->name }} · {{ $activeProvisions->count() }} prestation(s) active(s)</div>
+    <div class="subtitle">
+        {{ $edition->year }} · {{ $edition->name }} · {{ $activeProvisions->count() }} prestation(s) active(s)
+        @if (isset($selectedCategories) && $selectedCategories->isNotEmpty())
+            · Catégorie(s) : {{ $selectedCategories->implode(', ') }}
+        @endif
+    </div>
 
     <div class="container">
 
         <table class="table">
             <thead>
                 <tr>
-                    <th style="text-align: left; min-width: 60px;">Catégorie</th>
-                    <th style="text-align: left; min-width: 90px;">Client</th>
-                    <th style="text-align: left; min-width: 50px;">Statut</th>
+                    <th style="width: 50px; text-align: left;">Catégorie</th>
+                    <th style="width: 80px; text-align: left;">Client</th>
+                    <th style="width: 45px; text-align: left;">Statut</th>
                     @foreach ($activeProvisions as $provision)
-                        <th class="th-provision">
-                            <span class="th-provision-rotate">{{ $provision->name }}</span>
-                        </th>
+                        @if ($activeProvisions->count() <= 10)
+                            <th class="th-provision-horizontal">
+                                {{ $provision->name }}
+                            </th>
+                        @else
+                            <th class="th-provision">
+                                <span class="th-provision-rotate">{{ str($provision->name)->limit(45) }}</span>
+                            </th>
+                        @endif
                     @endforeach
-                    <th style="text-align: right; min-width: 60px;">Montant</th>
+                    <th style="width: 55px; text-align: right;">Montant</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($clients as $client)
                 <tr style="vertical-align: middle;">
-                    <td>{{ $client->category?->name }}</td>
-                    <td><strong>{{ str($client->name)->limit(26) }}</strong></td>
+                    <td>{{ str($client->category?->name)->limit(14) }}</td>
+                    <td><strong>{{ str($client->name)->limit(24) }}</strong></td>
                     <td style="color: #666666;">
-                        {{ $client->currentEngagement?->stage?->getLabel() }}
+                        {{ str($client->currentEngagement?->stage?->getLabel())->limit(12) }}
                     </td>
 
                     @foreach ($activeProvisions as $provision)
@@ -150,7 +165,7 @@
                         </td>
                     @endforeach
 
-                    <td class="text-right">
+                    <td class="text-right" style="white-space: nowrap;">
                         @if ($client->advertiser_total > 0)
                             {{ (new App\Classes\Price())->generateFormatted($client->advertiser_total, 'pdf') }}
                         @endif
@@ -169,7 +184,7 @@
                             {{ $count > 0 ? $count : '' }}
                         </td>
                     @endforeach
-                    <td class="text-right">{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'pdf') }}</td>
+                    <td class="text-right" style="white-space: nowrap;">{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'pdf') }}</td>
                 </tr>
             </tfoot>
         </table>

@@ -787,8 +787,60 @@ class ClientResource extends Resource
                 ])->dropdownWidth(Width::Large),
             ])
             ->headerActions([
+                Action::make('client_provisions_matrix_report')
+                    ->label('Rapport matrice')
+                    ->color('gray')
+                    ->icon('heroicon-o-table-cells')
+                    ->schema(function () {
+                        $editions = Edition::orderBy('year', 'desc')->pluck('year', 'id');
+                        $currentEdition = Edition::find(AppHelper::getCurrentEditionId());
+                        $clientCategories = ClientCategory::orderBy('name')->pluck('name', 'id');
+
+                        return [
+                            Select::make('edition_id')
+                                ->label('Édition')
+                                ->options($editions)
+                                ->default($currentEdition?->id)
+                                ->required(),
+                            Select::make('client_category_ids')
+                                ->label('Catégories de client (Optionnel)')
+                                ->options($clientCategories)
+                                ->multiple()
+                                ->searchable()
+                                ->preload(),
+                            Radio::make('export_format')
+                                ->label('Format d\'exportation')
+                                ->options([
+                                    'pdf'   => 'Document PDF (Format paysage)',
+                                    'excel' => 'Fichier Excel (.xlsx)',
+                                ])
+                                ->default('pdf')
+                                ->required(),
+                        ];
+                    })
+                    ->action(function (array $data) {
+                        $edition = Edition::find($data['edition_id']);
+                        $params = [
+                            'edition' => $edition?->year ?? setting('edition_id'),
+                        ];
+
+                        if (! empty($data['client_category_ids'])) {
+                            $params['client_category_ids'] = $data['client_category_ids'];
+                        }
+
+                        if (($data['export_format'] ?? 'pdf') === 'excel') {
+                            $params['export'] = 1;
+                        }
+
+                        $url = route('reports.client-provisions-matrix', $params);
+
+                        return redirect($url);
+                    })
+                    ->openUrlInNewTab()
+                    ->modalSubmitActionLabel('Générer le rapport'),
                 Action::make('provisions_comparison_report')
-                    ->label('Rapport comparatif des prestations')
+                    ->label('Rapport comparatif')
+                    ->color('gray')
                     ->icon('heroicon-o-chart-bar-square')
                     ->schema(function () {
                         $editions = Edition::orderBy('year', 'desc')->pluck('year', 'id');
