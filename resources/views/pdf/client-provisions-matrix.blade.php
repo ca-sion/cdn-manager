@@ -88,11 +88,11 @@
         }
         .th-provision-rotate {
             position: absolute;
-            bottom: 5px;
-            left: 2px;
+            bottom: 12px;
+            left: 3px;
             transform: rotate(-90deg);
             transform-origin: left bottom;
-            width: 115px;
+            width: 105px;
             font-size: 6.8px;
             font-weight: bold;
             line-height: 1.1;
@@ -140,11 +140,11 @@
                     @foreach ($activeProvisions as $provision)
                         @if ($activeProvisions->count() <= 10)
                             <th class="th-provision-horizontal">
-                                {{ str($provision->name)->limit(45) }}
+                                {{ str($provision->name)->limit(32) }}
                             </th>
                         @else
                             <th class="th-provision">
-                                <span class="th-provision-rotate">{{ str($provision->name)->limit(45) }}</span>
+                                <span class="th-provision-rotate">{{ str($provision->name)->limit(32) }}</span>
                             </th>
                         @endif
                     @endforeach
