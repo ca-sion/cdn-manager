@@ -11,7 +11,8 @@
         <li><x-filament::link :href="route('reports.banners')" class="underline">Banderoles</x-filament::link></li>
         <li><x-filament::link :href="route('reports.screens')" class="underline">Écrans</x-filament::link></li>
         <li><x-filament::link :href="route('reports.interclass-donors')" class="underline">Donateurs interclasses</x-filament::link></li>
-        <li><x-filament::link :href="route('reports.client-provisions')" class="underline">Prestations</x-filament::link></li>
+        <li><x-filament::link :href="route('reports.client-provisions')" class="underline">Prestations (détail)</x-filament::link></li>
+        <li><x-filament::link :href="route('reports.client-provisions-matrix')" class="underline">Prestations (matrice)</x-filament::link></li>
         <li><x-filament::link :href="route('reports.journal-provisions')" class="underline">Prestations pour le journal</x-filament::link></li>
         <li><x-filament::link :href="route('reports.provisions-comparison', [
                             'reference_edition_id'  => \App\Helpers\AppHelper::getCurrentEditionId(),

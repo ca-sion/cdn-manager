@@ -242,6 +242,157 @@ class ReportsController extends Controller
         return $pdf;
     }
 
+    public function clientProvisionsMatrix()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $clients = Client::whereHas('provisionElements', function ($query) use ($edition) {
+            $query->where('edition_id', $edition->id);
+        })
+            ->with([
+                'category',
+                'contacts',
+                'currentEngagement',
+                'provisionElements' => function ($query) use ($edition) {
+                    $query->where('edition_id', $edition->id)->with('provision.category');
+                },
+            ])
+            ->get();
+
+        $grandTotal = 0;
+        $clients->each(function ($client) use (&$grandTotal) {
+            $clientTotal = $client->provisionElements->sum(function ($element) {
+                return $element->price->amount ?? 0;
+            });
+            $client->advertiser_total = $clientTotal;
+            $grandTotal += $clientTotal;
+        });
+
+        $clients = $clients->sortBy([
+            ['category.name', 'asc'],
+            ['name', 'asc'],
+        ]);
+
+        // Extract unique provisions that are used by at least one client
+        $activeProvisions = $clients->flatMap(function ($client) {
+            return $client->provisionElements->map(function ($pe) {
+                return $pe->provision;
+            });
+        })->filter()->unique('id')->values();
+
+        $activeProvisions = $activeProvisions->sortBy([
+            ['category.name', 'asc'],
+            ['name', 'asc'],
+        ])->values();
+
+        // Build lookup matrix for PDF Option A: matrix[client_id][provision_id] = 'x' or '2x', '3x'
+        $matrix = [];
+        foreach ($clients as $client) {
+            $elementsByProvision = $client->provisionElements->groupBy('provision_id');
+            foreach ($activeProvisions as $provision) {
+                $elements = $elementsByProvision->get($provision->id);
+                if ($elements && $elements->isNotEmpty()) {
+                    $totalQty = $elements->sum(function ($pe) {
+                        return $pe->numeric_indicator ?? $pe->vip_invitation_number ?? 1;
+                    });
+                    $matrix[$client->id][$provision->id] = $totalQty > 1 ? (string) $totalQty : 'x';
+                } else {
+                    $matrix[$client->id][$provision->id] = null;
+                }
+            }
+        }
+
+        if (request()->input('export')) {
+            // Determine which active provisions have quantities or non-zero amounts across all clients
+            $provisionFeatures = [];
+            foreach ($activeProvisions as $provision) {
+                $hasQuantity = false;
+                $hasAmount = false;
+
+                foreach ($clients as $client) {
+                    $elements = $client->provisionElements->where('provision_id', $provision->id);
+                    foreach ($elements as $pe) {
+                        if ($pe->numeric_indicator || $pe->vip_invitation_number) {
+                            $hasQuantity = true;
+                        }
+                        if (($pe->price->amount ?? 0) > 0) {
+                            $hasAmount = true;
+                        }
+                    }
+                }
+
+                $provisionFeatures[$provision->id] = [
+                    'has_quantity' => $hasQuantity,
+                    'has_amount'   => $hasAmount,
+                ];
+            }
+
+            $exportData = $clients->map(function ($client) use ($activeProvisions, $provisionFeatures) {
+                $row = [
+                    'Catégorie' => $client->category?->name ?? '',
+                    'Client'    => $client->name,
+                    'Contact'   => $client->contacts->sortBy('order_column')->map(fn ($c) => $c->name.($c->role ? " ({$c->role})" : ''))->implode(' / '),
+                    'Statut'    => $client->currentEngagement?->stage?->getLabel() ?? '',
+                ];
+
+                foreach ($activeProvisions as $provision) {
+                    $elements = $client->provisionElements->where('provision_id', $provision->id);
+                    $features = $provisionFeatures[$provision->id];
+
+                    if ($elements->isNotEmpty()) {
+                        $row[$provision->name] = 'X';
+
+                        if ($features['has_quantity']) {
+                            $qtySum = $elements->sum(function ($pe) {
+                                return $pe->numeric_indicator ?? $pe->vip_invitation_number ?? 1;
+                            });
+                            $row[$provision->name.' (Qté)'] = $qtySum > 0 ? $qtySum : 1;
+                        }
+
+                        if ($features['has_amount']) {
+                            $amountSum = $elements->sum(function ($pe) {
+                                return $pe->price->amount ?? 0;
+                            });
+                            $row[$provision->name.' (Montant CHF)'] = $amountSum;
+                        }
+                    } else {
+                        $row[$provision->name] = '';
+                        if ($features['has_quantity']) {
+                            $row[$provision->name.' (Qté)'] = '';
+                        }
+                        if ($features['has_amount']) {
+                            $row[$provision->name.' (Montant CHF)'] = '';
+                        }
+                    }
+                }
+
+                $row['Montant Total'] = $client->advertiser_total;
+
+                return $row;
+            });
+
+            return (new FastExcel($exportData))->download($edition?->year.'-client-provisions-matrice.xlsx');
+        }
+
+        $view = View::make('pdf.client-provisions-matrix', [
+            'clients'          => $clients,
+            'activeProvisions' => $activeProvisions,
+            'matrix'           => $matrix,
+            'edition'          => $edition,
+            'grandTotal'       => $grandTotal,
+        ]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-client-provisions-matrice.pdf');
+
+        return $pdf;
+    }
+
     public function provisionsComparison(Request $request, ProvisionComparisonService $comparisonService)
     {
         $request->validate([
