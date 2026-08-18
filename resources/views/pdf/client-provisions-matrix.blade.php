@@ -83,7 +83,7 @@
             max-width: 18px;
             vertical-align: bottom;
             padding: 3px 0px;
-            text-align: start;
+            text-align: left;
             position: relative;
         }
         .th-provision-rotate {
