@@ -57,7 +57,7 @@
             background-color: #F4F6F8;
         }
         .table th, .table td {
-            padding: 3px 3px;
+            padding: 3px 2px;
             border-right: 1px solid #EAEAEA;
         }
         .table th:last-child, .table td:last-child {
@@ -77,26 +77,32 @@
             word-wrap: break-word;
         }
         .th-provision {
-            height: 130px;
+            height: 125px;
+            width: 18px;
+            min-width: 18px;
+            max-width: 18px;
             vertical-align: bottom;
-            padding: 3px 1px;
+            padding: 3px 0px;
             text-align: center;
-            white-space: nowrap;
+            position: relative;
         }
         .th-provision-rotate {
+            position: absolute;
+            bottom: 5px;
+            left: 2px;
             transform: rotate(-90deg);
             transform-origin: left bottom;
-            width: 120px;
-            display: inline-block;
+            width: 115px;
             font-size: 6.8px;
             font-weight: bold;
-            line-height: 1;
-            margin-left: 5px;
+            line-height: 1.1;
             white-space: nowrap;
         }
         .cell-check {
             text-align: center;
             font-weight: bold;
+            width: 18px;
+            max-width: 18px;
         }
         .text-right {
             text-align: right;
