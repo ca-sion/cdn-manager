@@ -48,7 +48,6 @@
         }
         .table {
             width: 100%;
-            table-layout: fixed;
             border-collapse: collapse;
             font-size: 7.5px;
         }
@@ -58,9 +57,8 @@
             background-color: #F4F6F8;
         }
         .table th, .table td {
-            padding: 3px 2px;
+            padding: 3px 3px;
             border-right: 1px solid #EAEAEA;
-            overflow: hidden;
         }
         .table th:last-child, .table td:last-child {
             border-right: none;
@@ -79,24 +77,22 @@
             word-wrap: break-word;
         }
         .th-provision {
-            height: 120px;
+            height: 130px;
             vertical-align: bottom;
-            padding: 3px 0px;
+            padding: 3px 1px;
             text-align: center;
-            position: relative;
+            white-space: nowrap;
         }
         .th-provision-rotate {
             transform: rotate(-90deg);
             transform-origin: left bottom;
-            width: 110px;
+            width: 120px;
             display: inline-block;
             font-size: 6.8px;
             font-weight: bold;
-            line-height: 1.1;
-            margin-left: 9px;
+            line-height: 1;
+            margin-left: 5px;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         .cell-check {
             text-align: center;
@@ -104,6 +100,10 @@
         }
         .text-right {
             text-align: right;
+            white-space: nowrap;
+        }
+        .text-nowrap {
+            white-space: nowrap;
         }
         .text-center {
             text-align: center;
@@ -128,9 +128,9 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th style="width: 60px; text-align: left;">Catégorie</th>
-                    <th style="width: 110px; text-align: left;">Client</th>
-                    <th style="width: 45px; text-align: left;">Statut</th>
+                    <th class="text-nowrap" style="text-align: left;">Catégorie</th>
+                    <th class="text-nowrap" style="text-align: left;">Client</th>
+                    <th class="text-nowrap" style="text-align: left;">Statut</th>
                     @foreach ($activeProvisions as $provision)
                         @if ($activeProvisions->count() <= 10)
                             <th class="th-provision-horizontal">
@@ -142,16 +142,16 @@
                             </th>
                         @endif
                     @endforeach
-                    <th style="width: 60px; text-align: right;">Montant (CHF)</th>
+                    <th class="text-right">Montant</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($clients as $client)
                 <tr style="vertical-align: middle;">
-                    <td>{{ str($client->category?->name)->limit(16) }}</td>
-                    <td><strong>{{ str($client->name)->limit(26) }}</strong></td>
-                    <td style="color: #666666;">
-                        {{ str($client->currentEngagement?->stage?->getLabel())->limit(12) }}
+                    <td class="text-nowrap">{{ str($client->category?->name)->limit(18) }}</td>
+                    <td class="text-nowrap"><strong>{{ str($client->name)->limit(28) }}</strong></td>
+                    <td class="text-nowrap" style="color: #666666;">
+                        {{ str($client->currentEngagement?->stage?->getLabel())->limit(14) }}
                     </td>
 
                     @foreach ($activeProvisions as $provision)
@@ -165,7 +165,7 @@
                         </td>
                     @endforeach
 
-                    <td class="text-right" style="white-space: nowrap;">
+                    <td class="text-right">
                         @if ($client->advertiser_total > 0)
                             {{ (new App\Classes\Price())->generateFormatted($client->advertiser_total, 'npdf') }}
                         @endif
@@ -184,7 +184,7 @@
                             {{ $count > 0 ? $count : '' }}
                         </td>
                     @endforeach
-                    <td class="text-right" style="white-space: nowrap;">{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'npdf') }}</td>
+                    <td class="text-right">{{ (new App\Classes\Price())->generateFormatted($grandTotal, 'npdf') }}</td>
                 </tr>
             </tfoot>
         </table>
