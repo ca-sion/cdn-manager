@@ -106,7 +106,7 @@ class ProvisionElementResource extends Resource
                         ->options(ProvisionElementStatusEnum::class),
                 ])->columns(4),
                 Section::make('Champs')
-                    ->columns(3)
+                    ->columns(2)
                     ->live()
                     ->schema([
                         DatePicker::make('due_date')
@@ -195,6 +195,7 @@ class ProvisionElementResource extends Resource
                         Fieldset::make('Produit')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_product : false)
                             ->columns(5)
+                            ->columnSpanFull()
                             ->schema([
                                 Toggle::make('has_product')
                                     ->label('Produit')
