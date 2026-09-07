@@ -8,8 +8,6 @@ use App\Models\RunRegistration;
 use App\Enums\RunRegistrationType;
 use App\Livewire\FrontGroupManager;
 use App\Models\RunRegistrationElement;
-use App\Notifications\RunRegistrationLink;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class FrontGroupManagerTest extends TestCase
@@ -44,20 +42,54 @@ class FrontGroupManagerTest extends TestCase
     }
 
     /** @test */
-    public function it_can_send_edit_link_notification_to_target_email()
+    public function it_can_switch_tabs_and_filter_conformity()
     {
-        Notification::fake();
+        // 1. Conforming class (8 students with 3 girls)
+        $regSchoolConform = RunRegistration::create([
+            'run_registration_type' => RunRegistrationType::School,
+            'school_name'           => 'St-Guérin',
+            'school_class_level'    => '4H',
+        ]);
+        for ($i = 0; $i < 3; $i++) {
+            RunRegistrationElement::create([
+                'run_registration_id' => $regSchoolConform->id,
+                'first_name'          => "Fille $i",
+                'last_name'           => 'Test',
+                'gender'              => 'F',
+            ]);
+        }
+        for ($i = 0; $i < 5; $i++) {
+            RunRegistrationElement::create([
+                'run_registration_id' => $regSchoolConform->id,
+                'first_name'          => "Garçon $i",
+                'last_name'           => 'Test',
+                'gender'              => 'M',
+            ]);
+        }
 
-        $reg = RunRegistration::create([
-            'run_registration_type' => RunRegistrationType::Group,
-            'contact_first_name'    => 'Antoine',
-            'contact_last_name'     => 'Clivaz',
-            'contact_email'         => 'antoine@clivaz.ch',
+        // 2. Incomplete class (2 students)
+        $regSchoolIncomplete = RunRegistration::create([
+            'run_registration_type' => RunRegistrationType::School,
+            'school_name'           => 'Champsec',
+            'school_class_level'    => '3H',
+        ]);
+        RunRegistrationElement::create([
+            'run_registration_id' => $regSchoolIncomplete->id,
+            'first_name'          => 'Lucas',
+            'last_name'           => 'Test',
+            'gender'              => 'M',
         ]);
 
-        Livewire::test(FrontGroupManager::class)
-            ->call('sendEditLink', $reg->id);
+        $this->assertTrue($regSchoolConform->isSchoolTeamConform());
+        $this->assertFalse($regSchoolIncomplete->isSchoolTeamConform());
 
-        Notification::assertSentTo($reg, RunRegistrationLink::class);
+        Livewire::test(FrontGroupManager::class)
+            ->set('activeTab', 'school')
+            ->set('conformityFilter', 'conform')
+            ->assertSee('St-Guérin')
+            ->assertDontSee('Champsec')
+            ->set('conformityFilter', 'non_conform')
+            ->assertSee('Champsec')
+            ->assertDontSee('St-Guérin');
     }
 }

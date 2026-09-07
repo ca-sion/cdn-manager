@@ -14,6 +14,7 @@ class Run extends Model
     protected $fillable = [
         'name',
         'distance',
+        'gender',
         'cost',
         'available_for_types',
         'start_blocs',
@@ -56,6 +57,21 @@ class Run extends Model
         }
 
         return true;
+    }
+
+    public function matchesGender(?string $gender): bool
+    {
+        if ($this->gender === null || $this->gender === '' || $this->gender === 'all') {
+            return true;
+        }
+
+        if (empty($gender)) {
+            return true;
+        }
+
+        $runGender = is_object($this->gender) ? $this->gender->value : (string) $this->gender;
+
+        return strtoupper($runGender) === strtoupper((string) $gender);
     }
 
     protected function ageRangeLabel(): Attribute

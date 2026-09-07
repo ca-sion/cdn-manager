@@ -4,6 +4,7 @@ namespace Tests\Feature\Livewire;
 
 use App\Models\Run;
 use Tests\TestCase;
+use App\Models\School;
 use Livewire\Livewire;
 use App\Models\RunRegistration;
 use App\Enums\RunRegistrationType;
@@ -257,5 +258,107 @@ class FrontRunRegistrationTest extends TestCase
 
         $comp->call('closeImportModal');
         $this->assertFalse($comp->get('showImportModal'));
+    }
+
+    /** @test */
+    public function it_filters_available_runs_by_gender_and_age()
+    {
+        $runGirls = Run::create([
+            'name'                => 'Cadettes A (3 tours)',
+            'gender'              => 'F',
+            'min_age'             => 14,
+            'max_age'             => 17,
+            'available_for_types' => ['group'],
+        ]);
+
+        $runBoys = Run::create([
+            'name'                => 'Cadets A (4 tours)',
+            'gender'              => 'M',
+            'min_age'             => 14,
+            'max_age'             => 17,
+            'available_for_types' => ['group'],
+        ]);
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['type' => 'group']);
+
+        // Person born in 2009 (17 years old in 2026) Female
+        $runsForFemale = $comp->instance()->getRunsForBirthdate('01.01.2009', 'F');
+        $this->assertArrayHasKey((string) $runGirls->id, $runsForFemale);
+        $this->assertArrayNotHasKey((string) $runBoys->id, $runsForFemale);
+
+        // Person born in 2009 Male
+        $runsForMale = $comp->instance()->getRunsForBirthdate('01.01.2009', 'M');
+        $this->assertArrayHasKey((string) $runBoys->id, $runsForMale);
+        $this->assertArrayNotHasKey((string) $runGirls->id, $runsForMale);
+    }
+
+    /** @test */
+    public function it_auto_fills_and_creates_schools_properly()
+    {
+        $school = School::create([
+            'name'        => 'Centre scolaire de St-Guérin',
+            'postal_code' => '1950',
+            'locality'    => 'Sion',
+            'country'     => 'SUI',
+            'is_active'   => true,
+        ]);
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['type' => 'school']);
+        $comp->set('data.school_id', (string) $school->id);
+
+        $this->assertEquals('Centre scolaire de St-Guérin', $comp->get('data.school_name'));
+        $this->assertEquals('1950', $comp->get('data.school_postal_code'));
+        $this->assertEquals('Sion', $comp->get('data.school_locality'));
+    }
+
+    /** @test */
+    public function it_updates_courses_dynamically_when_gender_changes_and_computes_school_team_stats()
+    {
+        $runGirls = Run::create([
+            'name'                => 'Cadettes A (3 tours)',
+            'gender'              => 'F',
+            'min_age'             => 14,
+            'max_age'             => 17,
+            'available_for_types' => ['group'],
+        ]);
+
+        $runBoys = Run::create([
+            'name'                => 'Cadets A (4 tours)',
+            'gender'              => 'M',
+            'min_age'             => 14,
+            'max_age'             => 17,
+            'available_for_types' => ['group'],
+        ]);
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['type' => 'group']);
+
+        // Set birthdate to 2009 and gender to M
+        $comp->set('elements.0.birthdate', '01.01.2009');
+        $comp->set('elements.0.gender', 'M');
+
+        // Course should be auto-selected to Boys run since it's the unique match
+        $this->assertEquals((string) $runBoys->id, $comp->get('elements.0.run_id'));
+
+        // Change gender to F
+        $comp->set('elements.0.gender', 'F');
+
+        // Course should now automatically switch to Girls run
+        $this->assertEquals((string) $runGirls->id, $comp->get('elements.0.run_id'));
+
+        // Test school team stats
+        $compSchool = Livewire::test(FrontRunRegistration::class, ['type' => 'school']);
+        $compSchool->set('elements', [
+            ['_k' => '1', 'first_name' => 'Fille1', 'last_name' => 'A', 'gender' => 'F'],
+            ['_k' => '2', 'first_name' => 'Fille2', 'last_name' => 'B', 'gender' => 'F'],
+            ['_k' => '3', 'first_name' => 'Garcon1', 'last_name' => 'C', 'gender' => 'M'],
+        ]);
+
+        $stats = $compSchool->get('schoolTeamStats');
+        $this->assertEquals(3, $stats['total']);
+        $this->assertEquals(2, $stats['girls']);
+        $this->assertEquals(1, $stats['boys']);
+        $this->assertFalse($stats['is_conform']);
+        $this->assertEquals(5, $stats['missing_students']); // 8 - 3 = 5
+        $this->assertEquals(1, $stats['missing_girls']);    // 3 - 2 = 1
     }
 }

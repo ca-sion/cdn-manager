@@ -55,6 +55,85 @@
         </div>
     </div>
 
+    @if($this->type === 'school')
+        @php
+            $schoolStats = $this->schoolTeamStats;
+            $progressStudents = min(100, (int) round(($schoolStats['total'] / max(1, $schoolStats['min_students'])) * 100));
+            $progressGirls = min(100, (int) round(($schoolStats['girls'] / max(1, $schoolStats['min_girls'])) * 100));
+        @endphp
+        <!-- Jauge d'assistance et de conformité au règlement Interclasses (Classes 3H à 8H) -->
+        <div class="p-4 rounded-xl border {{ $schoolStats['is_conform'] ? 'bg-emerald-50/80 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800' : 'bg-amber-50/80 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800' }} shadow-2xs space-y-3 transition-all">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">{{ $schoolStats['is_conform'] ? '🎉' : '⏱️' }}</span>
+                    <div>
+                        <h4 class="text-xs font-bold {{ $schoolStats['is_conform'] ? 'text-emerald-900 dark:text-emerald-200' : 'text-amber-950 dark:text-amber-200' }}">
+                            {{ $schoolStats['is_conform'] ? 'Équipe complète et conforme au règlement interclasses !' : 'Constitution de votre équipe interclasses en cours' }}
+                        </h4>
+                        <p class="text-2xs {{ $schoolStats['is_conform'] ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300' }}">
+                            Règlement officiel : minimum {{ $schoolStats['min_students'] }} élèves de la même classe (3H à 8H), dont au moins {{ $schoolStats['min_girls'] }} filles.
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    @if($schoolStats['is_conform'])
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs font-extrabold bg-emerald-600 text-white shadow-xs">
+                            ✅ Équipe conforme ({{ $schoolStats['total'] }} élèves)
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-2xs font-bold bg-amber-200 text-amber-950 dark:bg-amber-900 dark:text-amber-100 border border-amber-300 dark:border-amber-700">
+                            ⚠️ Incomplet ({{ $schoolStats['total'] }}/{{ $schoolStats['min_students'] }} élèves)
+                        </span>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Jauges de progression visuelle -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+                <!-- 1. Jauge Effectif Total -->
+                <div class="bg-white dark:bg-gray-900/80 p-2.5 rounded-lg border {{ $schoolStats['total'] >= $schoolStats['min_students'] ? 'border-emerald-300 dark:border-emerald-800' : 'border-amber-200 dark:border-amber-800/80' }} space-y-1.5">
+                    <div class="flex items-center justify-between text-2xs font-semibold">
+                        <span class="text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                            👥 Effectif global
+                        </span>
+                        <span class="font-mono {{ $schoolStats['total'] >= $schoolStats['min_students'] ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-700 dark:text-amber-400' }}">
+                            {{ $schoolStats['total'] }} / {{ $schoolStats['min_students'] }} élèves requis
+                            @if($schoolStats['missing_students'] > 0)
+                                <span class="text-rose-600 dark:text-rose-400 font-normal">(manque {{ $schoolStats['missing_students'] }})</span>
+                            @else
+                                <span>✓</span>
+                            @endif
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                        <div class="h-2 rounded-full transition-all duration-300 {{ $schoolStats['total'] >= $schoolStats['min_students'] ? 'bg-emerald-500' : 'bg-amber-500' }}" style="width: {{ $progressStudents }}%"></div>
+                    </div>
+                </div>
+
+                <!-- 2. Jauge Mixité Filles -->
+                <div class="bg-white dark:bg-gray-900/80 p-2.5 rounded-lg border {{ $schoolStats['girls'] >= $schoolStats['min_girls'] ? 'border-emerald-300 dark:border-emerald-800' : 'border-amber-200 dark:border-amber-800/80' }} space-y-1.5">
+                    <div class="flex items-center justify-between text-2xs font-semibold">
+                        <span class="text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                            👧 Quota de mixité
+                        </span>
+                        <span class="font-mono {{ $schoolStats['girls'] >= $schoolStats['min_girls'] ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-700 dark:text-amber-400' }}">
+                            {{ $schoolStats['girls'] }} / {{ $schoolStats['min_girls'] }} filles requises
+                            @if($schoolStats['missing_girls'] > 0)
+                                <span class="text-rose-600 dark:text-rose-400 font-normal">(manque {{ $schoolStats['missing_girls'] }})</span>
+                            @else
+                                <span>✓</span>
+                            @endif
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                        <div class="h-2 rounded-full transition-all duration-300 {{ $schoolStats['girls'] >= $schoolStats['min_girls'] ? 'bg-emerald-500' : 'bg-pink-500' }}" style="width: {{ $progressGirls }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Tableau de Saisie Réactif (Style Tableur Excel) -->
     <div class="w-full overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
         <table class="w-full text-left text-xs divide-y divide-gray-200 dark:divide-gray-700"
@@ -95,7 +174,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                 @foreach($this->elements as $index => $row)
-                    <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-800/50 transition-colors">
+                    <tr wire:key="element-row-{{ $row['_k'] ?? $index }}" class="hover:bg-gray-50/60 dark:hover:bg-gray-800/50 transition-colors">
                         <td class="px-3 py-2 text-center text-gray-400 font-mono text-xs font-semibold">{{ $loop->iteration }}</td>
                         <td class="px-2 py-1.5">
                             <input type="text"
@@ -133,6 +212,7 @@
                         </td>
                         <td class="px-2 py-1.5">
                             <select wire:model.live="elements.{{ $index }}.gender"
+                                    wire:key="gender-select-{{ $row['_k'] ?? $index }}"
                                     data-row="{{ $index }}" data-col="3"
                                     @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 3)"
                                     @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 3)"
@@ -170,13 +250,14 @@
                         @if($this->type === 'group')
                             <td class="px-2 py-1.5">
                                 <select wire:model.live="elements.{{ $index }}.run_id"
+                                        wire:key="run-select-{{ $row['_k'] ?? $index }}-{{ $row['gender'] ?? 'M' }}-{{ $row['birthdate'] ?? '' }}"
                                         data-row="{{ $index }}" data-col="6"
                                         @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 6)"
                                         @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 6)"
                                         @disabled($this->isGridLocked())
                                         class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500 font-medium shadow-2xs">
                                     <option value="">-- Choisir une course --</option>
-                                    @foreach($this->getRunsForBirthdate($row['birthdate'] ?? '') as $rId => $rLabel)
+                                    @foreach($this->getRunsForBirthdate($row['birthdate'] ?? '', $row['gender'] ?? '') as $rId => $rLabel)
                                         <option value="{{ $rId }}">{{ $rLabel }}</option>
                                     @endforeach
                                 </select>

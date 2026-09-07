@@ -20,6 +20,7 @@ class RunRegistration extends Model
         'type',
         'company_name',
         'company_bloc',
+        'school_id',
         'school_name',
         'school_postal_code',
         'school_locality',
@@ -64,6 +65,11 @@ class RunRegistration extends Model
         return $this->belongsTo(Client::class);
     }
 
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
+
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);
@@ -72,6 +78,74 @@ class RunRegistration extends Model
     public function runRegistrationElements()
     {
         return $this->hasMany(RunRegistrationElement::class);
+    }
+
+    public function getGirlsCountAttribute(): int
+    {
+        return $this->runRegistrationElements->filter(function ($el) {
+            $g = is_object($el->gender) ? $el->gender->value : (string) $el->gender;
+
+            return strtoupper($g) === 'F';
+        })->count();
+    }
+
+    public function getBoysCountAttribute(): int
+    {
+        return $this->runRegistrationElements->filter(function ($el) {
+            $g = is_object($el->gender) ? $el->gender->value : (string) $el->gender;
+
+            return strtoupper($g) === 'M';
+        })->count();
+    }
+
+    /**
+     * Determine if a school registration conforms to the interclasses team regulations.
+     * Rules: min students (default: 8), min girls (default: 3).
+     */
+    public function isSchoolTeamConform(): bool
+    {
+        $type = is_object($this->run_registration_type) ? $this->run_registration_type->value : (string) $this->run_registration_type;
+        if ($type !== 'school') {
+            return true;
+        }
+
+        $minStudents = (int) config('cdn.interclasses.min_students', 8);
+        $minGirls = (int) config('cdn.interclasses.min_girls', 3);
+
+        return $this->participants_count >= $minStudents && $this->girls_count >= $minGirls;
+    }
+
+    /**
+     * Get the school compliance status details.
+     */
+    public function getSchoolConformityDetails(): array
+    {
+        $minStudents = (int) config('cdn.interclasses.min_students', 8);
+        $minGirls = (int) config('cdn.interclasses.min_girls', 3);
+
+        $total = $this->participants_count;
+        $girls = $this->girls_count;
+        $boys = $this->boys_count;
+
+        $hasEnoughStudents = $total >= $minStudents;
+        $hasEnoughGirls = $girls >= $minGirls;
+        $isConform = $hasEnoughStudents && $hasEnoughGirls;
+
+        $missingStudents = max(0, $minStudents - $total);
+        $missingGirls = max(0, $minGirls - $girls);
+
+        return [
+            'is_conform'          => $isConform,
+            'total'               => $total,
+            'girls'               => $girls,
+            'boys'                => $boys,
+            'min_students'        => $minStudents,
+            'min_girls'           => $minGirls,
+            'has_enough_students' => $hasEnoughStudents,
+            'has_enough_girls'    => $hasEnoughGirls,
+            'missing_students'    => $missingStudents,
+            'missing_girls'       => $missingGirls,
+        ];
     }
 
     /**

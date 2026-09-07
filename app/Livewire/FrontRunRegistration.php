@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Run;
 use App\Models\Client;
+use App\Models\School;
 use Livewire\Component;
 use Filament\Schemas\Schema;
 use Livewire\WithFileUploads;
@@ -86,6 +87,10 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             }
 
             $registrationData = $this->registration->toArray();
+            if ($type === 'school' && empty($registrationData['school_id']) && ! empty($registrationData['school_name'])) {
+                $matchedSchool = School::where('name', $registrationData['school_name'])->first();
+                $registrationData['school_id'] = $matchedSchool ? (string) $matchedSchool->id : 'other';
+            }
             $this->form->fill($registrationData);
         } else {
             $initialData = [
@@ -222,9 +227,33 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                     ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school')
                     ->columns(4)
                     ->schema([
-                        TextInput::make('school_name')
-                            ->label('Nom du centre scolaire')
-                            ->placeholder('Ex: Centre scolaire Pasteur')
+                        Select::make('school_id')
+                            ->label('Établissement scolaire')
+                            ->placeholder('Sélectionnez votre centre scolaire...')
+                            ->options(function () {
+                                $schools = School::where('is_active', true)->orderBy('name')->pluck('name', 'id')->toArray();
+                                $schools['other'] = '➕ Autre établissement (saisie manuelle)';
+
+                                return $schools;
+                            })
+                            ->live()
+                            ->afterStateUpdated(function ($state, $set) {
+                                if ($state && $state !== 'other') {
+                                    $school = School::find($state);
+                                    if ($school) {
+                                        $set('school_name', $school->name);
+                                        $set('school_postal_code', $school->postal_code);
+                                        $set('school_locality', $school->locality);
+                                        $set('school_country', $school->country ?: 'SUI');
+                                        if ($school->client_id) {
+                                            $set('client_id', $school->client_id);
+                                        }
+                                    }
+                                } elseif ($state === 'other') {
+                                    $set('school_name', '');
+                                }
+                            })
+                            ->searchable()
                             ->required()
                             ->columnSpan(2),
 
@@ -234,23 +263,33 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                             ->required()
                             ->columnSpan(2),
 
+                        TextInput::make('school_name')
+                            ->label('Nom de l\'établissement')
+                            ->placeholder('Ex: Centre scolaire Pasteur')
+                            ->required(fn ($get) => $get('school_id') === 'other')
+                            ->visible(fn ($get) => $get('school_id') === 'other')
+                            ->columnSpan(2),
+
                         TextInput::make('school_postal_code')
                             ->label('Code postal')
                             ->placeholder('1950')
                             ->numeric()
-                            ->required(),
+                            ->required()
+                            ->columnSpan(fn ($get) => $get('school_id') === 'other' ? 1 : 2),
 
                         TextInput::make('school_locality')
                             ->label('Localité')
                             ->placeholder('Sion')
-                            ->required(),
+                            ->required()
+                            ->columnSpan(fn ($get) => $get('school_id') === 'other' ? 1 : 2),
 
                         Select::make('school_country')
                             ->label('Pays')
                             ->options(CountryHelper::getOptions())
                             ->searchable()
                             ->default('SUI')
-                            ->required(),
+                            ->required()
+                            ->columnSpan(2),
                     ]),
 
                 // SECTION SCHOOL 2: Titulaire de la classe
@@ -489,6 +528,9 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                         if ($selectedRun->max_age !== null && $calculatedAge > $selectedRun->max_age) {
                             $rowErrors[] = "Âge supérieur à la limite pour la course \"{$selectedRun->name}\" (âge maximum : {$selectedRun->max_age} ans, âge calculé : {$calculatedAge} ans)";
                         }
+                        if ($gender !== '' && ! $selectedRun->matchesGender($gender)) {
+                            $rowErrors[] = "Course \"{$selectedRun->name}\" non ouverte au genre sélectionné ({$gender})";
+                        }
                     }
                 }
             }
@@ -538,7 +580,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         return null;
     }
 
-    public function getRunsForBirthdate(?string $birthdate): array
+    public function getRunsForBirthdate(?string $birthdate, ?string $gender = null): array
     {
         $age = $this->calculateAge($birthdate);
 
@@ -550,6 +592,10 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         $options = [];
         foreach ($runs as $r) {
             if ($age !== null && ! $r->matchesAge($age)) {
+                continue;
+            }
+
+            if (! empty($gender) && ! $r->matchesGender($gender)) {
                 continue;
             }
 
@@ -567,23 +613,62 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         return $options;
     }
 
+    public function getSchoolTeamStatsProperty(): array
+    {
+        $minStudents = (int) config('cdn.interclasses.min_students', 8);
+        $minGirls = (int) config('cdn.interclasses.min_girls', 3);
+
+        $validElements = array_filter($this->elements, fn ($r) => ! empty(trim($r['first_name'] ?? '')) || ! empty(trim($r['last_name'] ?? '')));
+        $total = count($validElements);
+        $girls = count(array_filter($validElements, fn ($r) => strtoupper(trim((string) ($r['gender'] ?? ''))) === 'F'));
+        $boys = count(array_filter($validElements, fn ($r) => strtoupper(trim((string) ($r['gender'] ?? ''))) === 'M'));
+
+        return [
+            'total'            => $total,
+            'girls'            => $girls,
+            'boys'             => $boys,
+            'min_students'     => $minStudents,
+            'min_girls'        => $minGirls,
+            'is_conform'       => ($total >= $minStudents && $girls >= $minGirls),
+            'missing_students' => max(0, $minStudents - $total),
+            'missing_girls'    => max(0, $minGirls - $girls),
+        ];
+    }
+
+    public function updated($propertyName, $value = null): void
+    {
+        if (str_starts_with((string) $propertyName, 'elements.')) {
+            $this->normalizeElementsCourseOptions();
+        }
+    }
+
     public function updatedElements(): void
+    {
+        $this->normalizeElementsCourseOptions();
+    }
+
+    private function normalizeElementsCourseOptions(): void
     {
         if (! is_array($this->elements)) {
             return;
         }
 
         foreach ($this->elements as &$row) {
-            $runId = trim((string) ($row['run_id'] ?? ''));
             $birthdate = trim((string) ($row['birthdate'] ?? ''));
+            $gender = trim((string) ($row['gender'] ?? ''));
+            $runId = trim((string) ($row['run_id'] ?? ''));
 
-            if ($runId !== '' && $birthdate !== '') {
-                $age = $this->calculateAge($birthdate);
-                if ($age !== null) {
-                    $selectedRun = Run::find((int) $runId);
-                    if ($selectedRun && ! $selectedRun->matchesAge($age)) {
-                        $row['run_id'] = '';
-                    }
+            if ($this->type === 'group') {
+                $availableRuns = $this->getRunsForBirthdate($birthdate, $gender);
+
+                // If current selected run is no longer valid for age + gender, reset it
+                if ($runId !== '' && ! isset($availableRuns[$runId])) {
+                    $row['run_id'] = '';
+                }
+
+                // If no run selected (or just reset) and there is exactly one available run, auto-select it!
+                if ($row['run_id'] === '' && count($availableRuns) === 1) {
+                    $row['run_id'] = (string) array_key_first($availableRuns);
                 }
             }
         }
@@ -683,7 +768,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 $row['nationality'] = strtoupper(substr($parts[4], 0, 3));
             }
 
-            $availableRuns = $this->getRunsForBirthdate($row['birthdate']);
+            $availableRuns = $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M');
             if (! empty($availableRuns) && count($availableRuns) === 1) {
                 $row['run_id'] = (string) array_key_first($availableRuns);
             }
@@ -739,7 +824,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $row['email'] = $normalized['email'] ?? $normalized['courriel'] ?? '';
             $row['nationality'] = strtoupper(substr($normalized['nationalite'] ?? $normalized['nationalité'] ?? $normalized['country'] ?? 'SUI', 0, 3));
 
-            $availableRuns = $this->getRunsForBirthdate($row['birthdate']);
+            $availableRuns = $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M');
             if (! empty($availableRuns) && count($availableRuns) === 1) {
                 $row['run_id'] = (string) array_key_first($availableRuns);
             }
@@ -797,6 +882,35 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         }
 
         $formData = $this->form->getState();
+
+        if ($this->type === 'school') {
+            $schoolId = $formData['school_id'] ?? null;
+            $schoolName = trim((string) ($formData['school_name'] ?? ''));
+
+            if (($schoolId === 'other' || empty($schoolId)) && ! empty($schoolName)) {
+                $school = School::firstOrCreate(
+                    ['name' => $schoolName],
+                    [
+                        'postal_code' => $formData['school_postal_code'] ?? null,
+                        'locality'    => $formData['school_locality'] ?? null,
+                        'country'     => $formData['school_country'] ?? 'SUI',
+                    ]
+                );
+                $formData['school_id'] = $school->id;
+                if ($school->client_id && empty($formData['client_id'])) {
+                    $formData['client_id'] = $school->client_id;
+                }
+            } elseif ($schoolId && $schoolId !== 'other') {
+                $school = School::find((int) $schoolId);
+                if ($school) {
+                    $formData['school_name'] = $school->name;
+                    if ($school->client_id && empty($formData['client_id'])) {
+                        $formData['client_id'] = $school->client_id;
+                    }
+                }
+            }
+        }
+
         $isNew = ! $this->registration || ! $this->registration->exists;
 
         if ($isNew) {

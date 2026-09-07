@@ -14,9 +14,13 @@ class FrontGroupManager extends Component
 {
     use WithPagination;
 
+    public string $activeTab = 'school';
+
     public string $search = '';
 
-    public string $typeFilter = '';
+    public string $degreeFilter = '';
+
+    public string $conformityFilter = '';
 
     public string $invoiceFilter = '';
 
@@ -30,20 +34,53 @@ class FrontGroupManager extends Component
 
     public ?int $selectedClientId = null;
 
-    protected $queryString = ['search', 'typeFilter', 'invoiceFilter', 'sortField', 'sortDirection'];
+    protected $queryString = [
+        'activeTab'        => ['except' => 'school'],
+        'search'           => ['except' => ''],
+        'degreeFilter'     => ['except' => ''],
+        'conformityFilter' => ['except' => ''],
+        'invoiceFilter'    => ['except' => ''],
+        'sortField'        => ['except' => 'created_at'],
+        'sortDirection'    => ['except' => 'desc'],
+    ];
+
+    public function setTab(string $tab): void
+    {
+        $this->activeTab = in_array($tab, ['school', 'company', 'group', 'all']) ? $tab : 'school';
+        $this->resetPage();
+    }
+
+    public function updatedActiveTab(): void
+    {
+        $this->resetPage();
+    }
 
     public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
-    public function updatedTypeFilter(): void
+    public function updatedDegreeFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedConformityFilter(): void
     {
         $this->resetPage();
     }
 
     public function updatedInvoiceFilter(): void
     {
+        $this->resetPage();
+    }
+
+    public function resetFilters(): void
+    {
+        $this->search = '';
+        $this->degreeFilter = '';
+        $this->conformityFilter = '';
+        $this->invoiceFilter = '';
         $this->resetPage();
     }
 
@@ -157,8 +194,15 @@ class FrontGroupManager extends Component
 
     public function render()
     {
+        $minStudents = (int) config('cdn.interclasses.min_students', 8);
+        $minGirls = (int) config('cdn.interclasses.min_girls', 3);
+
         $query = RunRegistration::where('run_registration_type', '!=', 'elite')
-            ->with(['client', 'runRegistrationElements.run']);
+            ->with(['client', 'school', 'runRegistrationElements.run.provision.product']);
+
+        if ($this->activeTab !== 'all') {
+            $query->where('run_registrations.run_registration_type', $this->activeTab);
+        }
 
         if (! empty($this->search)) {
             $query->where(function ($q) {
@@ -166,13 +210,16 @@ class FrontGroupManager extends Component
                     ->orWhere('run_registrations.school_name', 'like', '%'.$this->search.'%')
                     ->orWhere('run_registrations.contact_first_name', 'like', '%'.$this->search.'%')
                     ->orWhere('run_registrations.contact_last_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('run_registrations.school_class_holder_first_name', 'like', '%'.$this->search.'%')
+                    ->orWhere('run_registrations.school_class_holder_last_name', 'like', '%'.$this->search.'%')
                     ->orWhere('run_registrations.contact_email', 'like', '%'.$this->search.'%')
-                    ->orWhere('run_registrations.school_locality', 'like', '%'.$this->search.'%');
+                    ->orWhere('run_registrations.school_locality', 'like', '%'.$this->search.'%')
+                    ->orWhere('run_registrations.invoicing_locality', 'like', '%'.$this->search.'%');
             });
         }
 
-        if (! empty($this->typeFilter)) {
-            $query->where('run_registrations.run_registration_type', $this->typeFilter);
+        if (! empty($this->degreeFilter) && ($this->activeTab === 'school' || $this->activeTab === 'all')) {
+            $query->where('run_registrations.school_class_level', $this->degreeFilter);
         }
 
         if ($this->invoiceFilter === 'linked') {
@@ -181,9 +228,22 @@ class FrontGroupManager extends Component
             $query->whereNull('run_registrations.client_id');
         }
 
+        if ($this->activeTab === 'school' && ! empty($this->conformityFilter)) {
+            if ($this->conformityFilter === 'conform') {
+                $query->has('runRegistrationElements', '>=', $minStudents)
+                    ->whereHas('runRegistrationElements', fn ($q) => $q->where('gender', 'F'), '>=', $minGirls);
+            } elseif ($this->conformityFilter === 'non_conform') {
+                $query->where(function ($q) use ($minStudents, $minGirls) {
+                    $q->has('runRegistrationElements', '<', $minStudents)
+                        ->orWhereHas('runRegistrationElements', fn ($sq) => $sq->where('gender', 'F'), '<', $minGirls);
+                });
+            }
+        }
+
         $allowedSorts = [
             'company_name'          => 'run_registrations.company_name',
             'school_name'           => 'run_registrations.school_name',
+            'school_class_level'    => 'run_registrations.school_class_level',
             'contact_last_name'     => 'run_registrations.contact_last_name',
             'run_registration_type' => 'run_registrations.run_registration_type',
             'created_at'            => 'run_registrations.created_at',
@@ -193,32 +253,65 @@ class FrontGroupManager extends Component
         $sortColumn = $allowedSorts[$this->sortField] ?? 'run_registrations.created_at';
         $sortDirection = in_array(strtolower($this->sortDirection), ['asc', 'desc']) ? strtolower($this->sortDirection) : 'desc';
 
+        $filteredCollection = (clone $query)->get();
         $registrations = $query->orderBy($sortColumn, $sortDirection)->paginate(20);
 
-        // Calculate global statistics separated by type using transversal RunRegistration model helpers
+        // Global dataset for tab badges & aggregated statistics
         $allRegistrations = RunRegistration::where('run_registration_type', '!=', 'elite')
-            ->with(['runRegistrationElements.run.provision.product'])
+            ->with(['runRegistrationElements.run.provision.product', 'client', 'school'])
             ->get();
 
         $companies = $allRegistrations->filter(fn ($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'company');
         $schools = $allRegistrations->filter(fn ($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'school');
         $groups = $allRegistrations->filter(fn ($r) => (is_object($r->run_registration_type) ? $r->run_registration_type->value : (string) $r->run_registration_type) === 'group');
 
+        $schoolsConformCount = $schools->filter(fn ($r) => $r->isSchoolTeamConform())->count();
+        $schoolsIncompleteCount = $schools->count() - $schoolsConformCount;
+
+        $degreesCount = [];
+        foreach (['3H', '4H', '5H', '6H', '7H', '8H'] as $deg) {
+            $degreesCount[$deg] = $schools->filter(fn ($r) => (string) $r->school_class_level === $deg)->count();
+        }
+
+        $hasActiveFilters = ! empty($this->search)
+            || ! empty($this->degreeFilter)
+            || ! empty($this->conformityFilter)
+            || ! empty($this->invoiceFilter);
+
         $stats = [
             'total_dossiers'     => $allRegistrations->count(),
             'total_participants' => $allRegistrations->sum(fn ($r) => $r->participants_count),
+            'total_girls'        => $allRegistrations->sum(fn ($r) => $r->girls_count),
+            'total_boys'         => $allRegistrations->sum(fn ($r) => $r->boys_count),
+            'total_estimated'    => $allRegistrations->sum(fn ($r) => $r->estimated_total),
 
             'companies_dossiers'     => $companies->count(),
             'companies_participants' => $companies->sum(fn ($r) => $r->participants_count),
+            'companies_girls'        => $companies->sum(fn ($r) => $r->girls_count),
+            'companies_boys'         => $companies->sum(fn ($r) => $r->boys_count),
+            'companies_estimated'    => $companies->sum(fn ($r) => $r->estimated_total),
+            'companies_linked'       => $companies->filter(fn ($r) => ! empty($r->client_id))->count(),
 
-            'schools_dossiers'     => $schools->count(),
-            'schools_participants' => $schools->sum(fn ($r) => $r->participants_count),
+            'schools_dossiers'         => $schools->count(),
+            'schools_participants'     => $schools->sum(fn ($r) => $r->participants_count),
+            'schools_girls'            => $schools->sum(fn ($r) => $r->girls_count),
+            'schools_boys'             => $schools->sum(fn ($r) => $r->boys_count),
+            'schools_conform_count'    => $schoolsConformCount,
+            'schools_incomplete_count' => $schoolsIncompleteCount,
+            'schools_degrees_count'    => $degreesCount,
 
             'groups_dossiers'     => $groups->count(),
             'groups_participants' => $groups->sum(fn ($r) => $r->participants_count),
+            'groups_girls'        => $groups->sum(fn ($r) => $r->girls_count),
+            'groups_boys'         => $groups->sum(fn ($r) => $r->boys_count),
+            'groups_estimated'    => $groups->sum(fn ($r) => $r->estimated_total),
 
-            'filtered_estimated' => $registrations->getCollection()->sum(fn ($r) => $r->estimated_total),
-            'total_estimated'    => $allRegistrations->sum(fn ($r) => $r->estimated_total),
+            'has_active_filters'    => $hasActiveFilters,
+            'filtered_dossiers'     => $filteredCollection->count(),
+            'filtered_participants' => $filteredCollection->sum(fn ($r) => $r->participants_count),
+            'filtered_girls'        => $filteredCollection->sum(fn ($r) => $r->girls_count),
+            'filtered_boys'         => $filteredCollection->sum(fn ($r) => $r->boys_count),
+            'filtered_estimated'    => $filteredCollection->sum(fn ($r) => $r->estimated_total),
         ];
 
         $clients = Client::orderBy('name')->get();
@@ -227,6 +320,8 @@ class FrontGroupManager extends Component
             'registrations' => $registrations,
             'stats'         => $stats,
             'clients'       => $clients,
+            'minStudents'   => $minStudents,
+            'minGirls'      => $minGirls,
         ])->layout('layouts.app', ['title' => 'Gestion des Inscriptions Groupes & Entreprises']);
     }
 }

@@ -16,6 +16,7 @@ class RunTest extends TestCase
         $fillable = [
             'name',
             'distance',
+            'gender',
             'cost',
             'available_for_types',
             'start_blocs',
@@ -80,5 +81,22 @@ class RunTest extends TestCase
 
         $run4 = new Run(['min_age' => null, 'max_age' => null]);
         $this->assertNull($run4->age_range_label);
+    }
+
+    /** @test */
+    public function it_verifies_gender_restrictions_correctly()
+    {
+        $runMixte = new Run(['gender' => null]);
+        $this->assertTrue($runMixte->matchesGender('M'));
+        $this->assertTrue($runMixte->matchesGender('F'));
+        $this->assertTrue($runMixte->matchesGender(null));
+
+        $runMale = new Run(['gender' => 'M']);
+        $this->assertTrue($runMale->matchesGender('M'));
+        $this->assertFalse($runMale->matchesGender('F'));
+
+        $runFemale = new Run(['gender' => 'F']);
+        $this->assertTrue($runFemale->matchesGender('F'));
+        $this->assertFalse($runFemale->matchesGender('M'));
     }
 }

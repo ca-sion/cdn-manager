@@ -210,6 +210,7 @@ class DatabaseSeeder extends Seeder
         $runHommes = Run::create([
             'name'                   => 'Course Hommes',
             'distance'               => 7.30,
+            'gender'                 => 'M',
             'cost'                   => 30.00,
             'min_age'                => 18,
             'max_age'                => null,
@@ -223,6 +224,7 @@ class DatabaseSeeder extends Seeder
         $runDames = Run::create([
             'name'                   => 'Course Dames',
             'distance'               => 5.20,
+            'gender'                 => 'F',
             'cost'                   => 30.00,
             'min_age'                => 18,
             'max_age'                => null,
@@ -353,8 +355,9 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Run::create([
-            'name'                   => 'Course des Cadets/Juniors - 3 Tours',
+            'name'                   => 'Course des Cadettes - 3 Tours',
             'distance'               => 3.30,
+            'gender'                 => 'F',
             'cost'                   => 20.00,
             'min_age'                => 14,
             'max_age'                => 17,
@@ -366,11 +369,12 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Run::create([
-            'name'                   => 'Course des Cadets/Juniors - 4 Tours',
+            'name'                   => 'Course des Cadets - 4 Tours',
             'distance'               => 4.40,
+            'gender'                 => 'M',
             'cost'                   => 20.00,
-            'min_age'                => 16,
-            'max_age'                => 19,
+            'min_age'                => 14,
+            'max_age'                => 17,
             'available_for_types'    => ['group'],
             'registrations_deadline' => now()->addDays(45),
             'datasport_code'         => 'DS-CAD-4T',

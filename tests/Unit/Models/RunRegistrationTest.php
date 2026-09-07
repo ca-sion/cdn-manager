@@ -34,6 +34,7 @@ class RunRegistrationTest extends TestCase
             'payment_note',
             'company_name',
             'company_bloc',
+            'school_id',
             'school_name',
             'school_postal_code',
             'school_locality',

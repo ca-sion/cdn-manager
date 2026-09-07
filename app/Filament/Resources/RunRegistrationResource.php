@@ -4,9 +4,11 @@ namespace App\Filament\Resources;
 
 use Exception;
 use App\Models\Client;
+use App\Models\School;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
+use App\Enums\SchoolClassLevel;
 use App\Models\RunRegistration;
 use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
@@ -68,6 +70,27 @@ class RunRegistrationResource extends Resource
                                 TextInput::make('company_name')
                                     ->label('Nom de l\'entreprise')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['company', RunRegistrationType::Company->value, RunRegistrationType::Company])),
+                                Select::make('school_id')
+                                    ->label('Établissement scolaire')
+                                    ->relationship('school', 'name')
+                                    ->searchable()
+                                    ->preload()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, $set) {
+                                        if ($state) {
+                                            $school = School::find($state);
+                                            if ($school) {
+                                                $set('school_name', $school->name);
+                                                $set('school_postal_code', $school->postal_code);
+                                                $set('school_locality', $school->locality);
+                                                $set('school_country', $school->country ?: 'SUI');
+                                                if ($school->client_id) {
+                                                    $set('client_id', $school->client_id);
+                                                }
+                                            }
+                                        }
+                                    })
+                                    ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
                                 TextInput::make('school_name')
                                     ->label('Nom de l\'école')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
@@ -81,8 +104,9 @@ class RunRegistrationResource extends Resource
                                     ->label('Pays École')
                                     ->default('SUI')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
-                                TextInput::make('school_class_level')
+                                Select::make('school_class_level')
                                     ->label('Niveau / Classe')
+                                    ->options(SchoolClassLevel::class)
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
                                 TextInput::make('school_class_holder_first_name')
                                     ->label('Prénom titulaire classe')
@@ -213,6 +237,9 @@ class RunRegistrationResource extends Resource
                 SelectFilter::make('run_registration_type')
                     ->label('Type d\'inscription')
                     ->options(RunRegistrationType::class),
+                SelectFilter::make('school_class_level')
+                    ->label('Degré scolaire')
+                    ->options(SchoolClassLevel::class),
             ])
             ->recordActions([
                 ActionGroup::make([
@@ -604,6 +631,7 @@ class RunRegistrationResource extends Resource
                 'ID Dossier'                   => $reg->id,
                 'Type'                         => $typeLabel,
                 'Organisme / Entreprise'       => $reg->company_name ?: ($reg->school_name ?: ($reg->contact_first_name.' '.$reg->contact_last_name)),
+                'Degré'                        => $reg->school_class_level,
                 'Personne contact'             => $reg->contact_first_name.' '.$reg->contact_last_name,
                 'Email contact'                => $reg->contact_email,
                 'Téléphone contact'            => $reg->contact_phone,
@@ -616,6 +644,8 @@ class RunRegistrationResource extends Resource
                 'IBAN de paiement'             => $reg->payment_iban,
                 'Client lié'                   => $reg->client?->name ?? 'Non associé',
                 'Nombre participants'          => $reg->runRegistrationElements->count(),
+                'Nombre filles (F)'            => $reg->girls_count,
+                'Nombre garçons (M)'           => $reg->boys_count,
                 'Montant Total (CHF)'          => $reg->estimated_total,
                 'Date création'                => $reg->created_at?->format('d.m.Y H:i'),
             ]);

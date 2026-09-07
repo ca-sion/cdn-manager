@@ -54,6 +54,15 @@ class RunResource extends Resource
                             ->label('Distance')
                             ->numeric()
                             ->suffix('km'),
+                        Select::make('gender')
+                            ->label('Restriction de genre')
+                            ->placeholder('Mixte / Tous genres admis')
+                            ->options([
+                                'M' => 'Hommes / Garçons uniquement (M)',
+                                'F' => 'Femmes / Filles uniquement (F)',
+                            ])
+                            ->nullable()
+                            ->helperText('Laissez vide si la course est ouverte aux hommes et aux femmes.'),
                         TextInput::make('cost')
                             ->label('Coût')
                             ->numeric()
@@ -126,6 +135,19 @@ class RunResource extends Resource
                     ->label('Dist.')
                     ->suffix(' km')
                     ->sortable(),
+                TextColumn::make('gender')
+                    ->label('Genre')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'M'     => 'Hommes (M)',
+                        'F'     => 'Femmes (F)',
+                        default => 'Mixte',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        'M'     => 'info',
+                        'F'     => 'warning',
+                        default => 'gray',
+                    }),
                 TextColumn::make('cost')
                     ->label('Prix')
                     ->money('CHF')
