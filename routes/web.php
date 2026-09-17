@@ -16,8 +16,12 @@ use App\Livewire\FrontEliteRegistration;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\RunFillRateController;
 use App\Http\Controllers\TrackingController;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
+
+Route::get('/courses/remplissage', [RunFillRateController::class, 'index'])->name('courses.fill-rate');
+Route::get('/api/courses/remplissage', [RunFillRateController::class, 'api'])->name('api.courses.fill-rate');
 
 Route::get('registrations/manager', FrontGroupManager::class)->middleware(SiteProtection::class)->name('front.run-registration.manager');
 Route::get('registrations/elite-manager', FrontEliteManager::class)->middleware(SiteProtection::class)->name('front.elite-manager');
