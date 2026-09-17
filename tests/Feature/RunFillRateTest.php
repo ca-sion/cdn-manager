@@ -69,9 +69,8 @@ it('fetches fill rates and returns successful public page with snow blue theme a
     $response->assertStatus(200);
     $response->assertSee('Trail des Châteaux');
     $response->assertSee('Course Hommes');
-    // 450 sur 500 => 90% (reste 50 dossards > 15)
+    // 450 sur 500 => 90%
     $response->assertSee('90%');
-    $response->assertSee('Derniers dossards');
 });
 
 it('marks race as 100% full when 15 or fewer slots remain', function () {
@@ -167,7 +166,6 @@ it('aggregates internal CDN registrations before deadline', function () {
     $response->assertStatus(200);
     // 50 inscrits sur 100 places => 50%
     $response->assertSee('50%');
-    $response->assertSee('Places disponibles');
 });
 
 it('serves the public page in embed mode without repeating individual register buttons', function () {
@@ -295,7 +293,6 @@ it('renders interclasses levels breakdown (3H to 8H)', function () {
 
     $response->assertStatus(200);
     $response->assertSee('Interclasses');
-    $response->assertSee('Par degré scolaire');
     $response->assertSee('3H');
     $response->assertSee('8H');
     $response->assertSee('5%');

@@ -231,7 +231,7 @@ class DatasportScraperService
                 'registration_url' => (string) ($header['onreg']['link'] ?? $defaultRegistrationUrl),
             ],
             'courses'         => $courses,
-            'last_updated_at' => now()->translatedFormat('d F Y à H:i'),
+            'last_updated_at' => now('Europe/Zurich')->translatedFormat('d F Y à H:i'),
             'is_fallback'     => false,
         ];
     }
@@ -507,7 +507,7 @@ class DatasportScraperService
                 'registration_url' => $defaultRegistrationUrl,
             ],
             'courses'         => $courses,
-            'last_updated_at' => now()->translatedFormat('d F Y à H:i'),
+            'last_updated_at' => now('Europe/Zurich')->translatedFormat('d F Y à H:i'),
             'is_fallback'     => true,
         ];
     }
