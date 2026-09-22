@@ -361,4 +361,73 @@ class FrontRunRegistrationTest extends TestCase
         $this->assertEquals(5, $stats['missing_students']); // 8 - 3 = 5
         $this->assertEquals(1, $stats['missing_girls']);    // 3 - 2 = 1
     }
+
+    /** @test */
+    public function it_saves_elements_correctly_without_duplicating_or_resurrecting_deleted_rows()
+    {
+        $run = Run::factory()->create([
+            'name'                => 'Course Entreprises',
+            'available_for_types' => ['company'],
+            'min_age'             => 16,
+            'max_age'             => 99,
+        ]);
+        setting(['default_run_company' => $run->id]);
+
+        $registration = RunRegistration::factory()->create([
+            'run_registration_type'  => 'company',
+            'company_name'           => 'Test Enterprise',
+            'contact_first_name'     => 'Marc',
+            'contact_last_name'      => 'Favre',
+            'contact_email'          => 'marc@test.com',
+            'invoicing_company_name' => 'Test Enterprise',
+            'invoicing_address'      => 'Rue du Rhône 1',
+            'invoicing_postal_code'  => '1950',
+            'invoicing_locality'     => 'Sion',
+            'invoicing_email'        => 'invoicing@test.com',
+        ]);
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['registration' => $registration->id]);
+
+        // Add 2 elements
+        $comp->set('elements', [
+            [
+                '_k'         => 'l1',
+                'first_name' => 'Alice',
+                'last_name'  => 'Dupond',
+                'birthdate'  => '15.05.1990',
+                'gender'     => 'F',
+                'email'      => 'alice@test.com',
+            ],
+            [
+                '_k'         => 'l2',
+                'first_name' => 'Bob',
+                'last_name'  => 'Martin',
+                'birthdate'  => '20.08.1985',
+                'gender'     => 'M',
+                'email'      => 'bob@test.com',
+            ],
+        ]);
+
+        // First Save
+        $comp->call('save');
+        $this->assertCount(2, $registration->fresh()->runRegistrationElements);
+
+        // Consecutive Save without page reload: should not duplicate
+        $comp->call('save');
+        $this->assertCount(2, $registration->fresh()->runRegistrationElements);
+
+        // Remove 1 element (Bob)
+        $comp->call('removeRow', 1);
+        $this->assertCount(1, $comp->get('elements'));
+
+        // Save after removal
+        $comp->call('save');
+        $this->assertCount(1, $registration->fresh()->runRegistrationElements);
+        $this->assertEquals('Alice', $registration->fresh()->runRegistrationElements->first()->first_name);
+
+        // Reload fresh component (simulate page refresh)
+        $freshComp = Livewire::test(FrontRunRegistration::class, ['registration' => $registration->id]);
+        $this->assertCount(1, $freshComp->get('elements'));
+        $this->assertEquals('Alice', $freshComp->get('elements.0.first_name'));
+    }
 }

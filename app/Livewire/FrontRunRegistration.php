@@ -121,13 +121,19 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 
         $this->type = in_array($type, ['company', 'school', 'group', 'elite']) ? $type : 'company';
 
+        $this->loadElements();
+    }
+
+    public function loadElements(): void
+    {
         $elementsList = $this->registration
-            ? $this->registration->runRegistrationElements()->withTrashed()->get()
+            ? $this->registration->runRegistrationElements()->get()
             : collect();
 
         if ($elementsList->isNotEmpty()) {
             $this->elements = $elementsList->map(function ($el) {
                 $arr = array_merge($this->emptyElement(), $el->toArray());
+                $arr['id'] = $el->id;
                 $arr['_k'] = 'el_'.$el->id;
                 if ($el->birthdate) {
                     $arr['birthdate'] = $el->birthdate->format('d.m.Y');
@@ -684,6 +690,9 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         $key = $row['_k'] ?? null;
         if ($key) {
             $this->elements = array_values(array_filter($this->elements, fn ($r) => ($r['_k'] ?? null) !== $key));
+            if (empty($this->elements)) {
+                $this->elements = $this->defaultElements();
+            }
         }
     }
 
@@ -700,6 +709,11 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
     {
         if (! $this->isGridLocked() && isset($this->elements[$index])) {
             array_splice($this->elements, $index, 1);
+            $this->elements = array_values($this->elements);
+
+            if (empty($this->elements)) {
+                $this->elements = $this->defaultElements();
+            }
         }
     }
 
@@ -977,13 +991,10 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 $elementData['team'] = ! empty($elementData['team']) ? $elementData['team'] : $teamName;
 
                 $elementId = $elementData['id'] ?? null;
-                unset($elementData['_k'], $elementData['id']);
+                unset($elementData['_k'], $elementData['_labels'], $elementData['_actions'], $elementData['id']);
 
-                if ($elementId && $this->registration->runRegistrationElements()->withTrashed()->where('id', $elementId)->exists()) {
-                    $existingEl = $this->registration->runRegistrationElements()->withTrashed()->find($elementId);
-                    if ($existingEl->trashed()) {
-                        $existingEl->restore();
-                    }
+                if ($elementId && $this->registration->runRegistrationElements()->where('id', $elementId)->exists()) {
+                    $existingEl = $this->registration->runRegistrationElements()->find($elementId);
                     $existingEl->update($elementData);
                     $keptIds[] = $existingEl->id;
                 } else {
@@ -993,6 +1004,8 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             }
 
             $this->registration->runRegistrationElements()->whereNotIn('id', $keptIds)->delete();
+
+            $this->loadElements();
         }
 
         if ($isNew) {
