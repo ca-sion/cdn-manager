@@ -69,6 +69,23 @@ class RunRegistrationService
             throw new Exception('Impossible de générer une facture : aucune inscription trouvée pour ce client.');
         }
 
+        $client = $registrations->first()->client ?? Client::find($clientId);
+        $quota = $client ? (int) $client->cdn_vouchers_quota : 0;
+
+        // Auto-application du quota d'inscriptions incluses selon le contrat de partenariat
+        if ($quota > 0) {
+            $currentFreeCount = $allElements->where('has_free_registration_fee', true)->count();
+            if ($currentFreeCount < $quota) {
+                $neededFree = $quota - $currentFreeCount;
+                $toUpdate = $allElements->where('has_free_registration_fee', false)->take($neededFree);
+                foreach ($toUpdate as $el) {
+                    $el->update(['has_free_registration_fee' => true]);
+                }
+                // Rafraîchir les éléments après application du quota
+                $allElements = RunRegistrationElement::whereIn('run_registration_id', $registrationIds)->get();
+            }
+        }
+
         $paidElements = $allElements->where('has_free_registration_fee', false);
         $freeElements = $allElements->where('has_free_registration_fee', true);
 
@@ -107,11 +124,11 @@ class RunRegistrationService
             }
         }
 
-        // Ligne distincte pour les dossards offerts / Vouchers
+        // Ligne distincte pour les inscriptions incluses / Vouchers
         if ($freeElements->isNotEmpty()) {
             $freeQty = $freeElements->count();
             $positions->push([
-                'name'        => 'Dossards offerts / Vouchers déduits ('.$freeQty.' participant'.($freeQty > 1 ? 's' : '').')',
+                'name'        => 'Inscriptions incluses selon partenariat et vouchers ('.$freeQty.' participant'.($freeQty > 1 ? 's' : '').')',
                 'quantity'    => $freeQty,
                 'unit'        => 'pce',
                 'cost'        => 0.00,

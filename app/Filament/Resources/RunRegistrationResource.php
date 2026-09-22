@@ -424,13 +424,24 @@ class RunRegistrationResource extends Resource
 
                     // Export Aggregated Data with Invoicing & Accounting details
                     Action::make('exportAggregatedData')
-                        ->label('Export agrégations')
+                        ->label('Export récapitulatif comptable')
                         ->icon('heroicon-o-chart-bar')
                         ->color('success')
                         ->action(function () {
-                            $registrations = RunRegistration::with(['runRegistrationElements.run', 'client'])->get();
+                            $registrations = RunRegistration::with(['runRegistrationElements.run.provision.product', 'client', 'invoice'])->get();
 
                             return RunRegistrationResource::generateAggregatedExcel($registrations);
+                        }),
+
+                    // Export Detailed Participants List
+                    Action::make('exportDetailedParticipants')
+                        ->label('Export participants détaillé')
+                        ->icon('heroicon-o-users')
+                        ->color('primary')
+                        ->action(function () {
+                            $registrations = RunRegistration::with(['runRegistrationElements.run.provision.product', 'client', 'invoice'])->get();
+
+                            return RunRegistrationResource::generateDetailedParticipantsExcel($registrations);
                         }),
                 ]),
             ])
@@ -493,6 +504,18 @@ class RunRegistrationResource extends Resource
                             $filtered = $records->filter(fn ($r) => ($r->run_registration_type?->value ?? $r->run_registration_type) === 'group');
 
                             return RunRegistrationResource::generateDatasportGroupExcel($filtered);
+                        }),
+                    BulkAction::make('exportDetailedParticipants')
+                        ->label('Export participants détaillé (sélection)')
+                        ->icon('heroicon-o-users')
+                        ->action(function (Collection $records) {
+                            return RunRegistrationResource::generateDetailedParticipantsExcel($records);
+                        }),
+                    BulkAction::make('exportAggregatedData')
+                        ->label('Export récapitulatif comptable (sélection)')
+                        ->icon('heroicon-o-chart-bar')
+                        ->action(function (Collection $records) {
+                            return RunRegistrationResource::generateAggregatedExcel($records);
                         }),
                 ]),
             ]);
@@ -627,26 +650,39 @@ class RunRegistrationResource extends Resource
                 ? $reg->run_registration_type->getLabel()
                 : (string) $reg->run_registration_type;
 
+            $client = $reg->client;
+            $invoice = $reg->invoice;
+
+            $elements = $reg->runRegistrationElements;
+            $totalParticipants = $elements->count();
+            $freeCount = $elements->where('has_free_registration_fee', true)->count();
+            $paidCount = $totalParticipants - $freeCount;
+
             $data->push([
-                'ID Dossier'                   => $reg->id,
+                'ID dossier'                   => $reg->id,
                 'Type'                         => $typeLabel,
-                'Organisme / Entreprise'       => $reg->company_name ?: ($reg->school_name ?: ($reg->contact_first_name.' '.$reg->contact_last_name)),
+                'Organisme / entreprise'       => $reg->company_name ?: ($reg->school_name ?: ($reg->contact_first_name.' '.$reg->contact_last_name)),
                 'Degré'                        => $reg->school_class_level,
-                'Personne contact'             => $reg->contact_first_name.' '.$reg->contact_last_name,
-                'Email contact'                => $reg->contact_email,
-                'Téléphone contact'            => $reg->contact_phone,
-                'Facturation - Raison Sociale' => $reg->invoicing_company_name,
-                'Facturation - Adresse'        => $reg->invoicing_address,
-                'Facturation - Complément'     => $reg->invoicing_address_extension,
-                'Facturation - Code Postal'    => $reg->invoicing_postal_code ?: $reg->school_postal_code,
-                'Facturation - Localité'       => $reg->invoicing_locality ?: $reg->school_locality,
-                'Facturation - Email'          => $reg->invoicing_email,
+                'Personne de contact'          => trim($reg->contact_first_name.' '.$reg->contact_last_name),
+                'Email de contact'             => $reg->contact_email,
+                'Téléphone de contact'         => $reg->contact_phone,
+                'Facturation - raison sociale' => $reg->invoicing_company_name,
+                'Facturation - adresse'        => $reg->invoicing_address,
+                'Facturation - complément'     => $reg->invoicing_address_extension,
+                'Facturation - code postal'    => $reg->invoicing_postal_code ?: $reg->school_postal_code,
+                'Facturation - localité'       => $reg->invoicing_locality ?: $reg->school_locality,
+                'Facturation - email'          => $reg->invoicing_email,
                 'IBAN de paiement'             => $reg->payment_iban,
-                'Client lié'                   => $reg->client?->name ?? 'Non associé',
-                'Nombre participants'          => $reg->runRegistrationElements->count(),
+                'Client partenaire lié'        => $client?->name ?? 'Non associé',
+                'Quota inclus contrat (CDN)'   => $client ? (int) $client->cdn_vouchers_quota : 0,
+                'Participants totaux'          => $totalParticipants,
+                'Dossards inclus appliqués'    => $freeCount,
+                'Dossards payants'             => $paidCount,
                 'Nombre filles (F)'            => $reg->girls_count,
                 'Nombre garçons (M)'           => $reg->boys_count,
-                'Montant Total (CHF)'          => $reg->estimated_total,
+                'Montant estimé (CHF)'         => $reg->estimated_total,
+                'N° Facture'                   => $invoice?->number ?? 'Non facturé',
+                'Statut facture'               => $invoice ? ($invoice->status?->value ?? $invoice->status) : 'Aucune',
                 'Date création'                => $reg->created_at?->format('d.m.Y H:i'),
             ]);
         }
@@ -657,7 +693,65 @@ class RunRegistrationResource extends Resource
             return null;
         }
 
-        return (new FastExcel($data))->download('export_inscriptions_comptabilite_'.date('Ymd_His').'.xlsx');
+        return (new FastExcel($data))->download('export_inscriptions_recapitulatif_'.date('Ymd_His').'.xlsx');
+    }
+
+    public static function generateDetailedParticipantsExcel($registrations)
+    {
+        $data = collect();
+
+        foreach ($registrations as $reg) {
+            $typeLabel = $reg->run_registration_type instanceof RunRegistrationType
+                ? $reg->run_registration_type->getLabel()
+                : (string) $reg->run_registration_type;
+
+            $client = $reg->client;
+            $invoice = $reg->invoice;
+
+            foreach ($reg->runRegistrationElements as $element) {
+                $gender = is_object($element->gender) ? $element->gender->value : ($element->gender ?? '');
+                if (strtolower($gender) === 'male' || strtolower($gender) === 'homme') {
+                    $gender = 'M';
+                } elseif (strtolower($gender) === 'female' || strtolower($gender) === 'femme') {
+                    $gender = 'F';
+                }
+
+                $birthdate = $element->birthdate ? $element->birthdate->format('d.m.Y') : '';
+                $runName = $element->run?->name ?? ($element->run_name ?? '');
+                $cost = (float) ($element->run?->provision?->product?->price?->amount ?? ($element->run?->cost ?? 0));
+                $effectiveCost = $element->has_free_registration_fee ? 0.00 : $cost;
+
+                $data->push([
+                    'ID dossier'             => $reg->id,
+                    'Type inscription'       => $typeLabel,
+                    'Organisme / entreprise' => $reg->company_name ?: ($reg->school_name ?: ($reg->contact_first_name.' '.$reg->contact_last_name)),
+                    'Client partenaire lié'  => $client?->name ?? 'Non associé',
+                    'Nom participant'        => $element->last_name,
+                    'Prénom participant'     => $element->first_name,
+                    'Date de naissance'      => $birthdate,
+                    'Genre'                  => $gender,
+                    'Nationalité'            => $element->nationality ?: 'SUI',
+                    'Email participant'      => $element->email ?: $reg->contact_email,
+                    'Course'                 => $runName,
+                    'Bloc de départ'         => $element->bloc ?: '',
+                    'Équipe / entreprise'    => $element->team ?: ($reg->company_name ?: ''),
+                    'Frais offerts / inclus' => $element->has_free_registration_fee ? 'Oui' : 'Non',
+                    'Prix unitaire (CHF)'    => $cost,
+                    'Facturé effectif (CHF)' => $effectiveCost,
+                    'Option vidéo'           => $element->with_video ? 'Oui' : 'Non',
+                    'N° Facture'             => $invoice?->number ?? 'Non facturé',
+                    'Statut facture'         => $invoice ? ($invoice->status?->value ?? $invoice->status) : 'Aucune',
+                ]);
+            }
+        }
+
+        if ($data->isEmpty()) {
+            Notification::make()->title('Aucun participant à exporter.')->warning()->send();
+
+            return null;
+        }
+
+        return (new FastExcel($data))->download('export_participants_detail_'.date('Ymd_His').'.xlsx');
     }
 
     public static function getRelations(): array

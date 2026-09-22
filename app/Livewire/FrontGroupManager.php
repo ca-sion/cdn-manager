@@ -186,10 +186,19 @@ class FrontGroupManager extends Component
     public function exportAggregatedData()
     {
         $registrations = RunRegistration::where('run_registration_type', '!=', 'elite')
-            ->with(['runRegistrationElements.run', 'client'])
+            ->with(['runRegistrationElements.run.provision.product', 'client', 'invoice'])
             ->get();
 
         return RunRegistrationResource::generateAggregatedExcel($registrations);
+    }
+
+    public function exportDetailedParticipants()
+    {
+        $registrations = RunRegistration::where('run_registration_type', '!=', 'elite')
+            ->with(['runRegistrationElements.run.provision.product', 'client', 'invoice'])
+            ->get();
+
+        return RunRegistrationResource::generateDetailedParticipantsExcel($registrations);
     }
 
     public function render()

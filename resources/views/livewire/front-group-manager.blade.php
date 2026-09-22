@@ -61,7 +61,10 @@
                     </div>
                     <div class="py-1">
                         <button wire:click="exportAggregatedData" @click="open = false" class="w-full text-left px-3 py-2 text-xs text-slate-900 dark:text-white font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 cursor-pointer">
-                            📊 Export agrégé (Tous types)
+                            📊 Export récapitulatif comptable
+                        </button>
+                        <button wire:click="exportDetailedParticipants" @click="open = false" class="w-full text-left px-3 py-2 text-xs text-blue-600 dark:text-blue-400 font-semibold hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 cursor-pointer">
+                            👥 Export participants détaillé
                         </button>
                     </div>
                 </div>
