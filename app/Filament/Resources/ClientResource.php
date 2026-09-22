@@ -243,6 +243,30 @@ class ClientResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('vouchers_summary')
+                    ->label('Vouchers')
+                    ->state(function (Client $record) {
+                        $cdnQuota = $record->cdn_vouchers_quota;
+                        $trailQuota = $record->trail_vouchers_quota;
+                        $assigned = $record->assigned_vouchers_count;
+
+                        if ($cdnQuota === 0 && $trailQuota === 0 && $assigned === 0) {
+                            return null;
+                        }
+
+                        $parts = [];
+                        if ($cdnQuota > 0 || $assigned > 0) {
+                            $parts[] = "CDN: {$assigned}/{$cdnQuota}";
+                        }
+                        if ($trailQuota > 0) {
+                            $parts[] = "Trail: {$trailQuota}";
+                        }
+
+                        return implode(' | ', $parts);
+                    })
+                    ->badge()
+                    ->color(fn (Client $record) => $record->missing_vouchers_count > 0 ? 'warning' : 'success')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('currentEngagement.sent_at')
                     ->label('Env. le')
                     ->date('d.m.y')
@@ -380,9 +404,13 @@ class ClientResource extends Resource
                                 ]);
 
                                 try {
+                                    $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+                                    $vouchers = $client->vouchers()->where('edition_id', $editionId)->get();
+
                                     $client->notify(new ClientSendVouchers(
-                                        $client->vouchers,
-                                        "Veuillez utiliser ce lien pré-rempli pour compléter l'inscription de vos coureurs d'entreprise :\n".$signedUrl
+                                        $vouchers,
+                                        "Veuillez utiliser ce lien pré-rempli pour compléter l'inscription de vos coureurs d'entreprise :\n".$signedUrl,
+                                        $client->trail_vouchers_quota
                                     ));
                                     $sentCount++;
                                 } catch (Exception $e) {

@@ -224,6 +224,70 @@ class Client extends Model implements HasMedia
     }
 
     /**
+     * Get the client's CDN vouchers quota for the current edition.
+     */
+    protected function cdnVouchersQuota(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $provisionIds = collect(setting('voucher_cdn_provisions', []))->flatten()->filter()->map(fn ($v) => (int) $v)->values()->all();
+                if (empty($provisionIds)) {
+                    return 0;
+                }
+
+                return (int) $this->currentProvisionElements()
+                    ->whereIn('provision_id', $provisionIds)
+                    ->get()
+                    ->sum(fn ($pe) => ($pe->numeric_indicator !== null && $pe->numeric_indicator !== '') ? (int) $pe->numeric_indicator : 1);
+            }
+        );
+    }
+
+    /**
+     * Get the client's Trail des Châteaux vouchers quota for the current edition.
+     */
+    protected function trailVouchersQuota(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $provisionIds = collect(setting('voucher_trail_provisions', []))->flatten()->filter()->map(fn ($v) => (int) $v)->values()->all();
+                if (empty($provisionIds)) {
+                    return 0;
+                }
+
+                return (int) $this->currentProvisionElements()
+                    ->whereIn('provision_id', $provisionIds)
+                    ->get()
+                    ->sum(fn ($pe) => ($pe->numeric_indicator !== null && $pe->numeric_indicator !== '') ? (int) $pe->numeric_indicator : 1);
+            }
+        );
+    }
+
+    /**
+     * Get the number of assigned vouchers for current edition.
+     */
+    protected function assignedVouchersCount(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+
+                return $this->vouchers()->where('edition_id', $editionId)->count();
+            }
+        );
+    }
+
+    /**
+     * Get the number of missing vouchers for current edition.
+     */
+    protected function missingVouchersCount(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => max(0, $this->cdn_vouchers_quota - $this->assigned_vouchers_count)
+        );
+    }
+
+    /**
      * Route notifications for the mail channel.
      *
      * @return array<string, string>|string

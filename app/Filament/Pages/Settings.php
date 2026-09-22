@@ -81,6 +81,21 @@ class Settings extends BaseSettings
                             ->label('Donation interclasse : Prestation')
                             ->options(Provision::all()->pluck('name', 'id')),
                     ]),
+                Section::make('Vouchers et inscriptions offertes')
+                    ->schema([
+                        Select::make('voucher_cdn_provisions')
+                            ->label('Prestations : Vouchers Course de Noël (CDN)')
+                            ->helperText('Prestations donnant droit à des codes vouchers pour la Course de Noël.')
+                            ->options(Provision::all()->pluck('name', 'id'))
+                            ->multiple()
+                            ->searchable(),
+                        Select::make('voucher_trail_provisions')
+                            ->label('Prestations : Inscriptions Trail des Châteaux')
+                            ->helperText('Prestations donnant droit à des inscriptions offertes pour le Trail des Châteaux (contact par email).')
+                            ->options(Provision::all()->pluck('name', 'id'))
+                            ->multiple()
+                            ->searchable(),
+                    ]),
                 Section::make('Inscriptions courses')
                     ->schema([
                         Select::make('default_run_school')

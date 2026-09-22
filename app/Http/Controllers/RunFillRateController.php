@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Services\DatasportScraperService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
+use App\Services\DatasportScraperService;
 
 class RunFillRateController extends Controller
 {
@@ -34,7 +34,7 @@ class RunFillRateController extends Controller
 
         return response($content)
             ->header('X-Frame-Options', 'ALLOWALL')
-            ->header('Content-Security-Policy', "frame-ancestors *;");
+            ->header('Content-Security-Policy', 'frame-ancestors *;');
     }
 
     /**

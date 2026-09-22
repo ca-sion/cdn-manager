@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Run;
-use App\Models\RunRegistrationElement;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use App\Models\RunRegistrationElement;
 
 class DatasportScraperService
 {
     public const CACHE_KEY = 'datasport_fill_rates_data';
+
     public const BACKUP_CACHE_KEY = 'datasport_fill_rates_backup';
 
     /**

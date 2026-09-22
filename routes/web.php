@@ -16,8 +16,8 @@ use App\Livewire\FrontEliteRegistration;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReportsController;
-use App\Http\Controllers\RunFillRateController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\RunFillRateController;
 use ElicDev\SiteProtection\Http\Middleware\SiteProtection;
 
 Route::get('/courses/remplissage', [RunFillRateController::class, 'index'])->name('courses.fill-rate');

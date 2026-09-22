@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 use App\Models\Run;
 use App\Models\RunRegistration;
-use App\Models\RunRegistrationElement;
-use App\Services\DatasportScraperService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use App\Models\RunRegistrationElement;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
@@ -97,9 +96,9 @@ it('marks race as 100% full when 15 or fewer slots remain', function () {
 
     // Run avec limite de 500 et 490 inscrits (il reste 10 places <= 15)
     Run::factory()->create([
-        'name' => 'Trail des Châteaux',
-        'datasport_code' => 'DS-TRAIL-20K',
-        'registrations_limit' => 500,
+        'name'                 => 'Trail des Châteaux',
+        'datasport_code'       => 'DS-TRAIL-20K',
+        'registrations_limit'  => 500,
         'registrations_number' => 490,
     ]);
 
@@ -138,9 +137,9 @@ it('aggregates internal CDN registrations before deadline', function () {
 
     // Création d'une course en BD avec limite 100
     $run = Run::factory()->create([
-        'name' => 'Challenge Entreprises',
-        'datasport_code' => 'DS-ENTREPRISES',
-        'registrations_limit' => 100,
+        'name'                 => 'Challenge Entreprises',
+        'datasport_code'       => 'DS-ENTREPRISES',
+        'registrations_limit'  => 100,
         'registrations_number' => 0,
     ]);
 
@@ -150,10 +149,10 @@ it('aggregates internal CDN registrations before deadline', function () {
     for ($i = 0; $i < 50; $i++) {
         RunRegistrationElement::create([
             'run_registration_id' => $registration->id,
-            'run_id' => $run->id,
-            'first_name' => 'Test'.$i,
-            'last_name' => 'Runner'.$i,
-            'gender' => 'M',
+            'run_id'              => $run->id,
+            'first_name'          => 'Test'.$i,
+            'last_name'           => 'Runner'.$i,
+            'gender'              => 'M',
         ]);
     }
 
@@ -264,24 +263,24 @@ it('renders interclasses levels breakdown (3H to 8H)', function () {
     HTML;
 
     $run = Run::factory()->create([
-        'name' => 'Interclasses',
-        'datasport_code' => 'DS-INTERCLASSES',
+        'name'                => 'Interclasses',
+        'datasport_code'      => 'DS-INTERCLASSES',
         'registrations_limit' => 1200,
     ]);
 
     // Inscrire une classe de 3H avec 10 élèves (sur 200 places max = 5%)
     $schoolReg = RunRegistration::factory()->create([
         'run_registration_type' => 'school',
-        'school_class_level' => '3H',
+        'school_class_level'    => '3H',
     ]);
 
     for ($i = 0; $i < 10; $i++) {
         RunRegistrationElement::create([
             'run_registration_id' => $schoolReg->id,
-            'run_id' => $run->id,
-            'first_name' => 'Eleve'.$i,
-            'last_name' => 'Test',
-            'gender' => 'F',
+            'run_id'              => $run->id,
+            'first_name'          => 'Eleve'.$i,
+            'last_name'           => 'Test',
+            'gender'              => 'F',
         ]);
     }
 

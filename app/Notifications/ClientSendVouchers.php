@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Client;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
@@ -16,10 +17,13 @@ class ClientSendVouchers extends Notification
 
     public ?string $customMessage;
 
-    public function __construct(Collection $vouchers, ?string $customMessage = null)
+    public ?int $trailQuota;
+
+    public function __construct(Collection $vouchers, ?string $customMessage = null, ?int $trailQuota = null)
     {
         $this->vouchers = $vouchers;
         $this->customMessage = $customMessage;
+        $this->trailQuota = $trailQuota;
     }
 
     public function via(object $notifiable): array
@@ -32,57 +36,122 @@ class ClientSendVouchers extends Notification
         $clientName = $notifiable->name ?? ($notifiable->company_name ?? 'Partenaire');
         $currentEditionYear = now()->format('Y');
 
+        $cdnCount = $this->vouchers->count();
+        $trailQuota = $this->trailQuota ?? ($notifiable instanceof Client ? $notifiable->trail_vouchers_quota : 0);
+
         $csvFileName = 'vouchers_cdn_'.str($clientName)->slug().'.csv';
 
-        // Build CSV attachment content (Code;Course;Statut)
+        // Build CSV attachment content with UTF-8 BOM (Code;Course)
         $csvLines = ['Code;Course'];
         foreach ($this->vouchers as $voucher) {
             $runName = $voucher->run ? $voucher->run->name : 'Toutes courses';
             $csvLines[] = "{$voucher->code};\"{$runName}\"";
         }
-        $csvData = implode("\r\n", $csvLines);
+        $csvData = "\xEF\xBB\xBF".implode("\r\n", $csvLines);
 
         $mail = (new MailMessage)
-            ->subject('🎟️ Course de Noël et Trail des Châteaux '.$currentEditionYear.' - Codes pour inscriptions offertes ('.$clientName.')')
+            ->subject('🎟️ Course de Noël et Trail des Châteaux '.$currentEditionYear.' - Inscriptions selon partenariat ('.$clientName.')')
             ->replyTo('info@coursedenoel.ch')
             ->bcc('info@coursedenoel.ch')
             ->greeting('Cher partenaire,')
-            ->line('Selon les conditions de votre partenariat avec la Course de Noël et le Trail des Châteaux, trouverez en pièce jointe la liste des codes/vouchers pour vos inscriptions gratuites.')
+            ->line('Selon les conditions de votre partenariat avec la Course de Noël et le Trail des Châteaux, voici le récapitulatif de vos inscriptions incluses ainsi que les modalités pour inscrire vos participants.')
             ->attachData($csvData, $csvFileName, [
-                'mime' => 'text/csv',
+                'mime' => 'text/csv; charset=UTF-8',
             ]);
-
-        $mail->line('📎 La liste complète est disponible dans le fichier joint _'.$csvFileName.'_ (ouvrable directement dans Excel).');
 
         if ($this->customMessage) {
             $mail->line($this->customMessage);
         }
 
-        // Instructions Section
-        $instructionsHtml = '<div style="margin-top: 18px;">'
-            .'<h4 style="margin: 0 0 6px 0; color: #0f172a; font-size: 16px;">Inscription à la course enetreprise</h4>'
-            .'<ul style="margin: 0; padding-left: 20px; font-size: 15px; color: #334155;">'
-            .'<li><strong>Informations :</strong> <a href="https://coursedenoel.ch/courses/challenge-entreprises" style="color: #2563eb; text-decoration: underline;">coursedenoel.ch/courses/challenge-entreprises</a></li>'
-            .'<li><strong>Délai d\'inscription :</strong> <strong style="color: #dc2626;">30 novembre</strong></li>'
-            .'</ul>'
+        // 1. Synthèse des inscriptions incluses selon partenariat
+        $trailSummaryBlock = '';
+        if ($trailQuota > 0) {
+            $trailSummaryBlock = '<div style="flex: 1; min-width: 200px; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; margin: 4px;">'
+                .'<div style="font-size: 11px; text-transform: uppercase; color: #15803d; font-weight: 700; letter-spacing: 0.5px;">Trail des Châteaux</div>'
+                .'<div style="font-size: 20px; font-weight: 800; color: #166534; margin: 4px 0;">'.$trailQuota.' <span style="font-size: 13px; font-weight: normal; color: #374151;">inscription(s) incluse(s)</span></div>'
+                .'<div style="font-size: 12px; color: #6b7280;">Inscription par email</div>'
+                .'</div>';
+        }
+
+        $summaryHtml = '<div style="margin: 20px 0 16px 0; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">'
+            .'<div style="font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 10px;">🎟️ Vos inscriptions incluses – Édition '.$currentEditionYear.'</div>'
+            .'<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">'
+            .'<div style="flex: 1; min-width: 200px; background: #ffffff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px; margin: 4px;">'
+            .'<div style="font-size: 11px; text-transform: uppercase; color: #1d4ed8; font-weight: 700; letter-spacing: 0.5px;">Course de Noël</div>'
+            .'<div style="font-size: 20px; font-weight: 800; color: #1e40af; margin: 4px 0;">'.$cdnCount.' <span style="font-size: 13px; font-weight: normal; color: #374151;">inscription(s) incluse(s)</span></div>'
+            .'<div style="font-size: 12px; color: #6b7280;">Codes fournis dans le fichier joint</div>'
+            .'</div>'
+            .$trailSummaryBlock
+            .'</div>'
+            .'<div style="font-size: 13px; color: #475569; padding-top: 4px;">'
+            .'📎 <strong>Fichier joint :</strong> Vos codes sont disponibles dans le fichier <em>'.$csvFileName.'</em> (compatible Excel).'
+            .'</div>'
+            .'</div>';
+        $mail->line(new HtmlString($summaryHtml));
+
+        // 2. Section Challenge Entreprises (Course de Noël) adaptée au nombre de vouchers
+        if ($cdnCount >= 20) {
+            $registrationDetailsHtml = '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 10px;">'
+                .'<div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">🔹 Équipe de 20 personnes et plus (Recommandé) :</div>'
+                .'<div style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 8px;">Inscription groupée simplifiée via notre formulaire en ligne (vos '.$cdnCount.' inscriptions incluses seront déduites automatiquement).</div>'
+                .'<a href="https://manager.coursedenoel.ch/registrations/company" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 4px;">Formulaire en ligne (+ 20) →</a>'
+                .'</div>'
+                .'<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 12px;">'
+                .'<div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">🔹 Pour des inscriptions individuelles :</div>'
+                .'<div style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 8px;">Vous pouvez également transmettre les codes vouchers joints à vos coureurs pour une inscription individuelle sur Datasport.</div>'
+                .'<a href="https://coursedenoel.ch/courses/challenge-entreprises#content-inscriptions" style="display: inline-block; background-color: #475569; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Inscription Datasport →</a>'
+                .'</div>';
+        } else {
+            $registrationDetailsHtml = '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 10px;">'
+                .'<div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">🔹 Moins de 20 participants :</div>'
+                .'<div style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 8px;">Inscription individuelle sur la plateforme Datasport en saisissant un code voucher par participant lors de la validation.</div>'
+                .'<a href="https://coursedenoel.ch/courses/challenge-entreprises#content-inscriptions" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 4px;">Inscription Datasport (< 20) →</a>'
+                .'</div>'
+                .'<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 12px;">'
+                .'<div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">🔹 20 participants et plus :</div>'
+                .'<div style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 8px;">Si votre délégation atteint 20 personnes ou plus, vous pouvez utiliser notre formulaire de groupe simplifié (vos '.$cdnCount.' inscriptions incluses seront déduites automatiquement).</div>'
+                .'<a href="https://manager.coursedenoel.ch/registrations/company" style="display: inline-block; background-color: #475569; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Formulaire de groupe (≥ 20) →</a>'
+                .'</div>';
+        }
+
+        $instructionsHtml = '<div style="margin: 16px 0; background: #f8fafc; border: 1px solid #cbd5e1; border-top: 4px solid #2563eb; border-radius: 8px; padding: 16px;">'
+            .'<h4 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 16px; font-weight: 700;">🏃 Challenge Entreprises</h4>'
+            .$registrationDetailsHtml
+            .'<div style="font-size: 13px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 10px; line-height: 1.5;">'
+            .'⏰ <strong>Délai :</strong> <strong style="color: #dc2626;">22 novembre</strong> · ℹ️ <strong>Infos :</strong> <a href="https://coursedenoel.ch/courses/challenge-entreprises" style="color: #2563eb; text-decoration: underline;">coursedenoel.ch/courses/challenge-entreprises</a>'
+            .'</div>'
             .'</div>';
         $mail->line(new HtmlString($instructionsHtml));
 
-        // Texner T-shirt Section
-        $tshirtHtml = '<div style="margin-top: 16px; background-color: #f1f5f9; border-left: 4px solid #0ea5e9; padding: 10px 14px; border-radius: 4px;">'
-            .'<h4 style="margin: 0 0 4px 0; color: #0369a1; font-size: 13px;">👕 T-shirts personnalisés avec Texner</h4>'
-            .'<p style="margin: 0; font-size: 12px; color: #334155;">'
-            .'Vous souhaitez un T-shirt personnalisé aux couleurs de votre entreprise ? C\'est possible ! Choisissez un visuel et commandez directement avec notre partenaire <strong>Texner</strong> avant le <strong>7 novembre</strong> sur : '
-            .'<a href="https://coursedenoel.ch/courses/challenge-entreprises" style="color: #0284c7; font-weight: bold; text-decoration: underline;">coursedenoel.ch/courses/challenge-entreprises</a>.'
+        // 3. Section Trail des Châteaux (conditionnelle)
+        if ($trailQuota > 0) {
+            $trailHtml = '<div style="margin: 16px 0; background: #f0fdf4; border: 1px solid #bbf7d0; border-top: 4px solid #16a34a; border-radius: 8px; padding: 16px;">'
+                .'<h4 style="margin: 0 0 10px 0; color: #15803d; font-size: 16px; font-weight: 700;">⛰️ Trail des Châteaux</h4>'
+                .'<p style="margin: 0 0 12px 0; font-size: 13px; color: #166534; line-height: 1.6;">'
+                .'Vous bénéficiez également de <strong>'.$trailQuota.' inscription(s) incluse(s)</strong> pour le <strong>Trail des Châteaux</strong>.<br>'
+                .'Pour inscrire vos coureurs au Trail, merci de contacter directement notre secrétariat par email à '
+                .'<a href="mailto:inscriptions@traildeschateaux.ch" style="color: #15803d; font-weight: bold; text-decoration: underline;">inscriptions@traildeschateaux.ch</a> '
+                .'en indiquant les nom, prénom, date de naissance, adresse email, sexe, numéro de téléphone portable et parcours choisi pour chaque participant.'
+                .'</p>'
+                .'<a href="mailto:inscriptions@traildeschateaux.ch?subject=Inscriptions%20Trail%20des%20Ch%C3%A2teaux%20-%20'.urlencode($clientName).'" style="display: inline-block; background-color: #16a34a; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 4px;">✉️ Écrire au secrétariat du Trail →</a>'
+                .'</div>';
+            $mail->line(new HtmlString($trailHtml));
+        }
+
+        // 4. Section T-shirts Texner
+        $tshirtHtml = '<div style="margin: 16px 0; background: #f0f9ff; border: 1px solid #bae6fd; border-top: 4px solid #0284c7; border-radius: 8px; padding: 16px;">'
+            .'<h4 style="margin: 0 0 6px 0; color: #0369a1; font-size: 15px; font-weight: 700;">👕 T-shirts personnalisés avec Texner</h4>'
+            .'<p style="margin: 0 0 10px 0; font-size: 13px; color: #0c4a6e; line-height: 1.5;">'
+            .'Vous souhaitez un T-shirt personnalisé aux couleurs de votre entreprise ? Choisissez un visuel et commandez directement avec notre partenaire <strong>Texner</strong> avant le <strong>11 novembre</strong>.'
             .'</p>'
+            .'<a href="https://coursedenoel.ch/courses/challenge-entreprises#content-t-shirt" style="display: inline-block; background-color: #0284c7; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Commander vos T-shirts Texner →</a>'
             .'</div>';
         $mail->line(new HtmlString($tshirtHtml));
 
-        // Contact Section
+        // Clôture
         $mail
-            ->line(new HtmlString('<br>'))
-            ->line('Bonne préparation !')
-            ->salutation('Le Comité d\'organisation');
+            ->line(new HtmlString('<div style="margin-top: 14px;">Bonne préparation !</div>'))
+            ->salutation('Le comité d\'organisation');
 
         return $mail;
     }

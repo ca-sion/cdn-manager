@@ -7,6 +7,9 @@ use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Edition;
 use App\Models\Voucher;
+use App\Models\Provision;
+use App\Models\ProvisionElement;
+use App\Notifications\ClientSendVouchers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class VoucherTest extends TestCase
@@ -68,16 +71,84 @@ class VoucherTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_valid_unclaimed_vouchers()
+    public function it_calculates_client_voucher_quotas_and_missing_counts()
     {
-        Voucher::create(['code' => 'USED1', 'is_used' => true, 'used_at' => now()]);
-        Voucher::create(['code' => 'FREE1', 'is_used' => false]);
-        Voucher::create(['code' => 'FREE2', 'is_used' => false]);
+        $edition = Edition::factory()->create(['year' => (int) date('Y')]);
 
-        $available = Voucher::where('is_used', false)->get();
+        $cdnProvision = Provision::create([
+            'name'       => 'Inscription Entreprise CDN',
+            'code'       => 'PROV-CDN-TEST',
+            'is_active'  => true,
+            'edition_id' => $edition->id,
+        ]);
 
-        $this->assertCount(2, $available);
-        $this->assertContains('FREE1', $available->pluck('code'));
-        $this->assertContains('FREE2', $available->pluck('code'));
+        $trailProvision = Provision::create([
+            'name'       => 'Inscription Trail',
+            'code'       => 'PROV-TRAIL-TEST',
+            'is_active'  => true,
+            'edition_id' => $edition->id,
+        ]);
+
+        setting([
+            'edition_id'               => $edition->id,
+            'voucher_cdn_provisions'   => [$cdnProvision->id],
+            'voucher_trail_provisions' => [$trailProvision->id],
+        ]);
+
+        $client = Client::factory()->create(['name' => 'Entreprise Valais SA']);
+
+        ProvisionElement::create([
+            'edition_id'        => $edition->id,
+            'provision_id'      => $cdnProvision->id,
+            'recipient_type'    => Client::class,
+            'recipient_id'      => $client->id,
+            'numeric_indicator' => 5,
+        ]);
+
+        ProvisionElement::create([
+            'edition_id'        => $edition->id,
+            'provision_id'      => $trailProvision->id,
+            'recipient_type'    => Client::class,
+            'recipient_id'      => $client->id,
+            'numeric_indicator' => 2,
+        ]);
+
+        $this->assertEquals(5, $client->cdn_vouchers_quota);
+        $this->assertEquals(2, $client->trail_vouchers_quota);
+        $this->assertEquals(0, $client->assigned_vouchers_count);
+        $this->assertEquals(5, $client->missing_vouchers_count);
+
+        Voucher::create([
+            'code'       => 'CDN-AUTO-01',
+            'client_id'  => $client->id,
+            'edition_id' => $edition->id,
+            'is_used'    => false,
+        ]);
+
+        $this->assertEquals(1, $client->fresh()->assigned_vouchers_count);
+        $this->assertEquals(4, $client->fresh()->missing_vouchers_count);
+    }
+
+    /** @test */
+    public function it_builds_client_send_vouchers_notification_correctly()
+    {
+        $edition = Edition::factory()->create(['year' => (int) date('Y')]);
+        $client = Client::factory()->create(['name' => 'BCVs']);
+
+        $vouchers = collect([
+            Voucher::create([
+                'code'       => 'BCVS-001',
+                'client_id'  => $client->id,
+                'edition_id' => $edition->id,
+                'is_used'    => false,
+            ]),
+        ]);
+
+        $notification = new ClientSendVouchers($vouchers, null, 2);
+        $mail = $notification->toMail($client);
+
+        $this->assertStringContainsString('BCVs', $mail->subject);
+        $this->assertStringContainsString('inscriptions@traildeschateaux.ch', (string) $mail->render());
+        $this->assertStringContainsString('challenge-entreprises', (string) $mail->render());
     }
 }
