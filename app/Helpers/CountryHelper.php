@@ -4,6 +4,8 @@ namespace App\Helpers;
 
 class CountryHelper
 {
+    public const DEFAULT = 'SUI';
+
     /**
      * Complete Datasport Countries list mapped to 3-letter IOC codes.
      */

@@ -94,7 +94,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $this->form->fill($registrationData);
         } else {
             $initialData = [
-                'school_country' => 'SUI',
+                'school_country' => CountryHelper::DEFAULT,
             ];
 
             if ($clientId = request()->query('client_id')) {
@@ -250,7 +250,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                                         $set('school_name', $school->name);
                                         $set('school_postal_code', $school->postal_code);
                                         $set('school_locality', $school->locality);
-                                        $set('school_country', $school->country ?: 'SUI');
+                                        $set('school_country', CountryHelper::DEFAULT);
                                         if ($school->client_id) {
                                             $set('client_id', $school->client_id);
                                         }
@@ -288,39 +288,51 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                             ->placeholder('Sion')
                             ->required()
                             ->columnSpan(fn ($get) => $get('school_id') === 'other' ? 1 : 2),
-
-                        Select::make('school_country')
-                            ->label('Pays')
-                            ->options(CountryHelper::getOptions())
-                            ->searchable()
-                            ->default('SUI')
-                            ->required()
-                            ->columnSpan(2),
                     ]),
 
                 // SECTION SCHOOL 2: Titulaire de la classe
                 Section::make('Titulaire de la classe')
                     ->icon('heroicon-m-user-group')
                     ->visible(fn (FrontRunRegistration $livewire) => $livewire->type === 'school')
-                    ->columns(2)
+                    ->columns(4)
                     ->schema([
                         TextInput::make('school_class_holder_first_name')
                             ->label('Prénom du titulaire')
+                            ->columnSpan(2)
                             ->required(),
 
                         TextInput::make('school_class_holder_last_name')
                             ->label('Nom du titulaire')
+                            ->columnSpan(2)
                             ->required(),
 
                         TextInput::make('school_class_holder_email')
                             ->label('E-mail du titulaire')
                             ->email()
+                            ->columnSpan(2)
                             ->required(),
 
                         TextInput::make('school_class_holder_phone')
                             ->label('N° de téléphone portable')
                             ->tel()
+                            ->columnSpan(2)
                             ->placeholder('079 123 45 67'),
+
+                        TextInput::make('school_class_holder_address')
+                            ->label('Adresse postale du titulaire')
+                            ->placeholder('Rue de la Gare 1')
+                            ->required()
+                            ->columnSpan(2),
+
+                        TextInput::make('school_class_holder_postal_code')
+                            ->label('Code postal')
+                            ->placeholder('1950')
+                            ->required(),
+
+                        TextInput::make('school_class_holder_locality')
+                            ->label('Localité')
+                            ->placeholder('Sion')
+                            ->required(),
                     ]),
 
                 // SECTION COMPANY: Entreprise
@@ -898,6 +910,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         $formData = $this->form->getState();
 
         if ($this->type === 'school') {
+            $formData['school_country'] = CountryHelper::DEFAULT;
             $schoolId = $formData['school_id'] ?? null;
             $schoolName = trim((string) ($formData['school_name'] ?? ''));
 
@@ -907,7 +920,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                     [
                         'postal_code' => $formData['school_postal_code'] ?? null,
                         'locality'    => $formData['school_locality'] ?? null,
-                        'country'     => $formData['school_country'] ?? 'SUI',
+                        'country'     => CountryHelper::DEFAULT,
                     ]
                 );
                 $formData['school_id'] = $school->id;

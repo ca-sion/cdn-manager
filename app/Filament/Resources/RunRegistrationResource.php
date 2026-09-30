@@ -83,7 +83,7 @@ class RunRegistrationResource extends Resource
                                                 $set('school_name', $school->name);
                                                 $set('school_postal_code', $school->postal_code);
                                                 $set('school_locality', $school->locality);
-                                                $set('school_country', $school->country ?: 'SUI');
+                                                $set('school_country', \App\Helpers\CountryHelper::DEFAULT);
                                                 if ($school->client_id) {
                                                     $set('client_id', $school->client_id);
                                                 }
@@ -119,6 +119,15 @@ class RunRegistrationResource extends Resource
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
                                 TextInput::make('school_class_holder_phone')
                                     ->label('Tél titulaire classe')
+                                    ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
+                                TextInput::make('school_class_holder_address')
+                                    ->label('Adresse titulaire classe')
+                                    ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
+                                TextInput::make('school_class_holder_postal_code')
+                                    ->label('NPA titulaire classe')
+                                    ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
+                                TextInput::make('school_class_holder_locality')
+                                    ->label('Localité titulaire classe')
                                     ->visible(fn ($get) => in_array($get('run_registration_type'), ['school', RunRegistrationType::School->value, RunRegistrationType::School])),
                             ])->columns(2),
 
@@ -537,11 +546,11 @@ class RunRegistrationResource extends Resource
                     'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
                     'Genre'                          => $gender,
-                    'Nationalité'                    => $element->nationality ?: ($element->country ?: 'Switzerland'),
+                    'Nationalité'                    => $element->nationality ?: ($element->country ?: \App\Helpers\CountryHelper::DEFAULT),
                     'E-mail'                         => $element->email ?: $registration->contact_email,
                     'Code postal'                    => $element->postal_code ?: ($registration->school_postal_code ?: $registration->invoicing_postal_code),
                     'Lieu'                           => $element->locality ?: ($registration->school_locality ?: $registration->invoicing_locality),
-                    'Pays'                           => $element->country ?: ($registration->school_country ?: 'Switzerland'),
+                    'Pays'                           => $element->country ?: ($registration->school_country ?: \App\Helpers\CountryHelper::DEFAULT),
                     'Etablissement et classe'        => $schoolEtClass,
                     'Prénom du responsable '         => $registration->contact_first_name,
                     'Nom du responsable '            => $registration->contact_last_name,
@@ -583,7 +592,7 @@ class RunRegistrationResource extends Resource
                     'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
                     'Genre'                          => $gender,
-                    'Nationalité'                    => $element->nationality ?: 'Switzerland',
+                    'Nationalité'                    => $element->nationality ?: \App\Helpers\CountryHelper::DEFAULT,
                     'E-mail'                         => $element->email ?: $registration->contact_email,
                     'Nom de l\'entreprise'           => $companyName,
                     'Bloc de départ souhaité'        => $bloc,
@@ -623,7 +632,7 @@ class RunRegistrationResource extends Resource
                     'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
                     'Genre'                          => $gender,
-                    'Nationalité'                    => $element->nationality ?: 'Switzerland',
+                    'Nationalité'                    => $element->nationality ?: \App\Helpers\CountryHelper::DEFAULT,
                     'E-mail'                         => $element->email ?: $registration->contact_email,
                     'Nom du club'                    => $clubName,
                     'Course'                         => $runName,
@@ -663,6 +672,10 @@ class RunRegistrationResource extends Resource
                 'Type'                         => $typeLabel,
                 'Organisme / entreprise'       => $reg->company_name ?: ($reg->school_name ?: ($reg->contact_first_name.' '.$reg->contact_last_name)),
                 'Degré'                        => $reg->school_class_level,
+                'Titulaire'                    => trim($reg->school_class_holder_first_name.' '.$reg->school_class_holder_last_name),
+                'Adresse titulaire'            => $reg->school_class_holder_address,
+                'NPA titulaire'                => $reg->school_class_holder_postal_code,
+                'Localité titulaire'           => $reg->school_class_holder_locality,
                 'Personne de contact'          => trim($reg->contact_first_name.' '.$reg->contact_last_name),
                 'Email de contact'             => $reg->contact_email,
                 'Téléphone de contact'         => $reg->contact_phone,

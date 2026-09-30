@@ -44,6 +44,9 @@ return new class extends Migration
             $table->string('school_class_holder_last_name')->nullable();
             $table->string('school_class_holder_email')->nullable();
             $table->string('school_class_holder_phone')->nullable();
+            $table->string('school_class_holder_address')->nullable();
+            $table->string('school_class_holder_postal_code')->nullable();
+            $table->string('school_class_holder_locality')->nullable();
 
             // Contact Details
             $table->string('contact_first_name')->nullable();
