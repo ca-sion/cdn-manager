@@ -75,6 +75,50 @@ class RunRegistrationSystemTest extends TestCase
     }
 
     /** @test */
+    public function public_school_creation_submits_and_routes_notification_to_holder()
+    {
+        Notification::fake();
+
+        $run = Run::factory()->create(['name' => 'Course Ecoliers', 'cost' => 0.00]);
+
+        Livewire::test(FrontRunRegistration::class, ['type' => 'school'])
+            ->set('data.school_id', 'other')
+            ->set('data.school_name', 'Ecole Primaire de Sion')
+            ->set('data.school_postal_code', '1950')
+            ->set('data.school_locality', 'Sion')
+            ->set('data.school_class_level', '5H')
+            ->set('data.school_class_holder_first_name', 'Marc')
+            ->set('data.school_class_holder_last_name', 'Favre')
+            ->set('data.school_class_holder_email', 'marc.favre@ecole-sion.test')
+            ->set('data.school_class_holder_address', 'Rue des Ecoles 1')
+            ->set('data.school_class_holder_postal_code', '1950')
+            ->set('data.school_class_holder_locality', 'Sion')
+            ->set('data.contact_first_name', 'Sophie')
+            ->set('data.contact_last_name', 'Accompagnatrice')
+            ->set('data.contact_email', 'sophie.accompagnatrice@test.com')
+            ->set('data.contact_phone', '0791234567')
+            ->set('elements', [
+                [
+                    '_k'         => 'l1',
+                    'first_name' => 'Lucas',
+                    'last_name'  => 'Rey',
+                    'birthdate'  => '2015-05-15',
+                    'gender'     => 'M',
+                    'email'      => '',
+                    'run_id'     => $run->id,
+                ],
+            ])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $registration = RunRegistration::where('school_class_holder_email', 'marc.favre@ecole-sion.test')->first();
+        $this->assertNotNull($registration);
+        $this->assertEquals('marc.favre@ecole-sion.test', $registration->routeNotificationForMail());
+
+        Notification::assertSentTo($registration, RunRegistrationLink::class);
+    }
+
+    /** @test */
     public function signed_edit_link_allows_editing()
     {
         $registration = RunRegistration::factory()->create([

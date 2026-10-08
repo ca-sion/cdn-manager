@@ -336,7 +336,7 @@ class FrontEliteRegistration extends Component implements HasActions, HasForms
             try {
                 $this->registration->notify(new RunRegistrationLink);
             } catch (\Throwable $e) {
-                // Ignore
+                report($e);
             }
 
             return redirect()->to(URL::signedRoute('front.run-registration.edit', [

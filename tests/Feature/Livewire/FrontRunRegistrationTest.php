@@ -379,6 +379,7 @@ class FrontRunRegistrationTest extends TestCase
             'contact_first_name'     => 'Marc',
             'contact_last_name'      => 'Favre',
             'contact_email'          => 'marc@test.com',
+            'contact_phone'          => '079 123 45 67',
             'invoicing_company_name' => 'Test Enterprise',
             'invoicing_address'      => 'Rue du Rhône 1',
             'invoicing_postal_code'  => '1950',

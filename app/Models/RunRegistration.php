@@ -53,6 +53,17 @@ class RunRegistration extends Model
     ];
 
     /**
+     * Accessor & Mutator for school_class_level attribute.
+     */
+    protected function schoolClassLevel(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => is_object($value) ? ($value->value ?? (string) $value) : $value,
+            set: fn ($value) => is_object($value) ? ($value->value ?? (string) $value) : $value,
+        )->withoutObjectCaching();
+    }
+
+    /**
      * Accessor & Mutator for legacy 'type' attribute.
      */
     protected function type(): Attribute
@@ -156,13 +167,23 @@ class RunRegistration extends Model
      */
     public function routeNotificationForMail(): ?string
     {
-        $email = $this->contact_email
-            ?: ($this->school_class_holder_email
-            ?: ($this->invoicing_email
-            ?: ($this->client?->email
-            ?: ($this->client?->invoicing_email ?: null))));
+        $type = is_object($this->run_registration_type)
+            ? $this->run_registration_type->value
+            : (string) ($this->run_registration_type ?? $this->type ?? '');
 
-        return ! empty($email) ? trim($email) : null;
+        if ($type === 'school') {
+            $email = $this->school_class_holder_email
+                ?: ($this->contact_email
+                ?: ($this->client?->email ?: null));
+        } else {
+            $email = $this->contact_email
+                ?: ($this->school_class_holder_email
+                ?: ($this->invoicing_email
+                ?: ($this->client?->email
+                ?: ($this->client?->invoicing_email ?: null))));
+        }
+
+        return ! empty($email) ? trim((string) $email) : null;
     }
 
     public static function getCompanyRun(): ?Run
@@ -276,7 +297,8 @@ class RunRegistration extends Model
         if ($type === 'school') {
             $name = $this->school_name ?: 'Centre Scolaire';
             if ($this->school_class_level) {
-                $name .= ' ('.$this->school_class_level.')';
+                $level = is_object($this->school_class_level) ? $this->school_class_level->value : (string) $this->school_class_level;
+                $name .= ' ('.$level.')';
             }
 
             return $name;

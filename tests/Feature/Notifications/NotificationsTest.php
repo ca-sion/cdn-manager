@@ -36,6 +36,8 @@ class NotificationsTest extends TestCase
         $this->assertStringContainsString('Course de Noël', $mail->subject);
         $this->assertEquals('Bonjour Isabelle,', $mail->greeting);
         $this->assertStringContainsString('Gérer mon dossier', $mail->actionText);
+        $this->assertEquals([['inscriptions@coursedenoel.ch', null]], $mail->replyTo);
+        $this->assertEquals([['inscriptions@coursedenoel.ch', null]], $mail->bcc);
     }
 
     /** @test */

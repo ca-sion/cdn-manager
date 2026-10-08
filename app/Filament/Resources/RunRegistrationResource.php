@@ -538,7 +538,8 @@ class RunRegistrationResource extends Resource
             foreach ($registration->runRegistrationElements as $element) {
                 $gender = is_object($element->gender) ? $element->gender->value : ($element->gender ?? '');
                 $birthdate = $element->birthdate ? $element->birthdate->format('d.m.Y') : '';
-                $schoolEtClass = trim(($registration->school_name ?? '').' '.($registration->school_class_level ?? ''));
+                $classLevel = is_object($registration->school_class_level) ? $registration->school_class_level->value : ($registration->school_class_level ?? '');
+                $schoolEtClass = trim(($registration->school_name ?? '').' '.$classLevel);
                 $maitre = trim(($registration->school_class_holder_first_name ?? '').' '.($registration->school_class_holder_last_name ?? ''));
 
                 $data->push([
@@ -556,7 +557,7 @@ class RunRegistrationResource extends Resource
                     'Nom du responsable '            => $registration->contact_last_name,
                     'Maître'                         => $maitre,
                     'Etablissement'                  => $registration->school_name,
-                    'Degré'                          => $registration->school_class_level,
+                    'Degré'                          => $classLevel,
                 ]);
             }
         }
@@ -671,7 +672,7 @@ class RunRegistrationResource extends Resource
                 'ID dossier'                   => $reg->id,
                 'Type'                         => $typeLabel,
                 'Organisme / entreprise'       => $reg->company_name ?: ($reg->school_name ?: ($reg->contact_first_name.' '.$reg->contact_last_name)),
-                'Degré'                        => $reg->school_class_level,
+                'Degré'                        => is_object($reg->school_class_level) ? $reg->school_class_level->value : ($reg->school_class_level ?? ''),
                 'Titulaire'                    => trim($reg->school_class_holder_first_name.' '.$reg->school_class_holder_last_name),
                 'Adresse titulaire'            => $reg->school_class_holder_address,
                 'NPA titulaire'                => $reg->school_class_holder_postal_code,

@@ -33,11 +33,23 @@ class RunRegistrationLink extends Notification
 
         $dossierName = $notifiable->display_name;
         $currentEditionYear = now()->format('Y');
+        $managerEmail = setting('general_registration_email', 'inscriptions@coursedenoel.ch');
+
+        $type = is_object($notifiable->run_registration_type)
+            ? $notifiable->run_registration_type->value
+            : (string) ($notifiable->run_registration_type ?? $notifiable->type ?? '');
+
+        $name = ($type === 'school')
+            ? ($notifiable->school_class_holder_first_name ?: $notifiable->contact_first_name)
+            : $notifiable->contact_first_name;
+
+        $greeting = $name ? 'Bonjour '.$name.',' : 'Bonjour,';
 
         return (new MailMessage)
             ->subject('🏃‍♂️ Course de Noël '.$currentEditionYear.' - Votre dossier d\'inscription ('.$dossierName.')')
-            ->replyTo('inscriptions@coursedenoel.ch')
-            ->greeting('Bonjour '.($notifiable->contact_first_name ?: 'Bonjour').',')
+            ->replyTo($managerEmail)
+            ->bcc($managerEmail)
+            ->greeting($greeting)
             ->line('Merci pour votre inscription et votre intérêt pour la Course de Noël !')
             ->line('Votre dossier pour **'.$dossierName.'** a bien été enregistré. Vous pouvez accéder à tout moment à votre espace personnel pour ajouter, modifier ou mettre à jour la liste de vos participants via le lien sécurisé ci-dessous :')
             ->action('📋 Gérer mon dossier d\'inscription', $url)

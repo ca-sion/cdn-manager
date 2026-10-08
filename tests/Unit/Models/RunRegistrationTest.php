@@ -70,6 +70,10 @@ class RunRegistrationTest extends TestCase
         $casts = $runRegistration->getCasts();
 
         $this->assertEquals(RunRegistrationType::class, $casts['run_registration_type']);
+
+        // Test school_class_level attribute enum to string conversion
+        $runRegistration->school_class_level = \App\Enums\SchoolClassLevel::H5;
+        $this->assertEquals('5H', $runRegistration->school_class_level);
     }
 
     /** @test */
@@ -84,10 +88,11 @@ class RunRegistrationTest extends TestCase
         $regSchool = new RunRegistration([
             'run_registration_type' => RunRegistrationType::School,
             'school_name'           => 'Collège des Creusets',
+            'school_class_level'    => \App\Enums\SchoolClassLevel::H5,
             'contact_first_name'    => 'Isabelle',
             'contact_last_name'     => 'Emery',
         ]);
-        $this->assertEquals('Collège des Creusets', $regSchool->display_name);
+        $this->assertEquals('Collège des Creusets (5H)', $regSchool->display_name);
 
         $regCompany = new RunRegistration([
             'run_registration_type' => RunRegistrationType::Company,
@@ -110,7 +115,7 @@ class RunRegistrationTest extends TestCase
 
         $client = Client::factory()->create(['email' => 'client@acme.ch']);
 
-        // Case 1: contact_email set
+        // Case 1: contact_email set (for non-school type)
         $reg1 = new RunRegistration([
             'contact_email'             => 'contact@acme.ch',
             'school_class_holder_email' => 'holder@acme.ch',
@@ -120,7 +125,15 @@ class RunRegistrationTest extends TestCase
         $reg1->setRelation('client', $client);
         $this->assertEquals('contact@acme.ch', $reg1->routeNotificationForMail());
 
-        // Case 2: contact_email empty, holder_email set
+        // Case 2: school type prioritizes school_class_holder_email even when contact_email is set
+        $regSchool = new RunRegistration([
+            'run_registration_type'     => RunRegistrationType::School,
+            'contact_email'             => 'responsable-jour-j@acme.ch',
+            'school_class_holder_email' => 'titulaire-classe@acme.ch',
+        ]);
+        $this->assertEquals('titulaire-classe@acme.ch', $regSchool->routeNotificationForMail());
+
+        // Case 3: contact_email empty, holder_email set
         $reg2 = new RunRegistration([
             'school_class_holder_email' => 'holder@acme.ch',
             'invoicing_email'           => 'invoice@acme.ch',
@@ -129,7 +142,7 @@ class RunRegistrationTest extends TestCase
         $reg2->setRelation('client', $client);
         $this->assertEquals('holder@acme.ch', $reg2->routeNotificationForMail());
 
-        // Case 3: only client_id email set
+        // Case 4: only client_id email set
         $reg3 = new RunRegistration([
             'client_id' => $client->id,
         ]);

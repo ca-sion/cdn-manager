@@ -1022,15 +1022,25 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         }
 
         if ($isNew) {
+            $targetEmail = $this->registration->routeNotificationForMail();
+            $mailSent = false;
+
             try {
                 $this->registration->notify(new RunRegistrationLink);
+                $mailSent = true;
             } catch (\Throwable $e) {
-                // Ignore mail dispatch errors
+                report($e);
             }
+
+            $successMessage = $mailSent && $targetEmail
+                ? "Votre inscription a été créée et un email de confirmation contenant votre lien permanent d'édition vous a été envoyé à {$targetEmail}."
+                : ($mailSent
+                    ? "Votre inscription a été créée et un email de confirmation contenant votre lien permanent d'édition vous a été envoyé."
+                    : "Votre inscription a été enregistrée avec succès. Attention : l'envoi de l'email de confirmation a rencontré un problème. Veuillez conserver précieusement le lien de cette page pour accéder à votre dossier.");
 
             return redirect()->to(URL::signedRoute('front.run-registration.edit', [
                 'registration' => $this->registration->id,
-            ]))->with('message', 'Votre inscription a été créée et un email de confirmation contenant votre lien permanent d\'édition vous a été envoyé.');
+            ]))->with('message', $successMessage);
         }
 
         session()->flash('message', $this->isGridLocked()
