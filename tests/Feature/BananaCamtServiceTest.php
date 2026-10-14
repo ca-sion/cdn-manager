@@ -304,3 +304,81 @@ XML;
 
     expect($updatedEntries->first()['account_credit'])->toBe('1100'); // QR invoice with client_account keeps client account
 });
+
+it('strictly uses bank booking date and resolves datetime formats for accounting compliance', function () {
+    $service = new BananaCamtService;
+
+    $edition = Edition::create([
+        'name' => '2025',
+        'year' => 2025,
+    ]);
+
+    $client = Client::create([
+        'name' => 'Société Fiduciaire Romande',
+    ]);
+
+    $invoice = new Invoice;
+    $invoice->edition_id = $edition->id;
+    $invoice->client_id = $client->id;
+    $invoice->number = '2025077';
+    $invoice->title = 'Audit 2025';
+    $invoice->status = InvoiceStatusEnum::Sent;
+    $invoice->qr_reference = '000000000000000000099887766';
+    $invoice->positions = [
+        [
+            'name'        => 'Audit 2025',
+            'cost'        => 1500.00,
+            'quantity'    => 1,
+            'tax_rate'    => 0,
+            'include_vat' => true,
+        ],
+    ];
+    $invoice->save();
+
+    // XML avec BookgDt en format DtTm (2025-07-28)
+    $xml = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.054.001.04">
+    <BkToCstmrDbtCdtNtfctn>
+        <Ntry>
+            <Amt Ccy="CHF">1500.00</Amt>
+            <CdtDbtInd>CRDT</CdtDbtInd>
+            <BookgDt><DtTm>2025-07-28T14:22:00+02:00</DtTm></BookgDt>
+            <ValDt><Dt>2025-07-29</Dt></ValDt>
+            <NtryDtls>
+                <TxDtls>
+                    <Amt Ccy="CHF">1500.00</Amt>
+                    <CdtDbtInd>CRDT</CdtDbtInd>
+                    <RltdPties><Dbtr><Nm>Société Fiduciaire Romande</Nm></Dbtr></RltdPties>
+                    <RmtInf><Strd><CdtrRefInf><Ref>000000000000000000099887766</Ref></CdtrRefInf></Strd></RmtInf>
+                </TxDtls>
+            </NtryDtls>
+        </Ntry>
+    </BkToCstmrDbtCdtNtfctn>
+</Document>
+XML;
+
+    $tempFile = tempnam(sys_get_temp_dir(), 'camt_date_test_').'.xml';
+    file_put_contents($tempFile, $xml);
+
+    $result = $service->processFiles([$tempFile], [
+        'bank_account' => '1020',
+        'reconcile'    => true,
+    ]);
+
+    @unlink($tempFile);
+
+    $entry = $result['entries']->first();
+    // Doit être la date d'écriture bancaire (2025-07-28) et jamais la date du jour
+    expect($entry['raw_date'])->toBe('2025-07-28')
+        ->and($entry['date'])->toBe('2025-07-28')
+        ->and($entry['formatted_date'])->toBe('28.07.2025');
+
+    // La facture CDN doit être réconciliée au 28.07.2025
+    $invoice->refresh();
+    expect($invoice->status)->toBe(InvoiceStatusEnum::Paid)
+        ->and($invoice->paid_on?->format('Y-m-d'))->toBe('2025-07-28');
+
+    // Le TSV Banana doit contenir la date 2025-07-28
+    expect($result['tsv_content'])->toContain("2025-07-28\t{$invoice->number}\t");
+});

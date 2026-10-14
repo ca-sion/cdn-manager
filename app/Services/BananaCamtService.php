@@ -196,9 +196,10 @@ class BananaCamtService
                 }
             }
 
-            $bookingDate = $this->xpathValue($ntry, 'camt:BookgDt/camt:Dt', $defaultNamespace)
-                ?: $this->xpathValue($ntry, 'camt:ValDt/camt:Dt', $defaultNamespace)
-                ?: date('Y-m-d');
+            $statementFallbackDate = $this->xpathValue($xml, '//camt:FrToDt/camt:ToDtTm', $defaultNamespace)
+                ?: $this->xpathValue($xml, '//camt:FrToDt/camt:FrDtTm', $defaultNamespace)
+                ?: $this->xpathValue($xml, '//camt:GrpHdr/camt:CreDtTm', $defaultNamespace);
+            $statementFallbackDate = $statementFallbackDate ? ($this->parseCamtDateString($statementFallbackDate) ?: date('Y-m-d')) : date('Y-m-d');
 
             $ntryAcctRef = $this->xpathValue($ntry, 'camt:AcctSvcrRef', $defaultNamespace) ?: '';
             $txDetailsList = $defaultNamespace ? $ntry->xpath('.//camt:TxDtls') : $ntry->xpath('.//TxDtls');
@@ -213,12 +214,16 @@ class BananaCamtService
                         ?: $this->xpathValue($txDtls, 'camt:Refs/camt:EndToEndId', $defaultNamespace)
                         ?: $ntryAcctRef;
 
+                    $bookingDate = $this->resolveBookingDate($txDtls, $ntry, $defaultNamespace, $statementFallbackDate);
+
                     $item = $this->extractTransactionData($bookingDate, $txDtls, $ntry, $defaultNamespace, $txRef, $processedSignatures, $stats);
                     if ($item !== null) {
                         $parsedEntries[] = $item;
                     }
                 }
             } else {
+                $bookingDate = $this->resolveBookingDate($ntry, $ntry, $defaultNamespace, $statementFallbackDate);
+
                 $item = $this->extractTransactionData($bookingDate, $ntry, $ntry, $defaultNamespace, $ntryAcctRef, $processedSignatures, $stats);
                 if ($item !== null) {
                     $parsedEntries[] = $item;
@@ -774,5 +779,63 @@ class BananaCamtService
 
             return $tx;
         });
+    }
+
+    /**
+     * Résout la date d'écriture bancaire conforme aux normes comptables suisses.
+     * Priorité :
+     * 1. Date de comptabilisation de la transaction unitaire (TxDtls/BookgDt)
+     * 2. Date de comptabilisation du lot (Ntry/BookgDt)
+     * 3. Date valeur de la transaction (TxDtls/ValDt)
+     * 4. Date valeur du lot (Ntry/ValDt)
+     * 5. Date d'acceptation (TxDtls/AccptncDtTm)
+     * 6. Date de fin de période du relevé CAMT (FrToDt/ToDtTm ou GrpHdr/CreDtTm)
+     */
+    protected function resolveBookingDate(
+        SimpleXMLElement $node,
+        SimpleXMLElement $fallbackNtry,
+        ?string $ns,
+        string $statementFallbackDate
+    ): string {
+        $dateCandidates = [
+            $this->xpathValue($node, 'camt:BookgDt/camt:Dt', $ns),
+            $this->xpathValue($node, 'camt:BookgDt/camt:DtTm', $ns),
+            $this->xpathValue($fallbackNtry, 'camt:BookgDt/camt:Dt', $ns),
+            $this->xpathValue($fallbackNtry, 'camt:BookgDt/camt:DtTm', $ns),
+            $this->xpathValue($node, 'camt:ValDt/camt:Dt', $ns),
+            $this->xpathValue($node, 'camt:ValDt/camt:DtTm', $ns),
+            $this->xpathValue($fallbackNtry, 'camt:ValDt/camt:Dt', $ns),
+            $this->xpathValue($fallbackNtry, 'camt:ValDt/camt:DtTm', $ns),
+            $this->xpathValue($node, 'camt:AccptncDtTm', $ns),
+            $this->xpathValue($fallbackNtry, 'camt:AccptncDtTm', $ns),
+        ];
+
+        foreach ($dateCandidates as $candidate) {
+            if (! empty($candidate)) {
+                $cleaned = $this->parseCamtDateString($candidate);
+                if ($cleaned) {
+                    return $cleaned;
+                }
+            }
+        }
+
+        return $statementFallbackDate;
+    }
+
+    /**
+     * Parse et convertit une chaîne de date ISO ou DateTime en format Y-m-d.
+     */
+    protected function parseCamtDateString(string $val): ?string
+    {
+        $val = trim($val);
+        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $val, $matches)) {
+            return $matches[1];
+        }
+
+        try {
+            return Carbon::parse($val)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }
