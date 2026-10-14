@@ -9,6 +9,8 @@ use Filament\Schemas\Schema;
 use App\Models\ClientCategory;
 use App\Models\ProvisionCategory;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Outerweb\FilamentSettings\Pages\Settings as BaseSettings;
 
@@ -113,6 +115,52 @@ class Settings extends BaseSettings
                             ->options(Run::all()->pluck('name', 'id'))
                             ->searchable()
                             ->nullable(),
+                    ]),
+                Section::make('Comptabilité & Banana')
+                    ->schema([
+                        TextInput::make('banana_bank_account')
+                            ->label('Compte bancaire (Banana)')
+                            ->helperText('Numéro du compte banque au bilan (ex. 1020). Débit pour encaissement, Crédit pour décaissement.')
+                            ->default('1020')
+                            ->required(),
+                        TextInput::make('banana_client_account')
+                            ->label('Compte Débiteurs / Clients par défaut')
+                            ->helperText('Compte de contrepartie par défaut pour les paiements de factures QR (ex. 1100 ou 31100).')
+                            ->default('1100')
+                            ->required(),
+                        TextInput::make('banana_supplier_account')
+                            ->label('Compte Créanciers / Fournisseurs par défaut')
+                            ->helperText('Compte au débit par défaut pour les décaissements sans règle spécifique (ex. 2000 ou 42021).')
+                            ->default('2000')
+                            ->required(),
+                        Select::make('banana_allocation_mode')
+                            ->label('Mode d\'affectation des factures QR')
+                            ->options([
+                                'client_account' => 'Compte Débiteurs général (ex: 1100) - Sans TVA sur le relevé',
+                                'provisions'     => 'Compte de prestation & code TVA (Comptabilité aux encaissements)',
+                            ])
+                            ->default('client_account')
+                            ->helperText('Si vous gérez les débiteurs dans Banana, choisissez "Compte Débiteurs" (la TVA a déjà été enregistrée sur la facture). Si vous comptabilisez au paiement, choisissez "Compte de prestation & TVA".')
+                            ->required(),
+                        Repeater::make('banana_rules')
+                            ->label('Règles d\'affectation automatique par mots-clés')
+                            ->helperText('Appliquées si le libellé de la transaction contient le mot-clé (priorité aux paiements hors factures QR).')
+                            ->schema([
+                                TextInput::make('keyword')
+                                    ->label('Mot-clé dans le libellé')
+                                    ->placeholder('ex. Salaire, Migros, AFC')
+                                    ->required(),
+                                TextInput::make('account')
+                                    ->label('Numéro de compte')
+                                    ->placeholder('ex. 5000, 4200, 2200')
+                                    ->required(),
+                                TextInput::make('vat_code')
+                                    ->label('Code TVA Banana (optionnel)')
+                                    ->placeholder('ex. USt81 ou VS81'),
+                            ])
+                            ->columns(3)
+                            ->defaultItems(0)
+                            ->collapsible(),
                     ]),
             ]);
     }

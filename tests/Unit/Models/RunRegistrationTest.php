@@ -6,6 +6,7 @@ use App\Models\Run;
 use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Edition;
+use App\Enums\SchoolClassLevel;
 use App\Models\RunRegistration;
 use App\Enums\RunRegistrationType;
 use App\Models\RunRegistrationElement;
@@ -72,7 +73,7 @@ class RunRegistrationTest extends TestCase
         $this->assertEquals(RunRegistrationType::class, $casts['run_registration_type']);
 
         // Test school_class_level attribute enum to string conversion
-        $runRegistration->school_class_level = \App\Enums\SchoolClassLevel::H5;
+        $runRegistration->school_class_level = SchoolClassLevel::H5;
         $this->assertEquals('5H', $runRegistration->school_class_level);
     }
 
@@ -88,7 +89,7 @@ class RunRegistrationTest extends TestCase
         $regSchool = new RunRegistration([
             'run_registration_type' => RunRegistrationType::School,
             'school_name'           => 'Collège des Creusets',
-            'school_class_level'    => \App\Enums\SchoolClassLevel::H5,
+            'school_class_level'    => SchoolClassLevel::H5,
             'contact_first_name'    => 'Isabelle',
             'contact_last_name'     => 'Emery',
         ]);

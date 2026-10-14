@@ -28,7 +28,9 @@ class ListInvoices extends ListRecords
                 ->label('Exporter')
                 ->exporter(InvoiceExporter::class),
             Action::make('camtImport')
-                ->label('Rapprocher CAMT 054')
+                ->label('Rapprochement & Banana (CAMT)')
+                ->icon('heroicon-o-document-arrow-down')
+                ->tooltip('Importation CAMT UBS (053/054), réconciliation QR et export écritures Banana')
                 ->url(CamtImport::getUrl()),
         ];
     }

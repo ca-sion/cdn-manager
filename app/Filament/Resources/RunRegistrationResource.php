@@ -8,6 +8,7 @@ use App\Models\School;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
+use App\Helpers\CountryHelper;
 use App\Enums\SchoolClassLevel;
 use App\Models\RunRegistration;
 use Filament\Actions\BulkAction;
@@ -83,7 +84,7 @@ class RunRegistrationResource extends Resource
                                                 $set('school_name', $school->name);
                                                 $set('school_postal_code', $school->postal_code);
                                                 $set('school_locality', $school->locality);
-                                                $set('school_country', \App\Helpers\CountryHelper::DEFAULT);
+                                                $set('school_country', CountryHelper::DEFAULT);
                                                 if ($school->client_id) {
                                                     $set('client_id', $school->client_id);
                                                 }
@@ -547,11 +548,11 @@ class RunRegistrationResource extends Resource
                     'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
                     'Genre'                          => $gender,
-                    'Nationalité'                    => $element->nationality ?: ($element->country ?: \App\Helpers\CountryHelper::DEFAULT),
+                    'Nationalité'                    => $element->nationality ?: ($element->country ?: CountryHelper::DEFAULT),
                     'E-mail'                         => $element->email ?: $registration->contact_email,
                     'Code postal'                    => $element->postal_code ?: ($registration->school_postal_code ?: $registration->invoicing_postal_code),
                     'Lieu'                           => $element->locality ?: ($registration->school_locality ?: $registration->invoicing_locality),
-                    'Pays'                           => $element->country ?: ($registration->school_country ?: \App\Helpers\CountryHelper::DEFAULT),
+                    'Pays'                           => $element->country ?: ($registration->school_country ?: CountryHelper::DEFAULT),
                     'Etablissement et classe'        => $schoolEtClass,
                     'Prénom du responsable '         => $registration->contact_first_name,
                     'Nom du responsable '            => $registration->contact_last_name,
@@ -593,7 +594,7 @@ class RunRegistrationResource extends Resource
                     'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
                     'Genre'                          => $gender,
-                    'Nationalité'                    => $element->nationality ?: \App\Helpers\CountryHelper::DEFAULT,
+                    'Nationalité'                    => $element->nationality ?: CountryHelper::DEFAULT,
                     'E-mail'                         => $element->email ?: $registration->contact_email,
                     'Nom de l\'entreprise'           => $companyName,
                     'Bloc de départ souhaité'        => $bloc,
@@ -633,7 +634,7 @@ class RunRegistrationResource extends Resource
                     'Prénom'                         => $element->first_name,
                     'Date de naissance (jj.mm.aaaa)' => $birthdate,
                     'Genre'                          => $gender,
-                    'Nationalité'                    => $element->nationality ?: \App\Helpers\CountryHelper::DEFAULT,
+                    'Nationalité'                    => $element->nationality ?: CountryHelper::DEFAULT,
                     'E-mail'                         => $element->email ?: $registration->contact_email,
                     'Nom du club'                    => $clubName,
                     'Course'                         => $runName,

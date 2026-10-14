@@ -67,6 +67,14 @@ class ProductResource extends Resource
                     ->inline(false),
                 TextInput::make('unit')
                     ->label('Unité'),
+                TextInput::make('account_number')
+                    ->label('N° Compte comptable (Banana)')
+                    ->placeholder('ex. 3200')
+                    ->maxLength(20),
+                TextInput::make('vat_code')
+                    ->label('Code TVA (Banana)')
+                    ->placeholder('ex. USt81 ou VM81')
+                    ->maxLength(20),
                 Toggle::make('is_active')
                     ->label('Actif')
                     ->default(true),
@@ -110,6 +118,10 @@ class ProductResource extends Resource
                 */
                 TextInputColumn::make('unit')
                     ->label('Unité'),
+                TextInputColumn::make('account_number')
+                    ->label('Compte'),
+                TextInputColumn::make('vat_code')
+                    ->label('Code TVA'),
                 ToggleColumn::make('is_active')
                     ->label('Actif')
                     ->extraAttributes(['style' => 'padding-top: 0;padding-bottom: 0;']),

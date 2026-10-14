@@ -1,18 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Pages;
 
 use Exception;
-use App\Models\Invoice;
-use Genkgo\Camt\Config;
-use Genkgo\Camt\Reader;
+use ZipArchive;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Carbon;
-use App\Enums\InvoiceStatusEnum;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+use App\Services\BananaCamtService;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -29,122 +32,206 @@ class CamtImport extends Page implements HasForms
 
     public ?array $data = [];
 
-    public ?Collection $transactions;
+    public ?Collection $transactions = null;
+
+    public ?array $summary = null;
+
+    public ?string $tsvContent = null;
 
     public function mount(): void
     {
-        $this->form->fill();
+        $this->form->fill([
+            'bank_account'       => setting('banana_bank_account', '1020'),
+            'allocation_mode'    => setting('banana_allocation_mode', 'client_account'),
+            'reconcile_invoices' => true,
+        ]);
     }
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                FileUpload::make('camt_file')
-                    ->label('Fichier CAMT.054 (XML)')
-                    ->acceptedFileTypes(['application/xml', 'text/xml'])
+                FileUpload::make('camt_files')
+                    ->label('Fichiers CAMT UBS (camt.053, camt.054, XML ou ZIP)')
+                    ->helperText('Sélectionnez un ou plusieurs fichiers (jusqu\'à 20). Les fichiers .054 (avis QR) et .053 (extraits) sont dédupliqués automatiquement.')
+                    ->acceptedFileTypes([
+                        'application/xml',
+                        'text/xml',
+                        'application/zip',
+                        'application/x-zip-compressed',
+                        'application/octet-stream',
+                    ])
+                    ->multiple()
+                    ->maxFiles(20)
                     ->storeFiles(false)
                     ->required(),
+
+                Grid::make(3)
+                    ->schema([
+                        TextInput::make('bank_account')
+                            ->label('N° Compte Banque (Banana)')
+                            ->helperText('ex. 1020')
+                            ->default(fn () => setting('banana_bank_account', '1020'))
+                            ->required(),
+
+                        Select::make('allocation_mode')
+                            ->label('Affectation des factures QR')
+                            ->options([
+                                'client_account' => 'Compte Débiteurs (1100) - Sans TVA',
+                                'provisions'     => 'Compte prestation & TVA (Encaissements)',
+                            ])
+                            ->default(fn () => setting('banana_allocation_mode', 'client_account'))
+                            ->required(),
+
+                        Toggle::make('reconcile_invoices')
+                            ->label('Rapprocher les factures CDN')
+                            ->helperText('Marque les factures QR payées en base de données')
+                            ->default(true),
+                    ]),
             ])
             ->statePath('data');
     }
 
     public function submit(): void
     {
-        $data = $this->form->getState();
-        $file = $data['camt_file'];
+        $formData = $this->form->getState();
+        $rawFiles = $formData['camt_files'] ?? [];
 
-        // Initialisation de la librairie Genkgo/Camt
-        $reader = new Reader(Config::getDefault());
+        if (empty($rawFiles)) {
+            Notification::make()
+                ->title('Aucun fichier sélectionné')
+                ->warning()
+                ->send();
 
-        try {
-            $xmlContent = file_get_contents($file->getRealPath());
-            $xmlContent = str_replace('T24:00:00', 'T23:59:59', $xmlContent);
-            $message = $reader->readString($xmlContent);
-            $notifications = $message->getRecords();
+            return;
+        }
 
-            $this->transactions = collect();
+        // Si un seul fichier n'est pas dans un tableau
+        if (! is_array($rawFiles)) {
+            $rawFiles = [$rawFiles];
+        }
 
-            $reconciledCount = 0;
-            $notFoundCount = 0;
+        // Traitement éventuel d'archives ZIP
+        $extractedFiles = [];
+        $tempDir = null;
 
-            DB::beginTransaction();
+        foreach ($rawFiles as $file) {
+            if ($file instanceof UploadedFile) {
+                $clientName = mb_strtolower($file->getClientOriginalName());
+                if (str_ends_with($clientName, '.zip')) {
+                    $zip = new ZipArchive;
+                    if ($zip->open($file->getRealPath()) === true) {
+                        if ($tempDir === null) {
+                            $tempDir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'camt_zip_'.uniqid();
+                            @mkdir($tempDir, 0777, true);
+                        }
+                        $zip->extractTo($tempDir);
+                        $zip->close();
 
-            foreach ($notifications as $notification) {
-                foreach ($notification->getEntries() as $entry) {
-                    if ($entry->getCreditDebitIndicator() == 'CRDT') {
-
-                        foreach ($entry->getTransactionDetails() as $transaction) {
-
-                            $qrReference = $transaction->getRemittanceInformation()?->getCreditorReferenceInformation()?->getRef();
-                            $bookingDate = Carbon::parse($entry->getBookingDate());
-                            $transactionReference = $transaction->getReference()?->getAccountServicerReference();
-                            $transactionAmount = $transaction->getAmount()?->getAmount() / 100;
-                            $debtor = $transaction->getRelatedParty()?->getRelatedPartyType()?->getName();
-
-                            $invoice = null;
-
-                            if ($qrReference) {
-                                $invoice = Invoice::where('qr_reference', $qrReference)->first();
-
-                                if ($invoice) {
-                                    if ($invoice->total != $transactionAmount) {
-                                        $invoiceStatus = InvoiceStatusEnum::ActionRequired->value;
-
-                                        Notification::make()
-                                            ->title('Montant inexact')
-                                            ->body("Montant payé de la facture #{$invoice->number} inexact (Attendu: {$invoice->total}, Reçu: {$transactionAmount}).")
-                                            ->warning()
-                                            ->persistent()
-                                            ->send();
-                                    } else {
-                                        $invoiceStatus = InvoiceStatusEnum::Paid->value;
-                                    }
-
-                                    $invoice->status = $invoiceStatus;
-                                    $invoice->paid_on = $bookingDate;
-                                    $invoice->reference = empty($invoice->reference) ? $transactionReference : $invoice->reference;
-                                    $invoice->save();
-
-                                    $reconciledCount++;
-                                } else {
-                                    $notFoundCount++;
-                                }
+                        // Récupérer tous les fichiers XML du dossier dézippé
+                        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($tempDir));
+                        foreach ($iterator as $f) {
+                            if ($f->isFile() && in_array(mb_strtolower($f->getExtension()), ['xml', 'camt'])) {
+                                $extractedFiles[] = $f->getPathname();
                             }
-
-                            // For table
-                            $this->transactions->add((object) [
-                                'debtor'       => $debtor,
-                                'qr_reference' => $qrReference,
-                                'invoice'      => $invoice ?? null,
-                                'date'         => $bookingDate,
-                                'amount'       => $transactionAmount,
-                                'reference'    => $transactionReference,
-                            ]);
                         }
                     }
+                } else {
+                    $extractedFiles[] = $file;
                 }
+            } elseif (is_string($file)) {
+                $extractedFiles[] = $file;
             }
+        }
 
-            DB::commit();
-
-            // Afficher une notification de succès
+        if (empty($extractedFiles)) {
             Notification::make()
-                ->title('Importation réussie')
-                ->body("{$reconciledCount} factures ont été rapprochées avec succès. {$notFoundCount} paiements n'ont pas trouvé de facture correspondante.")
+                ->title('Aucun fichier XML exploitable trouvé')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $service = app(BananaCamtService::class);
+            $result = $service->processFiles($extractedFiles, [
+                'bank_account'    => $formData['bank_account'] ?? '1020',
+                'allocation_mode' => $formData['allocation_mode'] ?? 'client_account',
+                'reconcile'       => (bool) ($formData['reconcile_invoices'] ?? true),
+            ]);
+
+            $this->transactions = $result['entries'];
+            $this->summary = $result['summary'];
+            $this->tsvContent = $result['tsv_content'];
+
+            $reconciled = $this->summary['reconciled_invoices'] ?? 0;
+            $unmatched = $this->summary['unmatched_payments'] ?? 0;
+            $duplicates = $this->summary['duplicate_entries'] ?? 0;
+
+            Notification::make()
+                ->title('Traitement terminé avec succès')
+                ->body("{$reconciled} factures réconciliées. {$unmatched} paiements hors factures CDN. {$duplicates} doublons UBS ignorés.")
                 ->success()
                 ->send();
 
         } catch (Exception $e) {
-            DB::rollBack();
-
             Notification::make()
-                ->title('Erreur lors de l\'importation')
-                ->body('Veuillez vérifier que le fichier est au format CAMT.054 valide. Erreur :'.$e->getMessage())
+                ->title('Erreur lors du traitement')
+                ->body('Une erreur est survenue lors de l\'analyse des fichiers : '.$e->getMessage())
                 ->danger()
+                ->persistent()
                 ->send();
+        } finally {
+            // Nettoyage dossier ZIP temporaire
+            if ($tempDir && is_dir($tempDir)) {
+                $this->removeDirectory($tempDir);
+            }
+        }
+    }
+
+    public function downloadBananaFile()
+    {
+        if (empty($this->tsvContent)) {
+            Notification::make()
+                ->title('Aucune donnée à exporter')
+                ->warning()
+                ->send();
+
+            return null;
         }
 
-        $this->form->fill();
+        $fileName = 'banana_import_'.date('Ymd_His').'.txt';
+        $content = $this->tsvContent;
+
+        return response()->streamDownload(function () use ($content) {
+            // BOM UTF-8 pour ouverture optimale dans Excel et Banana
+            echo "\xEF\xBB\xBF";
+            echo $content;
+        }, $fileName, [
+            'Content-Type' => 'text/tab-separated-values; charset=UTF-8',
+        ]);
+    }
+
+    public function resetImport(): void
+    {
+        $this->transactions = null;
+        $this->summary = null;
+        $this->tsvContent = null;
+        $this->form->fill([
+            'bank_account'       => setting('banana_bank_account', '1020'),
+            'allocation_mode'    => setting('banana_allocation_mode', 'client_account'),
+            'reconcile_invoices' => true,
+        ]);
+    }
+
+    protected function removeDirectory(string $dir): void
+    {
+        $files = array_diff(scandir($dir) ?: [], ['.', '..']);
+        foreach ($files as $file) {
+            $path = "$dir/$file";
+            is_dir($path) ? $this->removeDirectory($path) : @unlink($path);
+        }
+        @rmdir($dir);
     }
 }
