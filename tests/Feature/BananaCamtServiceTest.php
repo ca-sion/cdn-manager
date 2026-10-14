@@ -109,15 +109,16 @@ XML;
     $entries = $result['entries'];
     expect($entries)->toHaveCount(2);
 
-    // 1ère écriture : CRDT -> Débit 1020, Crédit 1100
+    // 1ère écriture : CRDT -> Débit 1020, Crédit 1100 (compte client par défaut car pas de règle sponsor explicite dans ce test)
     $creditEntry = $entries->firstWhere('sens', 'CRDT');
     expect($creditEntry['account_debit'])->toBe('1020')
         ->and($creditEntry['account_credit'])->toBe('1100')
+        ->and($creditEntry['vat_code'])->toBe('')
         ->and($creditEntry['amount'])->toBe(150.0)
         ->and($creditEntry['description'])->toContain('Entreprise ABC SA')
-        ->and($creditEntry['description'])->toContain('Facture QR F123');
+        ->and($creditEntry['description'])->toContain('Facture F123');
 
-    // 2ème écriture : DBIT -> Débit 6900 (règle UBS), Crédit 1020
+    // 2ème écriture : DBIT -> Débit 6900 (règle UBS explicite), Crédit 1020
     $debitEntry = $entries->firstWhere('sens', 'DBIT');
     expect($debitEntry['account_debit'])->toBe('6900')
         ->and($debitEntry['account_credit'])->toBe('1020')
@@ -126,7 +127,7 @@ XML;
 
     // Vérification du fichier TSV
     expect($result['tsv_content'])->toContain("Date\tDocInvoice\tDescription\tAccountDebit\tAccountCredit\tAmount\tVatCode\tExternalReference")
-        ->and($result['tsv_content'])->toContain("2026-10-14\t\tEntreprise ABC SA - Facture QR F123 - Paiement facture sponsoring\t1020\t1100\t150.00\t\t")
+        ->and($result['tsv_content'])->toContain("2026-10-14\t\tEntreprise ABC SA - Facture F123 - Paiement facture sponsoring\t1020\t1100\t150.00\t\t")
         ->and($result['tsv_content'])->toContain("2026-10-14\t\tUBS Switzerland AG - Frais de gestion de compte\t6900\t1020\t45.00\t\t");
 });
 
@@ -227,4 +228,79 @@ XML;
     $invoice->refresh();
     expect($invoice->status)->toBe(InvoiceStatusEnum::Paid)
         ->and($invoice->paid_on->toDateString())->toBe('2026-10-14');
+});
+
+it('detects partial payments and calculates remaining balance accurately', function () {
+    $service = new BananaCamtService;
+
+    $edition = Edition::create(['name' => '2026', 'year' => 2026]);
+    $client = Client::create(['name' => 'Start-up Tech Sàrl']);
+
+    $qrRef = '210000000000000000000007777';
+    $invoice = new Invoice;
+    $invoice->edition_id = $edition->id;
+    $invoice->client_id = $client->id;
+    $invoice->number = '2026077';
+    $invoice->title = 'Sponsoring Digital';
+    $invoice->status = InvoiceStatusEnum::Sent;
+    $invoice->qr_reference = $qrRef;
+    $invoice->positions = [
+        ['name' => 'Pack Digital', 'cost' => 1000.0, 'quantity' => 1, 'tax_rate' => 0.0, 'include_vat' => true],
+    ];
+    $invoice->save();
+
+    // XML avec un acompte de 600.00 CHF reçu sur 1000.00 CHF attendu
+    $xml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.054.001.04">
+    <BkToCstmrDbtCdtNtfctn>
+        <Ntry>
+            <Amt Ccy="CHF">600.00</Amt>
+            <CdtDbtInd>CRDT</CdtDbtInd>
+            <BookgDt><Dt>2026-10-14</Dt></BookgDt>
+            <NtryDtls>
+                <TxDtls>
+                    <Amt Ccy="CHF">600.00</Amt>
+                    <CdtDbtInd>CRDT</CdtDbtInd>
+                    <RltdPties><Dbtr><Nm>Start-up Tech Sàrl</Nm></Dbtr></RltdPties>
+                    <RmtInf><Strd><CdtrRefInf><Ref>{$qrRef}</Ref></CdtrRefInf></Strd></RmtInf>
+                </TxDtls>
+            </NtryDtls>
+        </Ntry>
+    </BkToCstmrDbtCdtNtfctn>
+</Document>
+XML;
+
+    $tempFile = tempnam(sys_get_temp_dir(), 'camt_partial_').'.xml';
+    file_put_contents($tempFile, $xml);
+
+    $result = $service->processFiles([$tempFile], [
+        'bank_account' => '1020',
+        'reconcile'    => true,
+    ]);
+
+    @unlink($tempFile);
+
+    expect($result['summary']['mismatched_amounts'])->toBe(1);
+
+    $entry = $result['entries']->first();
+    expect($entry['is_partial'])->toBeTrue()
+        ->and($entry['remaining_balance'])->toBe(400.0)
+        ->and($entry['is_overpaid'])->toBeFalse();
+
+    // Vérifier que la facture est passée en ActionRequired
+    $invoice->refresh();
+    expect($invoice->status)->toBe(InvoiceStatusEnum::ActionRequired);
+
+    // Tester la ré-application dynamique des règles
+    $updatedEntries = $service->reapplyRulesToEntries(
+        $result['entries'],
+        [['keyword' => 'Start-up Tech', 'account' => '31100', 'vat_code' => 'F2']],
+        '1020',
+        '1100',
+        '2000',
+        'client_account'
+    );
+
+    expect($updatedEntries->first()['account_credit'])->toBe('1100'); // QR invoice with client_account keeps client account
 });

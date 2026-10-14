@@ -7,6 +7,7 @@ namespace App\Filament\Pages;
 use Exception;
 use ZipArchive;
 use Filament\Pages\Page;
+use Filament\Actions\Action;
 use Filament\Schemas\Schema;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -211,6 +212,111 @@ class CamtImport extends Page implements HasForms
         }, $fileName, [
             'Content-Type' => 'text/tab-separated-values; charset=UTF-8',
         ]);
+    }
+
+    public function createRuleAction(): Action
+    {
+        return Action::make('createRule')
+            ->label('Mémoriser cette règle')
+            ->modalHeading('Créer une règle d\'affectation Banana')
+            ->modalDescription('Cette règle sera enregistrée dans les Paramètres et appliquée immédiatement aux écritures ci-dessous.')
+            ->modalSubmitActionLabel('Enregistrer et appliquer')
+            ->form([
+                TextInput::make('keyword')
+                    ->label('Mot-clé dans le libellé')
+                    ->helperText('Ex: nom du fournisseur, prestataire ou motif récurrent.')
+                    ->required(),
+                TextInput::make('account')
+                    ->label('N° Compte comptable')
+                    ->placeholder('ex. 42020, 42080, 42861, 31100...')
+                    ->helperText('Comptes fréquents CDN : 42020 (Salaires), 42080 (Frais banque), 2201 (TVA), 42861 (Web), 42060 (Logiciels), 42320 (Encarts), 42171 (Graphisme), 31100 (Sponsors)...')
+                    ->required(),
+                Select::make('vat_code')
+                    ->label('Code TVA Banana (optionnel)')
+                    ->options([
+                        ''   => 'Aucun code TVA',
+                        'F1' => 'F1 (Annonces - 4.50%)',
+                        'F2' => 'F2 (Sponsoring - 5.30%)',
+                        'F3' => 'F3 (Banderoles/Publicité - 5.30%)',
+                        'F4' => 'F4 (Cantine assis/alcool - 5.30%)',
+                        'F5' => 'F5 (Tentes - 3.70%)',
+                        'F6' => 'F6 (Cantine à emporter - 0.60%)',
+                    ])
+                    ->nullable(),
+            ])
+            ->fillForm(function (array $arguments): array {
+                return [
+                    'keyword'  => $arguments['keyword'] ?? '',
+                    'account'  => $arguments['account'] ?? '',
+                    'vat_code' => $arguments['vat_code'] ?? '',
+                ];
+            })
+            ->action(function (array $data): void {
+                $keyword = trim((string) ($data['keyword'] ?? ''));
+                $account = trim((string) ($data['account'] ?? ''));
+                $vatCode = trim((string) ($data['vat_code'] ?? ''));
+
+                if ($keyword === '' || $account === '') {
+                    return;
+                }
+
+                // 1. Sauvegarde dans les Settings
+                $rules = (array) setting('banana_rules', []);
+                // Remplacer si le mot-clé existe déjà ou ajouter
+                $updated = false;
+                foreach ($rules as &$rule) {
+                    if (mb_strtolower(trim((string) ($rule['keyword'] ?? ''))) === mb_strtolower($keyword)) {
+                        $rule['account'] = $account;
+                        $rule['vat_code'] = $vatCode;
+                        $updated = true;
+                        break;
+                    }
+                }
+                if (! $updated) {
+                    $rules[] = [
+                        'keyword'  => $keyword,
+                        'account'  => $account,
+                        'vat_code' => $vatCode,
+                    ];
+                }
+
+                setting(['banana_rules' => $rules]);
+
+                // 2. Ré-application immédiate sur les transactions courantes
+                $this->reapplyCurrentRules();
+
+                Notification::make()
+                    ->title('Règle enregistrée avec succès')
+                    ->body("La règle '{$keyword}' ➔ Compte {$account} a été enregistrée et appliquée à vos écritures.")
+                    ->success()
+                    ->send();
+            });
+    }
+
+    public function reapplyCurrentRules(): void
+    {
+        if (! $this->transactions || $this->transactions->isEmpty()) {
+            return;
+        }
+
+        $service = app(BananaCamtService::class);
+        $rules = (array) setting('banana_rules', []);
+        $bankAccount = (string) ($this->data['bank_account'] ?? setting('banana_bank_account', '1020'));
+        $clientAccount = (string) setting('banana_client_account', '1100');
+        $supplierAccount = (string) setting('banana_supplier_account', '2000');
+        $allocationMode = (string) ($this->data['allocation_mode'] ?? setting('banana_allocation_mode', 'client_account'));
+
+        $this->transactions = $service->reapplyRulesToEntries(
+            $this->transactions,
+            $rules,
+            $bankAccount,
+            $clientAccount,
+            $supplierAccount,
+            $allocationMode
+        );
+
+        // Régénération dynamique du fichier Banana TSV
+        $this->tsvContent = $service->generateBananaTsv($this->transactions);
     }
 
     public function resetImport(): void

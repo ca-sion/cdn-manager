@@ -106,10 +106,11 @@
                                 <th class="px-4 py-3" scope="col">TVA</th>
                                 <th class="px-4 py-3" scope="col">Libellé (Description)</th>
                                 <th class="px-4 py-3" scope="col">Rapprochement</th>
+                                <th class="px-3 py-3 text-center" scope="col">Règle</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-                            @foreach ($transactions as $tx)
+                            @foreach ($transactions as $index => $tx)
                                 <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
                                     <td class="whitespace-nowrap px-4 py-3 font-mono text-xs">
                                         {{ $tx['formatted_date'] }}
@@ -142,20 +143,33 @@
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-3 text-xs">
                                         @if ($tx['invoice'])
-                                            <div class="flex items-center gap-2">
-                                                <span class="fi-badge fi-color-custom flex items-center gap-x-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-400">
-                                                    {{ $tx['invoice']->status?->getLabel() ?? 'Payée' }}
-                                                </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                @if (! empty($tx['is_partial']))
+                                                    <span class="inline-flex items-center gap-x-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400"
+                                                          title="Facture totale : {{ number_format((float) $tx['invoice']->total, 2, '.', '\'') }} CHF">
+                                                        Acompte (Reste dû : {{ number_format((float) $tx['remaining_balance'], 2, '.', '\'') }} CHF)
+                                                    </span>
+                                                @elseif (! empty($tx['is_overpaid']))
+                                                    <span class="inline-flex items-center gap-x-1 rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20 dark:bg-sky-400/10 dark:text-sky-400"
+                                                          title="Facture totale : {{ number_format((float) $tx['invoice']->total, 2, '.', '\'') }} CHF">
+                                                        Trop-perçu (+{{ number_format((float) $tx['overpaid_amount'], 2, '.', '\'') }} CHF)
+                                                    </span>
+                                                @else
+                                                    <span class="fi-badge fi-color-custom flex items-center gap-x-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-400">
+                                                        Payée
+                                                    </span>
+                                                @endif
+
                                                 <a href="{{ route('filament.admin.resources.invoices.edit', ['record' => $tx['invoice']->id]) }}"
                                                    target="_blank"
-                                                   class="text-primary-600 hover:underline"
+                                                   class="text-primary-600 hover:underline text-xs"
                                                    title="Voir la facture #{{ $tx['invoice']->number }}">
                                                     📄
                                                 </a>
                                                 @if ($tx['invoice']->client)
                                                     <a href="{{ route('filament.admin.resources.clients.edit', ['record' => $tx['invoice']->client->id, 'activeRelationManager' => 3]) }}"
                                                        target="_blank"
-                                                       class="text-gray-500 hover:underline"
+                                                       class="text-gray-500 hover:underline text-xs"
                                                        title="Voir le client {{ $tx['invoice']->client->name }}">
                                                         👤
                                                     </a>
@@ -169,6 +183,18 @@
                                         @else
                                             <span class="text-xs text-gray-400">Hors QR</span>
                                         @endif
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-3 text-center">
+                                        <button type="button"
+                                                wire:click="mountAction('createRule', {
+                                                    keyword: @js($tx['party_name'] ?: preg_replace('/^(Facture|Ordre|Paiement)\s+/i', '', $tx['description'])),
+                                                    account: @js($tx['sens'] === 'DBIT' ? $tx['account_debit'] : $tx['account_credit']),
+                                                    vat_code: @js($tx['vat_code'] ?: '')
+                                                })"
+                                                class="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-gray-800 dark:hover:text-primary-400"
+                                                title="Mémoriser une règle pour ce partenaire dans les Paramètres">
+                                            <x-filament::icon icon="heroicon-o-cog-6-tooth" class="h-4 w-4" />
+                                        </button>
                                     </td>
                                 </tr>
                             @endforeach

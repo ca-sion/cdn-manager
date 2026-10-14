@@ -361,19 +361,35 @@ class BananaCamtService
         $docInvoice = '';
         $vatCode = '';
 
+        $isPartial = false;
+        $remainingBalance = 0.0;
+        $isOverpaid = false;
+        $overpaidAmount = 0.0;
+
         // 1. Rapprochement facture QR
         if ($sens === 'CRDT' && ! empty($qrReference)) {
             $invoice = Invoice::query()->where('qr_reference', $qrReference)->first();
 
             if ($invoice) {
                 $docInvoice = (string) $invoice->number;
+                $expectedTotal = (float) $invoice->total;
+                $diff = round($expectedTotal - $amount, 2);
 
-                if (abs((float) $invoice->total - $amount) > 0.01) {
-                    $stats['mismatched_amounts']++;
-                    $invoiceStatus = InvoiceStatusEnum::ActionRequired;
-                } else {
+                if (abs($diff) <= 0.01) {
                     $stats['reconciled_invoices']++;
                     $invoiceStatus = InvoiceStatusEnum::Paid;
+                } elseif ($diff > 0.01) {
+                    // Acompte / Paiement partiel reçu
+                    $stats['mismatched_amounts']++;
+                    $invoiceStatus = InvoiceStatusEnum::ActionRequired;
+                    $isPartial = true;
+                    $remainingBalance = $diff;
+                } else {
+                    // Trop-perçu
+                    $stats['mismatched_amounts']++;
+                    $invoiceStatus = InvoiceStatusEnum::ActionRequired;
+                    $isOverpaid = true;
+                    $overpaidAmount = abs($diff);
                 }
 
                 if ($reconcileInDatabase) {
@@ -413,7 +429,7 @@ class BananaCamtService
                 }
             } else {
                 // Règle par mot-clé pour encaissements divers
-                [$matchedAccount, $matchedVat] = $this->matchKeywordRule($description, $rules);
+                [$matchedAccount, $matchedVat] = $this->matchKeywordRule($description, $entry, $rules);
                 if ($matchedAccount) {
                     $accountCredit = $matchedAccount;
                     $vatCode = $matchedVat;
@@ -425,7 +441,7 @@ class BananaCamtService
             $accountDebit = $defaultSupplierAccount;
 
             // Règle par mot-clé pour décaissements
-            [$matchedAccount, $matchedVat] = $this->matchKeywordRule($description, $rules);
+            [$matchedAccount, $matchedVat] = $this->matchKeywordRule($description, $entry, $rules);
             if ($matchedAccount) {
                 $accountDebit = $matchedAccount;
                 $vatCode = $matchedVat;
@@ -448,6 +464,11 @@ class BananaCamtService
             'qr_reference'       => $qrReference,
             'invoice'            => $invoice,
             'party_name'         => $entry['party_name'],
+            'raw_entry'          => $entry,
+            'is_partial'         => $isPartial,
+            'remaining_balance'  => $remainingBalance,
+            'is_overpaid'        => $isOverpaid,
+            'overpaid_amount'    => $overpaidAmount,
         ];
     }
 
@@ -459,76 +480,112 @@ class BananaCamtService
      */
     protected function buildDescription(array $entry, ?Invoice $invoice): string
     {
-        $parts = [];
-
-        // 1. Identification de la partie prenante
-        $party = $invoice?->client?->invoicing_name
+        $sens = $entry['sens'];
+        $rawParty = $invoice?->client?->invoicing_name
             ?: $invoice?->client?->name
             ?: $entry['party_name'];
 
-        if (! empty($party)) {
-            $parts[] = trim((string) $party);
+        // Libellé technique bancaire standard UBS
+        foreach (array_merge([$rawParty], $entry['remittance_parts']) as $checkPart) {
+            if ($checkPart && str_contains(mb_strtolower((string) $checkPart), 'balance of service prices')) {
+                return 'UBS - Frais bancaires et tenue de compte';
+            }
         }
 
-        // 2. Traitement spécifique des factures QR
+        $parts = [];
+
+        // 1. Partie prenante
+        if (! empty($rawParty)) {
+            $parts[] = trim((string) $rawParty);
+        }
+
+        // 2. Traitement des factures
         if ($invoice) {
+            // Facture réconciliée dans CDN
             $parts[] = "Facture F{$invoice->number}";
 
-            // Ajouter le titre ou l'intitulé si distinct du nom de la facture
             if (! empty($invoice->title) && ! str_contains(mb_strtolower($invoice->title), 'facture')) {
                 $parts[] = $invoice->title;
             }
-        } elseif (! empty($entry['qr_reference'])) {
-            // Facture QR non trouvée dans CDN : décoder le numéro de facture contenu dans la référence
+        } elseif ($sens === 'CRDT' && ! empty($entry['qr_reference'])) {
+            // Encaissement QR d'un client dont la facture n'est pas trouvée dans CDN
             $cleanRef = ltrim($entry['qr_reference'], '0');
             $refNumber = strlen($cleanRef) > 1 ? substr($cleanRef, 0, -1) : $cleanRef;
-            $parts[] = "Facture QR F{$refNumber}";
+            $parts[] = "Facture F{$refNumber}";
         }
 
-        // 3. Intégration des motifs de paiement / communication
+        // 3. Traitement des motifs de paiement / communication
         foreach ($entry['remittance_parts'] as $remittance) {
             $clean = $this->sanitizeText((string) $remittance);
-            if (! empty($clean)) {
-                $parts[] = $clean;
+            if (empty($clean)) {
+                continue;
             }
+
+            // Nettoyage spécifique de chaînes coupées connues
+            $clean = str_ireplace('CIRCUITDECOU // RSES.CH', 'circuitdescourses.ch', $clean);
+            $clean = str_ireplace(' // ', ' - ', $clean);
+
+            // Pour un décaissement (DBIT), si c'est une facture fournisseur, reformater proprement
+            if ($sens === 'DBIT') {
+                if (preg_match('/(?:facture|fact|invoice|pro\s*forma)\s*[:#]?\s*([a-z0-9_-]+)/i', $clean, $m)) {
+                    $parts[] = $clean;
+
+                    continue;
+                }
+            }
+
+            $parts[] = $clean;
         }
 
         if (empty($parts)) {
-            return $entry['sens'] === 'CRDT' ? 'Paiement reçu' : 'Paiement émis';
+            return $sens === 'CRDT' ? 'Paiement reçu' : 'Paiement émis';
         }
 
-        // 4. Dé-duplication des segments et nettoyage des filtres parasites
-        $uniqueParts = [];
-        $seen = [];
-
-        foreach ($parts as $part) {
-            $normalized = mb_strtolower(preg_replace('/\s+/', '', $part));
-            if (! isset($seen[$normalized]) && ! empty($normalized)) {
-                $seen[$normalized] = true;
-                $uniqueParts[] = $part;
-            }
-        }
-
-        $fullDescription = implode(' - ', $uniqueParts);
-
-        // Nettoyage final des mentions techniques bancaires suisses
+        // 4. Nettoyage et suppression des scories techniques bancaires
         $patternsToRemove = [
+            '/\b(?:e-banking\s+Order|Standing\s+order)\b/i',
             '/\bCredit QR reference\b/i',
             '/\bCREDIT TRANSACTIONS\b/i',
             '/\bTOTAL ENTRIES\b/i',
             '/\bBVR reference\b/i',
             '/\bNONREF\b/i',
             '/\bNOTPROVIDED\b/i',
+            '/\s*-\s*-\s*/',
             '/\s{2,}/',
         ];
 
-        $cleaned = preg_replace($patternsToRemove, ' ', $fullDescription);
-        $cleaned = trim((string) $cleaned, " \t\n\r\0\x0B-");
+        // 5. Dé-duplication intelligente des segments
+        $uniqueParts = [];
+        $extractedNumbers = [];
 
-        // Retirer impérativement tout retour à la ligne ou tabulation pour la compatibilité TSV Banana
-        $cleaned = str_replace(["\t", "\r", "\n"], ' ', $cleaned);
+        foreach ($parts as $part) {
+            $partCleaned = preg_replace($patternsToRemove, ' ', $part);
+            $partCleaned = trim((string) $partCleaned, " \t\n\r\0\x0B-");
+            if (empty($partCleaned)) {
+                continue;
+            }
 
-        return mb_substr($cleaned, 0, 250);
+            // Détection de numéros de facture pour éviter les répétitions (ex: "Facture F2025119" et "Facture 2025119")
+            if (preg_match('/\b(?:F)?(\d{5,})\b/i', $partCleaned, $matches)) {
+                $num = $matches[1];
+                if (isset($extractedNumbers[$num])) {
+                    continue; // Déjà présent dans un segment précédent
+                }
+                $extractedNumbers[$num] = true;
+            }
+
+            $normalized = mb_strtolower(preg_replace('/\s+/', '', $partCleaned));
+            if (! isset($uniqueParts[$normalized])) {
+                $uniqueParts[$normalized] = $partCleaned;
+            }
+        }
+
+        $fullDescription = implode(' - ', array_values($uniqueParts));
+        $fullDescription = preg_replace('/\s*-\s*-\s*/', ' - ', $fullDescription);
+        $fullDescription = trim((string) $fullDescription, " \t\n\r\0\x0B-");
+        $fullDescription = str_replace(["\t", "\r", "\n"], ' ', $fullDescription);
+
+        return mb_substr($fullDescription, 0, 250);
     }
 
     /**
@@ -557,23 +614,31 @@ class BananaCamtService
     }
 
     /**
-     * Vérifie si le libellé correspond à une règle par mot-clé configurée.
+     * Vérifie si le libellé ou les informations brutes correspondent à une règle par mot-clé configurée dans les Paramètres.
      *
+     * @param  array<string, mixed>  $entry
      * @param  array<int, array<string, mixed>>  $rules
      * @return array{0: ?string, 1: ?string}
      */
-    protected function matchKeywordRule(string $description, array $rules): array
+    protected function matchKeywordRule(string $description, array $entry, array $rules): array
     {
-        $lowerDesc = mb_strtolower($description);
+        $rawParts = array_merge([$description, $entry['party_name'] ?? ''], $entry['remittance_parts'] ?? []);
+        $searchContext = mb_strtolower(implode(' ', array_filter($rawParts)));
 
+        // 1. Priorité absolue aux règles administrées dans les Paramètres
         foreach ($rules as $rule) {
             $keyword = mb_strtolower(trim((string) ($rule['keyword'] ?? '')));
-            if ($keyword !== '' && str_contains($lowerDesc, $keyword)) {
+            if ($keyword !== '' && str_contains($searchContext, $keyword)) {
                 return [
                     (string) ($rule['account'] ?? ''),
                     (string) ($rule['vat_code'] ?? ''),
                 ];
             }
+        }
+
+        // 2. Filet de sécurité uniquement pour le libellé technique bancaire UBS
+        if (str_contains($searchContext, 'balance of service prices') || str_contains($searchContext, 'frais bancaire') || str_contains($searchContext, 'tenue de compte')) {
+            return ['42080', ''];
         }
 
         return [null, null];
@@ -647,5 +712,67 @@ class BananaCamtService
         $text = preg_replace('/\s+/', ' ', $text);
 
         return trim((string) $text);
+    }
+
+    /**
+     * Ré-applique dynamiquement les règles sur une collection d'écritures sans ré-analyser les fichiers XML.
+     *
+     * @param  Collection<int, array<string, mixed>>  $entries
+     * @param  array<int, array<string, mixed>>  $rules
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function reapplyRulesToEntries(
+        Collection $entries,
+        array $rules,
+        string $bankAccount,
+        string $defaultClientAccount,
+        string $defaultSupplierAccount,
+        string $allocationMode
+    ): Collection {
+        return $entries->map(function (array $tx) use ($rules, $bankAccount, $defaultClientAccount, $defaultSupplierAccount, $allocationMode) {
+            $sens = $tx['sens'];
+            $invoice = $tx['invoice'] ?? null;
+            $rawEntry = $tx['raw_entry'] ?? [];
+
+            if ($sens === 'CRDT') {
+                $tx['account_debit'] = $bankAccount;
+                if ($invoice) {
+                    if ($allocationMode === 'provisions') {
+                        [$prodAccount, $prodVat] = $this->resolveInvoiceProductAccount($invoice);
+                        if ($prodAccount) {
+                            $tx['account_credit'] = $prodAccount;
+                            $tx['vat_code'] = $prodVat;
+                        } else {
+                            $tx['account_credit'] = $defaultClientAccount;
+                            $tx['vat_code'] = '';
+                        }
+                    } else {
+                        $tx['account_credit'] = $defaultClientAccount;
+                        $tx['vat_code'] = '';
+                    }
+                } else {
+                    [$matchedAccount, $matchedVat] = $this->matchKeywordRule($tx['description'], $rawEntry, $rules);
+                    if ($matchedAccount) {
+                        $tx['account_credit'] = $matchedAccount;
+                        $tx['vat_code'] = $matchedVat;
+                    } else {
+                        $tx['account_credit'] = $defaultClientAccount;
+                        $tx['vat_code'] = '';
+                    }
+                }
+            } else {
+                $tx['account_credit'] = $bankAccount;
+                [$matchedAccount, $matchedVat] = $this->matchKeywordRule($tx['description'], $rawEntry, $rules);
+                if ($matchedAccount) {
+                    $tx['account_debit'] = $matchedAccount;
+                    $tx['vat_code'] = $matchedVat;
+                } else {
+                    $tx['account_debit'] = $defaultSupplierAccount;
+                    $tx['vat_code'] = '';
+                }
+            }
+
+            return $tx;
+        });
     }
 }

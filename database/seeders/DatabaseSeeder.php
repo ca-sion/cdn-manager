@@ -400,6 +400,28 @@ class DatabaseSeeder extends Seeder
         $this->updateSetting('default_run_company', $runEntreprises->id);
         $this->updateSetting('default_run_elite', $runHommes->id);
 
+        // Paramètres Comptabilité & Banana (100% administrables dans Filament)
+        $this->updateSetting('banana_bank_account', '1020');
+        $this->updateSetting('banana_client_account', '1100');
+        $this->updateSetting('banana_supplier_account', '2000');
+        $this->updateSetting('banana_allocation_mode', 'client_account');
+        $this->updateSetting('banana_rules', [
+            ['keyword' => 'Ravedoni', 'account' => '42020', 'vat_code' => ''],
+            ['keyword' => 'Salaire', 'account' => '42020', 'vat_code' => ''],
+            ['keyword' => 'Administration fédérale des contributions', 'account' => '2201', 'vat_code' => ''],
+            ['keyword' => 'AFC', 'account' => '2201', 'vat_code' => ''],
+            ['keyword' => 'Infomaniak', 'account' => '42861', 'vat_code' => ''],
+            ['keyword' => 'Epsitec', 'account' => '42060', 'vat_code' => ''],
+            ['keyword' => 'Impactmedias', 'account' => '42320', 'vat_code' => ''],
+            ['keyword' => 'by the way studio', 'account' => '42171', 'vat_code' => ''],
+            ['keyword' => 'Migros', 'account' => '31100', 'vat_code' => 'F2'],
+            ['keyword' => 'Sponsor', 'account' => '31100', 'vat_code' => 'F2'],
+            ['keyword' => 'Banderole', 'account' => '31100', 'vat_code' => 'F3'],
+            ['keyword' => 'Annonce', 'account' => '31110', 'vat_code' => 'F1'],
+            ['keyword' => 'Journal', 'account' => '31110', 'vat_code' => 'F1'],
+            ['keyword' => 'Don', 'account' => '31120', 'vat_code' => ''],
+        ]);
+
         // ==========================================
         // SCENARIOS
         // ==========================================
