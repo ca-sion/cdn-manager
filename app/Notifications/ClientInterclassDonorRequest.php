@@ -50,7 +50,7 @@ class ClientInterclassDonorRequest extends Notification
             ->bcc('pub@coursedenoel.ch')
             ->greeting('Madame, Monsieur,')
             ->line('Le samedi 12 décembre 2026 marquera un événement exceptionnel à Sion : la **Course de Noël**, qui verra plus de 6\'000 coureurs s\'élancer au cœur de la ville de Sion.')
-            ->line('Dans ce cadre, le « **Concours interclasses** » fêtera sa 26e édition, et permettra à nouveau à **plus de 1\'000 élèves** du degré primaire de découvrir le plaisir de courir avec leurs camarades de classe et de donner le meilleur d’eux-mêmes pour renforcer leur esprit d’équipe !')
+            ->line('Dans ce cadre, le « **Concours interclasses** » fêtera sa 26e édition, et permettra à nouveau à **plus de 1\'200 élèves** du degré primaire de découvrir le plaisir de courir avec leurs camarades de classe et de donner le meilleur d’eux-mêmes pour renforcer leur esprit d’équipe !')
             ->line('Vous avez été un soutien fidèle par le passé ou partagez nos valeurs de promotion du sport jeunesse. C’est pourquoi nous nous permettons de vous solliciter afin de pouvoir primer les meilleures classes de chacune des 6 catégories.')
             ->line('Nous vous serions ainsi très reconnaissants si vous pouviez **offrir aux participant·e·s des bons/entrées** et ce jusqu\'à 25 élèves. Votre généreux geste permettrait à ces enfants et à leurs familles de passer ensemble un moment inoubliable.')
             ->line('En contrepartie, nous :')
