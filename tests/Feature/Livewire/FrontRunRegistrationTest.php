@@ -4,12 +4,17 @@ namespace Tests\Feature\Livewire;
 
 use App\Models\Run;
 use Tests\TestCase;
+use App\Models\Client;
 use App\Models\School;
 use Livewire\Livewire;
+use App\Models\Edition;
+use Illuminate\Support\Carbon;
 use App\Models\RunRegistration;
+use Illuminate\Http\UploadedFile;
 use App\Enums\RunRegistrationType;
 use Illuminate\Support\Facades\URL;
 use App\Livewire\FrontRunRegistration;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class FrontRunRegistrationTest extends TestCase
@@ -495,5 +500,195 @@ class FrontRunRegistrationTest extends TestCase
             ->call('removeRowByKey', 'only');
 
         $this->assertCount(3, $comp->get('elements'));
+    }
+
+    private function fakeRegistration(string $type = 'company', array $overrides = []): RunRegistration
+    {
+        return RunRegistration::factory()->create(array_merge([
+            'run_registration_type'  => $type,
+            'company_name'           => 'Test Enterprise',
+            'contact_first_name'     => 'Marc',
+            'contact_last_name'      => 'Favre',
+            'contact_email'          => 'marc@test.com',
+            'contact_phone'          => '079 123 45 67',
+            'invoicing_company_name' => 'Test Enterprise',
+            'invoicing_address'      => 'Rue du Rhône 1',
+            'invoicing_postal_code'  => '1950',
+            'invoicing_locality'     => 'Sion',
+            'invoicing_email'        => 'invoicing@test.com',
+        ], $overrides));
+    }
+
+    /** @test */
+    public function paste_import_does_not_assign_a_group_run_to_company_or_school_rows()
+    {
+        Run::factory()->create(['name' => 'Course Groupes', 'available_for_types' => ['group'], 'min_age' => 5, 'max_age' => 99]);
+
+        foreach (['company', 'school'] as $type) {
+            $comp = Livewire::test(FrontRunRegistration::class, ['type' => $type])
+                ->set('pasteTextData', 'Lucas;Rey;02.02.2012;M;lucas@example.com;SUI')
+                ->call('processPasteText');
+
+            $imported = collect($comp->get('elements'))->firstWhere('first_name', 'Lucas');
+            $this->assertNotNull($imported, "row not imported for $type");
+            $this->assertSame('', (string) $imported['run_id'], "run_id must stay empty for $type");
+        }
+    }
+
+    /** @test */
+    public function paste_import_still_auto_selects_the_only_matching_run_for_groups()
+    {
+        $run = Run::factory()->create(['name' => 'Course Groupes', 'available_for_types' => ['group'], 'min_age' => 5, 'max_age' => 99]);
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['type' => 'group'])
+            ->set('pasteTextData', 'Lucas;Rey;02.02.2012;M;lucas@example.com;SUI')
+            ->call('processPasteText');
+
+        $imported = collect($comp->get('elements'))->firstWhere('first_name', 'Lucas');
+        $this->assertSame((string) $run->id, (string) $imported['run_id']);
+    }
+
+    /** @test */
+    public function locked_grid_does_not_prevent_updating_contact_details_even_with_invalid_rows()
+    {
+        $run = Run::factory()->create(['name' => 'Course Entreprises', 'available_for_types' => ['company']]);
+        setting(['default_run_company' => $run->id]);
+        $registration = $this->fakeRegistration();
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['registration' => $registration->id]);
+
+        setting(['registrations_deadline' => now()->subDay()->toDateTimeString()]);
+
+        $comp->set('elements', [
+            ['_k' => 'l1', 'first_name' => 'Alice', 'last_name' => '', 'birthdate' => 'nope', 'gender' => 'F', 'email' => 'bad'],
+        ])->set('data.contact_first_name', 'Zed')->call('save');
+
+        $this->assertSame('Zed', $registration->fresh()->contact_first_name);
+        $this->assertCount(0, $registration->fresh()->runRegistrationElements);
+    }
+
+    /** @test */
+    public function excel_import_rejects_files_that_are_not_spreadsheets()
+    {
+        Storage::fake('local');
+
+        Livewire::test(FrontRunRegistration::class, ['type' => 'school'])
+            ->set('importFile', UploadedFile::fake()->create('virus.pdf', 10, 'application/pdf'))
+            ->call('processExcelImport')
+            ->assertHasErrors(['importFile']);
+    }
+
+    /** @test */
+    public function a_registration_cannot_be_opened_by_numeric_id_without_a_signed_url()
+    {
+        $registration = $this->fakeRegistration();
+
+        $response = $this->get('/registrations/'.$registration->id);
+
+        $response->assertDontSee('Test Enterprise');
+        $response->assertDontSee('marc@test.com');
+    }
+
+    /** @test */
+    public function the_edit_route_rejects_unsigned_urls()
+    {
+        $registration = $this->fakeRegistration();
+
+        $this->get(route('front.run-registration.edit', ['registration' => $registration->id]))
+            ->assertStatus(403);
+    }
+
+    /** @test */
+    public function client_query_string_prefills_the_form_over_http()
+    {
+        Edition::factory()->create();
+        $client = Client::factory()->create(['name' => 'Prefill Corp SA']);
+
+        $this->get('/registrations/company?client_id='.$client->id)
+            ->assertOk()
+            ->assertSee('Prefill Corp SA');
+    }
+
+    /** @test */
+    public function client_id_is_kept_on_the_registration_when_saving()
+    {
+        $run = Run::factory()->create(['name' => 'Course Entreprises', 'available_for_types' => ['company']]);
+        setting(['default_run_company' => $run->id]);
+        Edition::factory()->create();
+        $client = Client::factory()->create();
+
+        Livewire::test(FrontRunRegistration::class, ['type' => 'company'])
+            ->set('data.client_id', $client->id)
+            ->set('data.company_name', 'Acme')
+            ->set('data.invoicing_address', 'Rue 1')
+            ->set('data.invoicing_postal_code', '1950')
+            ->set('data.invoicing_locality', 'Sion')
+            ->set('data.invoicing_company_name', 'Acme')
+            ->set('data.invoicing_email', 'acme@test.com')
+            ->set('data.contact_first_name', 'A')
+            ->set('data.contact_last_name', 'B')
+            ->set('data.contact_email', 'ab@test.com')
+            ->set('elements', [['_k' => 'l1', 'first_name' => 'Alice', 'last_name' => 'Dupond', 'birthdate' => '15.05.1990', 'gender' => 'F', 'email' => 'a@test.com']])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame($client->id, RunRegistration::latest('id')->first()?->client_id);
+    }
+
+    /** @test */
+    public function a_year_only_birthdate_is_rejected_instead_of_being_saved_as_1970()
+    {
+        $run = Run::factory()->create(['name' => 'Course Entreprises', 'available_for_types' => ['company']]);
+        setting(['default_run_company' => $run->id]);
+        $registration = $this->fakeRegistration();
+
+        Livewire::test(FrontRunRegistration::class, ['registration' => $registration->id])
+            ->set('elements', [['_k' => 'l1', 'first_name' => 'Alice', 'last_name' => 'Dupond', 'birthdate' => '1990', 'gender' => 'F', 'email' => 'a@test.com']])
+            ->call('save');
+
+        $this->assertCount(0, $registration->fresh()->runRegistrationElements);
+    }
+
+    /** @test */
+    public function a_registration_can_still_be_opened_by_id_through_a_signed_url()
+    {
+        $registration = $this->fakeRegistration();
+
+        $this->get(URL::signedRoute('front.run-registration.edit', ['registration' => $registration->id]))
+            ->assertOk()
+            ->assertSee('Test Enterprise');
+    }
+
+    /** @test */
+    public function age_is_computed_from_the_birth_year_only()
+    {
+        Carbon::setTestNow('2026-11-07');
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['type' => 'school']);
+
+        $this->assertSame(16, $comp->instance()->calculateAge('31.12.2010'));
+        $this->assertSame(16, $comp->instance()->calculateAge('01.01.2010'));
+        $this->assertNull($comp->instance()->calculateAge('abc'));
+
+        Carbon::setTestNow();
+    }
+
+    /** @test */
+    public function grid_rows_are_keyed_by_key_and_index_so_shifted_rows_get_fresh_wire_model_bindings()
+    {
+        // Regression: wire:model paths embed the index. If a row keeps the same wire:key after its index
+        // changes, Livewire 4 keeps the old binding and the grid shows the wrong values (verified in browser).
+        $rows = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $rows[] = ['_k' => "k$i", 'first_name' => "P$i", 'last_name' => "N$i", 'birthdate' => '', 'gender' => 'M'];
+        }
+
+        foreach (['school', 'company'] as $type) {
+            $comp = Livewire::test(FrontRunRegistration::class, ['type' => $type])->set('elements', $rows);
+            $comp->assertSeeHtml('wire:key="element-row-k3-2"');
+
+            $comp->call('removeRowByKey', 'k1');
+            $comp->assertSeeHtml('wire:key="element-row-k3-1"')->assertDontSeeHtml('wire:key="element-row-k3-2"');
+        }
     }
 }

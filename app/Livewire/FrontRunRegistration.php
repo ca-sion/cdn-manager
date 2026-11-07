@@ -15,6 +15,7 @@ use App\Models\RunRegistration;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\URL;
 use Rap2hpoutre\FastExcel\FastExcel;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Components\Textarea;
@@ -62,7 +63,8 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         if ($type instanceof RunRegistration) {
             $registration = $type;
             $type = null;
-        } elseif (is_numeric($type) || (is_string($type) && ! in_array($type, ['company', 'school', 'group', 'elite']))) {
+        } elseif (request()->hasValidSignature() && (is_numeric($type) || (is_string($type) && ! in_array($type, ['company', 'school', 'group', 'elite'])))) {
+            // Loading a registration by raw id is only allowed through a signed URL.
             $found = RunRegistration::find($type);
             if ($found) {
                 $registration = $found;
@@ -214,6 +216,8 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 
         return $schema
             ->components([
+                Hidden::make('client_id'),
+
                 // SECTION GROUPE: Société / Club
                 Section::make('Société ou Club')
                     ->icon('heroicon-m-user-group')
@@ -488,15 +492,10 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                     $validDate = checkdate((int) $m[2], (int) $m[1], (int) $m[3]);
                 } elseif (preg_match('/^(\d{4})[\.\/-](\d{1,2})[\.\/-](\d{1,2})$/', $birthdate, $m)) {
                     $validDate = checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
-                } elseif (preg_match('/^(\d{4})$/', $birthdate, $m)) {
-                    $year = (int) $m[1];
-                    $validDate = ($year >= 1900 && $year <= (int) now()->format('Y') + 1);
-                } elseif (preg_match('/^(\d{2})$/', $birthdate, $m)) {
-                    $validDate = true;
                 }
 
                 if (! $validDate) {
-                    $rowErrors[] = 'Date de naissance invalide (ex: jj.mm.aaaa ou aaaa)';
+                    $rowErrors[] = 'Date de naissance invalide (format attendu : jj.mm.aaaa)';
                 }
             }
 
@@ -821,8 +820,10 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 $row['nationality'] = strtoupper(substr($parts[4], 0, 3));
             }
 
-            $availableRuns = $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M');
-            if (! empty($availableRuns) && count($availableRuns) === 1) {
+            $availableRuns = $this->type === 'group'
+                ? $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M')
+                : [];
+            if (count($availableRuns) === 1) {
                 $row['run_id'] = (string) array_key_first($availableRuns);
             }
 
@@ -847,8 +848,22 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             return;
         }
 
+        $this->validate([
+            'importFile' => ['file', 'mimes:xlsx,xls,csv', 'max:5120'],
+        ], [
+            'importFile.mimes' => 'Le fichier doit être au format Excel (.xlsx, .xls) ou CSV.',
+            'importFile.max'   => 'Le fichier ne doit pas dépasser 5 Mo.',
+        ]);
+
         $filePath = $this->importFile->getRealPath();
-        $rows = (new FastExcel)->import($filePath);
+        try {
+            $rows = (new FastExcel)->import($filePath);
+        } catch (\Throwable $e) {
+            report($e);
+            $this->addError('importFile', 'Impossible de lire ce fichier. Vérifiez qu\'il s\'agit bien d\'un fichier Excel valide.');
+
+            return;
+        }
 
         $newRows = [];
         foreach ($rows as $item) {
@@ -877,8 +892,10 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $row['email'] = $normalized['email'] ?? $normalized['courriel'] ?? '';
             $row['nationality'] = strtoupper(substr($normalized['nationalite'] ?? $normalized['nationalité'] ?? $normalized['country'] ?? 'SUI', 0, 3));
 
-            $availableRuns = $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M');
-            if (! empty($availableRuns) && count($availableRuns) === 1) {
+            $availableRuns = $this->type === 'group'
+                ? $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M')
+                : [];
+            if (count($availableRuns) === 1) {
                 $row['run_id'] = (string) array_key_first($availableRuns);
             }
 
@@ -927,7 +944,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 
     public function save()
     {
-        $errors = $this->verifyIntegrity();
+        $errors = $this->isGridLocked() ? [] : $this->verifyIntegrity();
         if (count($errors) > 0) {
             session()->flash('message', '⚠️ Impossible d\'enregistrer : '.count($errors).' participant(s) contiennent des anomalies. Veuillez consulter le rapport de vérification ci-dessous.');
 

@@ -174,7 +174,8 @@
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                 @foreach($this->elements as $index => $row)
-                    <tr wire:key="element-row-{{ $row['_k'] ?? $index }}" class="hover:bg-gray-50/60 dark:hover:bg-gray-800/50 transition-colors">
+                    {{-- The index is part of the key on purpose: wire:model paths embed the index, so a row whose index changes must be re-created to get its bindings refreshed. --}}
+                    <tr wire:key="element-row-{{ $row['_k'] ?? 'x' }}-{{ $index }}" class="hover:bg-gray-50/60 dark:hover:bg-gray-800/50 transition-colors">
                         <td class="px-3 py-2 text-center text-gray-400 font-mono text-xs font-semibold">{{ $loop->iteration }}</td>
                         <td class="px-2 py-1.5">
                             <input type="text"
