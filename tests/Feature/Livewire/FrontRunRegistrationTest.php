@@ -431,4 +431,69 @@ class FrontRunRegistrationTest extends TestCase
         $this->assertCount(1, $freshComp->get('elements'));
         $this->assertEquals('Alice', $freshComp->get('elements.0.first_name'));
     }
+
+    /** @test */
+    public function it_removes_only_the_targeted_row_by_key()
+    {
+        foreach (['school', 'company'] as $type) {
+            $rows = [];
+            for ($i = 1; $i <= 15; $i++) {
+                $rows[] = ['_k' => "k$i", 'first_name' => "P$i", 'last_name' => "N$i", 'birthdate' => '', 'gender' => 'M'];
+            }
+
+            $comp = Livewire::test(FrontRunRegistration::class, ['type' => $type])
+                ->set('elements', $rows)
+                ->call('removeRowByKey', 'k3');
+
+            $elements = $comp->get('elements');
+            $this->assertCount(14, $elements);
+            $this->assertEquals('P4', $elements[2]['first_name']);
+            $this->assertEquals('P15', $elements[13]['first_name']);
+            $this->assertNotContains('k3', array_column($elements, '_k'));
+        }
+    }
+
+    /** @test */
+    public function it_ignores_a_repeated_removal_of_the_same_key()
+    {
+        $rows = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $rows[] = ['_k' => "k$i", 'first_name' => "P$i", 'last_name' => "N$i", 'birthdate' => '', 'gender' => 'M'];
+        }
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['type' => 'school'])
+            ->set('elements', $rows)
+            ->call('removeRowByKey', 'k2')
+            ->call('removeRowByKey', 'k2');
+
+        $this->assertCount(4, $comp->get('elements'));
+    }
+
+    /** @test */
+    public function it_drops_ghost_rows_created_by_late_updates_after_a_deletion()
+    {
+        $rows = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $rows[] = ['_k' => "k$i", 'first_name' => "P$i", 'last_name' => "N$i", 'birthdate' => '', 'gender' => 'M'];
+        }
+
+        $comp = Livewire::test(FrontRunRegistration::class, ['type' => 'school'])
+            ->set('elements', $rows)
+            ->call('removeRowByKey', 'k1')
+            ->set('elements.2.first_name', '');
+
+        $elements = $comp->get('elements');
+        $this->assertCount(2, $elements);
+        $this->assertEquals(['k2', 'k3'], array_column($elements, '_k'));
+    }
+
+    /** @test */
+    public function it_keeps_a_blank_row_when_the_last_row_is_removed()
+    {
+        $comp = Livewire::test(FrontRunRegistration::class, ['type' => 'school'])
+            ->set('elements', [['_k' => 'only', 'first_name' => 'A', 'last_name' => 'B', 'birthdate' => '', 'gender' => 'M']])
+            ->call('removeRowByKey', 'only');
+
+        $this->assertCount(3, $comp->get('elements'));
+    }
 }

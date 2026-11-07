@@ -274,7 +274,9 @@
                         @if(! $this->isGridLocked())
                             <td class="px-2 py-1.5 text-center">
                                 <button type="button"
-                                        wire:click="removeRow({{ $index }})"
+                                        wire:click="removeRowByKey('{{ $row['_k'] ?? '' }}')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="removeRowByKey"
                                         class="text-gray-400 hover:text-red-500 transition-colors p-1"
                                         title="Supprimer la ligne">
                                     🗑️

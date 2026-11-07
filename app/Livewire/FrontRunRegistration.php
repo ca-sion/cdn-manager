@@ -671,6 +671,17 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             return;
         }
 
+        // Drop ghost rows: a late wire:model update targeting an index that no longer
+        // exists (after a row deletion) would create a partial row without a `_k`.
+        $this->elements = array_values(array_filter(
+            $this->elements,
+            fn ($r) => is_array($r) && ! empty($r['_k'])
+        ));
+
+        if (empty($this->elements)) {
+            $this->elements = $this->defaultElements();
+        }
+
         foreach ($this->elements as &$row) {
             $birthdate = trim((string) ($row['birthdate'] ?? ''));
             $gender = trim((string) ($row['gender'] ?? ''));
@@ -714,6 +725,22 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $newRow = $this->emptyElement();
             $newRow['_k'] = 'l'.bin2hex(random_bytes(4));
             $this->elements[] = $newRow;
+        }
+    }
+
+    public function removeRowByKey(string $key): void
+    {
+        if ($this->isGridLocked()) {
+            return;
+        }
+
+        $this->elements = array_values(array_filter(
+            $this->elements,
+            fn ($r) => ($r['_k'] ?? null) !== $key
+        ));
+
+        if (empty($this->elements)) {
+            $this->elements = $this->defaultElements();
         }
     }
 
