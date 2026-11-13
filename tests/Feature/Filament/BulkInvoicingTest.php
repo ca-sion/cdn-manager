@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\ClientSendInvoiceRelaunch;
 use Filament\Notifications\Livewire\Notifications;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Filament\Actions\Support\BulkInvoicePreview;
 use App\Filament\Resources\ClientResource\Pages\ListClients;
 use App\Filament\Resources\InvoiceResource\Pages\ListInvoices;
 use App\Filament\Resources\RunRegistrationResource\Pages\ListRunRegistrations;
@@ -447,7 +448,8 @@ class BulkInvoicingTest extends TestCase
 
         $invoice = app(RunRegistrationService::class)->createInvoiceForClient($client->id);
 
-        $this->assertSame('Facture d\'inscriptions - Banque Test', $invoice->title);
+        $this->assertSame('Facture d\'inscriptions '.$invoice->number, $invoice->title);
+        $this->assertStringNotContainsString('Banque Test', $invoice->title);
         $this->assertSame('Facture d\'inscriptions', $invoice->note);
         $this->assertStringNotContainsString('Dossier', $invoice->title.$invoice->note);
         $this->assertSame('run_registrations', $invoice->meta['source']);
@@ -462,7 +464,7 @@ class BulkInvoicingTest extends TestCase
 
         $qrBill = InvoiceService::generateQrBill($client, $invoice);
 
-        $this->assertSame('Facture d\'inscriptions - Banque Test', $qrBill->getAdditionalInformation()->getMessage());
+        $this->assertSame('Facture d\'inscriptions '.$invoice->number, $qrBill->getAdditionalInformation()->getMessage());
     }
 
     public function test_legacy_titles_are_cleaned_at_display_time_without_touching_the_database(): void
@@ -473,7 +475,7 @@ class BulkInvoicingTest extends TestCase
             'note'  => 'Facture Inscriptions Courses regroupant les dossiers #1, #4',
         ]);
 
-        $this->assertSame('Facture d\'inscriptions - Mon Client', $legacy->title);
+        $this->assertSame('Facture d\'inscriptions '.$legacy->number, $legacy->title);
         $this->assertSame(
             'Facture Inscriptions Courses - Mon Client (Dossiers #1, #4, #5, #6, #16, #19)',
             \DB::table('invoices')->where('id', $legacy->id)->value('title'),
@@ -487,5 +489,136 @@ class BulkInvoicingTest extends TestCase
         $invoice = $this->invoice(Client::factory()->create(), InvoiceStatusEnum::Ready, ['title' => 'Facture 2025012 (acompte #2)']);
 
         $this->assertSame('Facture 2025012 (acompte #2)', $invoice->title);
+    }
+
+    // ───────────── Longues sélections (400 clients) ─────────────
+
+    public function test_preview_query_count_does_not_grow_with_the_number_of_clients(): void
+    {
+        $clients = collect(range(1, 40))->map(fn () => $this->clientWithProvision(2));
+        $ids = $clients->pluck('id')->all();
+
+        \DB::flushQueryLog();
+        \DB::enableQueryLog();
+        BulkInvoicePreview::provisions($ids);
+        $queries = count(\DB::getQueryLog());
+        \DB::disableQueryLog();
+
+        $this->assertLessThanOrEqual(12, $queries, "L'aperçu de 40 clients a coûté {$queries} requêtes (doit rester constant).");
+    }
+
+    public function test_primed_preview_gives_the_same_result_as_the_unprimed_one(): void
+    {
+        $todo = $this->clientWithProvision(2);
+        $done = $this->clientWithProvision();
+        InvoiceService::generateInvoiceByClient($done->id);
+        $draftClient = $this->clientWithProvision();
+        $draft = InvoiceService::generateInvoiceByClient($draftClient->id);
+        $draft->update(['status' => InvoiceStatusEnum::Draft]);
+        $this->clientWithProvision()->wasRecentlyCreated;
+        $extra = ProvisionElement::factory()->create([
+            'edition_id'   => $this->edition->id, 'recipient_id' => $draftClient->id, 'recipient_type' => Client::class,
+            'provision_id' => Provision::factory()->create(['edition_id' => $this->edition->id, 'product_id' => null])->id,
+            'has_product'  => true, 'quantity' => 1, 'cost' => 50, 'tax_rate' => 8.1,
+        ]);
+
+        $ids = [$todo->id, $done->id, $draftClient->id];
+        InvoiceService::flushCache();
+        $unprimed = collect($ids)->map(fn ($id) => array_diff_key(InvoiceService::previewInvoiceByClient($id), ['draft' => 1]))->all();
+
+        InvoiceService::flushCache();
+        $primed = BulkInvoicePreview::provisions($ids);
+
+        $this->assertSame(['new' => 1, 'draft' => 1, 'nothing' => 1], $primed['counts']);
+        $this->assertSame(collect($unprimed)->pluck('action')->all(), ['new', 'nothing', 'draft']);
+        $this->assertSame([$todo->id, $draftClient->id], $primed['default']);
+        $this->assertSame($draft->id, InvoiceService::previewInvoiceByClient($draftClient->id)['draft']->id);
+        $this->assertNotNull($extra);
+    }
+
+    public function test_long_selection_lists_only_actionable_clients_and_summarises_the_rest(): void
+    {
+        $actionable = collect(range(1, 3))->map(fn () => $this->clientWithProvision());
+        $done = collect(range(1, 14))->map(function () {
+            $client = $this->clientWithProvision();
+            InvoiceService::generateInvoiceByClient($client->id);
+
+            return $client;
+        });
+        $nothing = collect(range(1, 3))->map(fn () => Client::factory()->create());
+
+        $all = $actionable->merge($done)->merge($nothing)->all();
+
+        Livewire::test(ListClients::class)
+            ->mountTableBulkAction('generateInvoices', $all)
+            ->assertMountedActionModalSee($actionable->first()->name)
+            ->assertMountedActionModalDontSee($done->first()->name)
+            ->assertMountedActionModalDontSee($nothing->first()->name)
+            ->assertMountedActionModalSee('17 client(s) sans rien à facturer, non listés')
+            ->assertMountedActionModalSee('14 × tout est déjà facturé')
+            ->assertMountedActionModalSee('3 × aucune prestation');
+    }
+
+    public function test_short_selection_still_shows_every_client_with_its_reason(): void
+    {
+        $done = $this->clientWithProvision();
+        InvoiceService::generateInvoiceByClient($done->id);
+        $todo = $this->clientWithProvision();
+
+        Livewire::test(ListClients::class)
+            ->mountTableBulkAction('generateInvoices', [$done, $todo])
+            ->assertMountedActionModalSee($done->name)
+            ->assertMountedActionModalSee('Rien à facturer (tout est déjà facturé)');
+    }
+
+    public function test_report_is_truncated_for_long_results_but_undo_keeps_every_invoice(): void
+    {
+        $clients = collect(range(1, 40))->map(fn () => $this->clientWithProvision());
+
+        Livewire::test(ListClients::class)
+            ->callTableBulkAction('generateInvoices', $clients->all(), data: ['provision_client_ids' => $clients->pluck('id')->all()]);
+
+        $notification = $this->lastNotification();
+
+        $this->assertStringContainsString('40 facture(s) créée(s)', $notification['title']);
+        $this->assertStringContainsString('… et 25 autre(s)', $notification['body']);
+        $this->assertSame(1, substr_count($notification['body'], '… et'));
+        $this->assertCount(40, $notification['actions'][0]['eventData']['invoiceIds']);
+    }
+
+    public function test_registration_invoice_title_follows_the_provision_invoice_pattern(): void
+    {
+        $client = Client::factory()->create(['name' => 'UBS SA Sion']);
+        $this->registration($client);
+        $runs = app(RunRegistrationService::class)->createInvoiceForClient($client->id);
+
+        $provisionClient = $this->clientWithProvision();
+        $provisions = InvoiceService::generateInvoiceByClient($provisionClient->id);
+
+        $this->assertMatchesRegularExpression('/^Facture d\'inscriptions \d+$/', $runs->title);
+        $this->assertMatchesRegularExpression('/^Facture \d+$/', $provisions->title);
+        $this->assertSame(str_replace('Facture d\'inscriptions ', '', $runs->title), $runs->number);
+    }
+
+    public function test_draft_run_invoice_keeps_its_number_in_the_title_when_recalculated(): void
+    {
+        $client = Client::factory()->create();
+        $registration = $this->registration($client);
+        $service = app(RunRegistrationService::class);
+        $invoice = $service->createInvoiceForClient($client->id);
+        $invoice->update(['status' => InvoiceStatusEnum::Draft]);
+
+        RunRegistrationElement::factory()->create(['run_registration_id' => $registration->id, 'run_id' => Run::first()->id, 'has_free_registration_fee' => false]);
+        $same = $service->createInvoiceForClient($client->id);
+
+        $this->assertSame($invoice->id, $same->id);
+        $this->assertSame('Facture d\'inscriptions '.$invoice->number, $same->fresh()->title);
+    }
+
+    public function test_intermediate_titles_with_the_client_name_are_shown_with_the_number(): void
+    {
+        $invoice = $this->invoice(Client::factory()->create(), InvoiceStatusEnum::Sent, ['title' => 'Facture d\'inscriptions - UBS SA Sion', 'note' => 'Facture d\'inscriptions']);
+
+        $this->assertSame('Facture d\'inscriptions '.$invoice->number, $invoice->title);
     }
 }

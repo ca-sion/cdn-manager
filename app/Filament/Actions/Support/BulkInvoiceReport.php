@@ -87,9 +87,21 @@ class BulkInvoiceReport
         return '<li>'.e($row['client']).' — <a href="'.e($url).'" target="_blank" class="underline">facture '.e($invoice->number).'</a> · '.e(Number::currency((float) $invoice->total, 'CHF', 'fr_CH')).'</li>';
     }
 
+    /** Nombre maximum de lignes affichées par section (le détail complet reste dans les logs). */
+    protected const DISPLAY_LIMIT = 15;
+
     protected function section(string $title, array $items): string
     {
-        return $items === [] ? '' : '<p class="mt-2 font-semibold">'.e($title).'</p><ul class="list-disc ml-5">'.implode('', $items).'</ul>';
+        if ($items === []) {
+            return '';
+        }
+
+        $more = count($items) > self::DISPLAY_LIMIT
+            ? '<li class="italic">… et '.(count($items) - self::DISPLAY_LIMIT).' autre(s) (détail complet dans les logs et dans la liste des factures)</li>'
+            : '';
+
+        return '<p class="mt-2 font-semibold">'.e($title).' ('.count($items).')</p><ul class="list-disc ml-5">'
+            .implode('', array_slice($items, 0, self::DISPLAY_LIMIT)).$more.'</ul>';
     }
 
     public function send(): void
@@ -121,10 +133,10 @@ class BulkInvoiceReport
             ->persistent();
 
         $notification = match (true) {
-            $counts['failed'] > 0                              => $notification->danger(),
-            $counts['created'] + $counts['completed'] === 0    => $notification->warning(),
-            $counts['skipped'] > 0                             => $notification->warning(),
-            default                                            => $notification->success(),
+            $counts['failed'] > 0                           => $notification->danger(),
+            $counts['created'] + $counts['completed'] === 0 => $notification->warning(),
+            $counts['skipped'] > 0                          => $notification->warning(),
+            default                                         => $notification->success(),
         };
 
         if ($this->created !== []) {

@@ -23,6 +23,7 @@ class BulkInvoicePreview
      */
     public static function provisions(array $clientIds): array
     {
+        InvoiceService::prime($clientIds);
         $names = Client::whereIn('id', $clientIds)->pluck('name', 'id');
         $result = ['options' => [], 'descriptions' => [], 'default' => [], 'disabled' => [], 'counts' => ['new' => 0, 'draft' => 0, 'nothing' => 0]];
 
@@ -58,6 +59,7 @@ class BulkInvoicePreview
     public static function registrations(array $clientIds, ?Collection $selected = null): array
     {
         $service = app(RunRegistrationService::class);
+        $service->prime($clientIds);
         $names = Client::whereIn('id', $clientIds)->pluck('name', 'id');
         $result = ['options' => [], 'descriptions' => [], 'default' => [], 'disabled' => [], 'counts' => ['todo' => 0, 'nothing' => 0]];
 
@@ -96,5 +98,38 @@ class BulkInvoicePreview
         }
 
         return $result;
+    }
+
+    /**
+     * Allège une longue liste : au-delà de $threshold clients, seuls ceux qui ont quelque chose à facturer
+     * sont listés ; les autres sont résumés par raison (« 120 déjà facturés, 80 aucune prestation »).
+     * Pour une courte sélection, tout reste visible avec la raison de chaque ligne.
+     *
+     * @param  array{options: array, descriptions: array, default: array, disabled: array, counts: array}  $preview
+     * @return array{preview: array, hidden: int, summary: ?string}
+     */
+    public static function compact(array $preview, int $threshold = 15): array
+    {
+        if (count($preview['options']) <= $threshold) {
+            return ['preview' => $preview, 'hidden' => 0, 'summary' => null];
+        }
+
+        $reasons = [];
+        foreach ($preview['disabled'] as $id) {
+            preg_match('/\((.+)\)/', $preview['descriptions'][$id] ?? '', $m);
+            $reasons[$m[1] ?? 'rien à facturer'] = ($reasons[$m[1] ?? 'rien à facturer'] ?? 0) + 1;
+        }
+
+        foreach ($preview['disabled'] as $id) {
+            unset($preview['options'][$id], $preview['descriptions'][$id]);
+        }
+
+        $summary = count($preview['disabled']).' client(s) sans rien à facturer, non listés : '
+            .collect($reasons)->map(fn ($n, $reason) => "{$n} × {$reason}")->implode(' · ');
+
+        $hidden = count($preview['disabled']);
+        $preview['disabled'] = [];
+
+        return ['preview' => $preview, 'hidden' => $hidden, 'summary' => $hidden > 0 ? $summary : null];
     }
 }

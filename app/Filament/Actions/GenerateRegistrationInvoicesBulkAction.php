@@ -63,10 +63,12 @@ class GenerateRegistrationInvoicesBulkAction extends BulkAction
             ->schema(function (Collection $records): array {
                 $withoutClient = $records->whereNull('client_id')->count();
                 $clientIds = $records->whereNotNull('client_id')->pluck('client_id')->unique()->map(fn ($id) => (int) $id)->values()->all();
-                $preview = BulkInvoicePreview::registrations($clientIds, $records);
+                $full = BulkInvoicePreview::registrations($clientIds, $records);
+                $view = BulkInvoicePreview::compact($full);
+                $preview = $view['preview'];
 
                 $components = [
-                    Text::make(count($clientIds).' client(s) · '.$preview['counts']['todo'].' avec des inscriptions à facturer'.($withoutClient ? ' · '.$withoutClient.' inscription(s) sans client ignorée(s)' : ''))->weight('bold'),
+                    Text::make(count($clientIds).' client(s) · '.$full['counts']['todo'].' avec des inscriptions à facturer'.($withoutClient ? ' · '.$withoutClient.' inscription(s) sans client ignorée(s)' : ''))->weight('bold'),
                 ];
 
                 if ($withoutClient > 0) {
@@ -82,6 +84,10 @@ class GenerateRegistrationInvoicesBulkAction extends BulkAction
                     ->bulkToggleable()
                     ->searchable()
                     ->required();
+
+                if ($view['summary']) {
+                    $components[] = Text::make($view['summary'])->color('gray');
+                }
 
                 return $components;
             })

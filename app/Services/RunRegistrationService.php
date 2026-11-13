@@ -16,6 +16,52 @@ use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 
 class RunRegistrationService
 {
+    /** @var array<string, array<int, mixed>> données chargées en une fois pour une liste de clients */
+    protected array $primed = [];
+
+    /** @var array<int, ?Run> */
+    protected array $runCache = [];
+
+    /**
+     * Charge en quelques requêtes les inscriptions, participants, factures et clients de plusieurs clients
+     * (au lieu de ~6 requêtes par client). À utiliser avant de calculer des aperçus pour une longue liste.
+     *
+     * @param  array<int, int>  $clientIds
+     */
+    public function prime(array $clientIds): void
+    {
+        $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+
+        $registrations = RunRegistration::whereIn('client_id', $clientIds)->get();
+        $elements = RunRegistrationElement::with('runRegistration')
+            ->whereIn('run_registration_id', $registrations->pluck('id'))
+            ->get();
+        $invoices = Invoice::whereIn('client_id', $clientIds)
+            ->where('edition_id', $editionId)
+            ->active()
+            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
+            ->get()
+            ->filter(fn (Invoice $invoice) => $invoice->isRunInvoice())
+            ->groupBy('client_id');
+        $clients = Client::whereIn('id', $clientIds)->get()->keyBy('id');
+
+        $registrationsByClient = $registrations->groupBy('client_id');
+        foreach ($clientIds as $id) {
+            $ids = ($registrationsByClient[$id] ?? collect())->pluck('id');
+            $this->primed[$id] = [
+                'registrations' => ($registrationsByClient[$id] ?? collect())->values(),
+                'elements'      => $elements->whereIn('run_registration_id', $ids)->values(),
+                'invoices'      => ($invoices[$id] ?? collect())->values(),
+                'client'        => $clients[$id] ?? null,
+            ];
+        }
+    }
+
+    public function flush(): void
+    {
+        $this->primed = [];
+    }
+
     /**
      * Calcule le montant total d'une inscription en sommant le coût des courses liées.
      * Les éléments marqués avec 'has_free_registration_fee' ne sont pas comptabilisés.
@@ -68,16 +114,21 @@ class RunRegistrationService
     {
         $isElite = fn ($registration) => ($registration->run_registration_type?->value ?? $registration->run_registration_type) === 'elite';
 
-        $all = RunRegistration::where('client_id', $clientId)->get();
-        $registrations = $all->reject($isElite)->values();
-        $eliteExcluded = RunRegistrationElement::whereIn('run_registration_id', $all->filter($isElite)->pluck('id'))->count();
+        $primed = $this->primed[$clientId] ?? null;
 
-        $allElements = RunRegistrationElement::with('runRegistration')
-            ->whereIn('run_registration_id', $registrations->pluck('id'))
-            ->get();
+        $all = $primed['registrations'] ?? RunRegistration::where('client_id', $clientId)->get();
+        $registrations = $all->reject($isElite)->values();
+        $eliteIds = $all->filter($isElite)->pluck('id');
+        $eliteExcluded = $primed
+            ? $primed['elements']->whereIn('run_registration_id', $eliteIds)->count()
+            : RunRegistrationElement::whereIn('run_registration_id', $eliteIds)->count();
+
+        $allElements = $primed
+            ? $primed['elements']->whereIn('run_registration_id', $registrations->pluck('id'))->values()
+            : RunRegistrationElement::with('runRegistration')->whereIn('run_registration_id', $registrations->pluck('id'))->get();
 
         $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
-        $runInvoices = Invoice::where('client_id', $clientId)
+        $runInvoices = $primed['invoices'] ?? Invoice::where('client_id', $clientId)
             ->where('edition_id', $editionId)
             ->active()
             ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
@@ -92,7 +143,7 @@ class RunRegistrationService
         $elements = $allElements->reject(fn ($el) => in_array($el->id, $invoicedIds, true))->values();
 
         // Quota d'inscriptions incluses (contrat de partenariat), uniquement sur ce qui reste à facturer
-        $client = Client::find($clientId);
+        $client = $primed ? $primed['client'] : Client::find($clientId);
         $quota = $client ? (int) $client->cdn_vouchers_quota : 0;
         $quotaIds = [];
         if ($quota > 0) {
@@ -169,13 +220,11 @@ class RunRegistrationService
                 RunRegistrationElement::whereIn('id', $plan['quota_ids'])->update(['has_free_registration_fee' => true]);
             }
 
-            $clientName = $plan['client'] ? $plan['client']->name : 'Client #'.$clientId;
-            $title = 'Facture d\'inscriptions - '.$clientName;
             $note = 'Facture d\'inscriptions';
 
             if ($draft = $plan['draft']) {
                 $draft->positions = $plan['positions']->toArray();
-                $draft->title = $title;
+                $draft->title = 'Facture d\'inscriptions '.$draft->number;
                 $draft->note = $note;
                 $draft->save();
                 $invoice = $draft;
@@ -186,7 +235,7 @@ class RunRegistrationService
                 $invoice->edition_id = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
                 $invoice->client_id = $clientId;
                 $invoice->status = InvoiceStatusEnum::Ready;
-                $invoice->title = $title;
+                $invoice->title = 'Facture d\'inscriptions '.$invoiceNumber;
                 $invoice->number = $invoiceNumber;
                 $invoice->date = now();
                 $invoice->due_date = now()->addDays(30);
@@ -199,6 +248,7 @@ class RunRegistrationService
             }
 
             RunRegistration::whereIn('id', $plan['registration_ids'])->update(['invoice_id' => $invoice->id]);
+            unset($this->primed[$clientId]);
 
             return $invoice;
         });
@@ -260,7 +310,7 @@ class RunRegistrationService
 
         foreach ($groupedPaid as $items) {
             $first = $items->first();
-            $run = $first->run_id ? Run::find($first->run_id) : null;
+            $run = $first->run_id ? ($this->runCache[$first->run_id] ??= Run::with('provision.product')->find($first->run_id)) : null;
             $product = $run?->provision?->product;
             $qty = $items->count();
 

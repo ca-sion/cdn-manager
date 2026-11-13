@@ -31,10 +31,14 @@ class InvoiceService
     /** @var array<int, Collection<int, ProvisionElement>> */
     protected static array $elementsCache = [];
 
+    /** @var array{all: array<int, Collection>, invoices: array<int, Collection>} données chargées en une fois pour une liste de clients */
+    protected static array $primed = ['all' => [], 'invoices' => []];
+
     public static function flushCache(): void
     {
         self::$stateCache = [];
         self::$elementsCache = [];
+        self::$primed = ['all' => [], 'invoices' => []];
     }
 
     public static function generatePdf(Invoice $invoice)
@@ -126,8 +130,55 @@ class InvoiceService
      *
      * @return Collection<int, Invoice>
      */
+    /**
+     * Charge en 2 requêtes les prestations et les factures de plusieurs clients (au lieu de ~7 requêtes par client).
+     * À utiliser avant de calculer un aperçu pour une longue liste de clients.
+     *
+     * @param  array<int, int>  $clientIds
+     */
+    public static function prime(array $clientIds): void
+    {
+        $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+
+        $elements = ProvisionElement::query()
+            ->where('recipient_type', Client::class)
+            ->whereIn('recipient_id', $clientIds)
+            ->where('edition_id', $editionId)
+            ->with('provision.category')
+            ->get()
+            ->groupBy('recipient_id');
+
+        $invoices = Invoice::whereIn('client_id', $clientIds)
+            ->where('edition_id', $editionId)
+            ->active()
+            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
+            ->get()
+            ->reject(fn (Invoice $invoice) => $invoice->isRunInvoice())
+            ->groupBy('client_id');
+
+        foreach ($clientIds as $id) {
+            self::$primed['all'][$id] = ($elements[$id] ?? collect())->values();
+            self::$primed['invoices'][$id] = ($invoices[$id] ?? collect())->values();
+        }
+    }
+
+    /**
+     * All provisions of the client for the current edition (invoiceable or not).
+     *
+     * @return Collection<int, ProvisionElement>
+     */
+    protected static function allProvisionElements(int $clientId): Collection
+    {
+        return self::$primed['all'][$clientId]
+            ?? Client::findOrFail($clientId)->currentProvisionElements()->with('provision.category')->get();
+    }
+
     public static function provisionInvoices(int $clientId): Collection
     {
+        if (isset(self::$primed['invoices'][$clientId])) {
+            return self::$primed['invoices'][$clientId];
+        }
+
         $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
 
         return Invoice::where('client_id', $clientId)
@@ -167,10 +218,7 @@ class InvoiceService
      */
     public static function invoiceableElements(int $clientId)
     {
-        return Client::findOrFail($clientId)
-            ->currentProvisionElements()
-            ->with('provision.category')
-            ->get()
+        return self::allProvisionElements($clientId)
             ->filter(fn (ProvisionElement $element) => $element->isInvoiceable())
             ->values();
     }
@@ -205,7 +253,7 @@ class InvoiceService
      */
     public static function billingOverview(int $clientId): array
     {
-        $all = Client::findOrFail($clientId)->currentProvisionElements()->with('provision.category')->get();
+        $all = self::allProvisionElements($clientId);
         $candidates = self::invoiceableElements($clientId);
 
         $invoiced = collect();

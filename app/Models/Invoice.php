@@ -140,8 +140,9 @@ class Invoice extends Model
 
     /**
      * Invoice title as displayed (PDF, QR « Informations supplémentaires », lists).
-     * Older run invoices were titled « Facture Inscriptions Courses - Client (Dossiers #1, #4) » :
-     * the wording is modernised and the internal dossier numbers are never shown.
+     * Run invoices are titled « Facture d'inscriptions 2025012 », like provision invoices (« Facture 2025012 »).
+     * Older titles (« Facture Inscriptions Courses - Client (Dossiers #1, #4) », « Facture d'inscriptions - Client »)
+     * are shown in the same form and the internal dossier numbers are never displayed.
      */
     protected function title(): Attribute
     {
@@ -149,6 +150,10 @@ class Invoice extends Model
             get: function (?string $value): ?string {
                 if ($value === null) {
                     return null;
+                }
+
+                if ($this->number && preg_match('/^Facture (?:d\'inscriptions|Inscriptions Courses)\s*-/u', $value)) {
+                    return 'Facture d\'inscriptions '.$this->number;
                 }
 
                 $value = preg_replace('/\s*\((?:Dossiers?|dossiers?)\s*#[^)]*\)/u', '', $value);

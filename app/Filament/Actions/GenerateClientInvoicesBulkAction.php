@@ -57,38 +57,59 @@ class GenerateClientInvoicesBulkAction extends BulkAction
                 $provisions = BulkInvoicePreview::provisions($clientIds);
                 $registrations = BulkInvoicePreview::registrations($clientIds);
 
-                // La liste des inscriptions ne montre que les clients concernés (ceux qui en ont)
+                // La liste des inscriptions ne concerne que les clients qui en ont
                 $withRegistrations = array_keys(array_filter($registrations['descriptions'], fn ($d) => ! str_contains($d, 'aucune inscription')));
-                $registrations['options'] = array_intersect_key($registrations['options'], array_flip($withRegistrations));
+                $registrationsFiltered = $registrations;
+                $registrationsFiltered['options'] = array_intersect_key($registrations['options'], array_flip($withRegistrations));
+                $registrationsFiltered['descriptions'] = array_intersect_key($registrations['descriptions'], $registrationsFiltered['options']);
+                $registrationsFiltered['disabled'] = array_values(array_intersect($registrations['disabled'], $withRegistrations));
+
+                // Longue sélection : on ne liste que ce qui est actionnable, le reste est résumé
+                $provisionsView = BulkInvoicePreview::compact($provisions);
+                $registrationsView = BulkInvoicePreview::compact($registrationsFiltered);
+                $provisionsList = $provisionsView['preview'];
+                $registrationsList = $registrationsView['preview'];
 
                 $components = [
                     Text::make(count($clientIds).' client(s) sélectionné(s)')->weight('bold'),
                     Text::make('Prestations : '.$provisions['counts']['new'].' nouvelle(s) facture(s) · '.$provisions['counts']['draft'].' brouillon(s) à compléter · '.$provisions['counts']['nothing'].' sans rien à facturer'),
                     Text::make('Inscriptions de courses : '.$registrations['counts']['todo'].' client(s) avec des inscriptions à facturer'),
-                    CheckboxList::make('provision_client_ids')
-                        ->label('Factures de PRESTATIONS')
-                        ->options($provisions['options'])
-                        ->descriptions($provisions['descriptions'])
-                        ->default($provisions['default'])
-                        ->disableOptionWhen(fn (string $value) => in_array((int) $value, $provisions['disabled'], true))
-                        ->bulkToggleable()
-                        ->searchable(),
                 ];
 
-                if ($registrations['options'] !== []) {
-                    $components[] = CheckboxList::make('registration_client_ids')
-                        ->label('Factures d\'INSCRIPTIONS de courses (une facture par client, toutes ses inscriptions non facturées)')
-                        ->options($registrations['options'])
-                        ->descriptions(array_intersect_key($registrations['descriptions'], $registrations['options']))
-                        ->default(array_values(array_intersect($registrations['default'], array_keys($registrations['options']))))
-                        ->disableOptionWhen(fn (string $value) => in_array((int) $value, $registrations['disabled'], true))
+                if ($provisionsList['options'] !== []) {
+                    $components[] = CheckboxList::make('provision_client_ids')
+                        ->label('Factures de PRESTATIONS')
+                        ->options($provisionsList['options'])
+                        ->descriptions($provisionsList['descriptions'])
+                        ->default($provisionsList['default'])
+                        ->disableOptionWhen(fn (string $value) => in_array((int) $value, $provisionsList['disabled'], true))
                         ->bulkToggleable()
                         ->searchable();
+                }
+
+                if ($provisionsView['summary']) {
+                    $components[] = Text::make('Prestations — '.$provisionsView['summary'])->color('gray');
+                }
+
+                if ($registrationsList['options'] !== []) {
+                    $components[] = CheckboxList::make('registration_client_ids')
+                        ->label('Factures d\'INSCRIPTIONS de courses (une facture par client, toutes ses inscriptions non facturées)')
+                        ->options($registrationsList['options'])
+                        ->descriptions($registrationsList['descriptions'])
+                        ->default($registrationsList['default'])
+                        ->disableOptionWhen(fn (string $value) => in_array((int) $value, $registrationsList['disabled'], true))
+                        ->bulkToggleable()
+                        ->searchable();
+                }
+
+                if ($registrationsView['summary']) {
+                    $components[] = Text::make('Inscriptions — '.$registrationsView['summary'])->color('gray');
                 }
 
                 return $components;
             })
             ->action(function (Collection $records, array $data) {
+                InvoiceService::flushCache();
                 $report = new BulkInvoiceReport('Génération en masse des factures (prestations et inscriptions)');
                 $clientIds = $this->clientIds($records);
                 $names = Client::whereIn('id', $clientIds)->pluck('name', 'id');
