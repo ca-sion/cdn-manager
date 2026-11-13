@@ -182,6 +182,14 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     }
 
     /**
+     * A provision is invoiceable when it has a product (own flag, otherwise the provision's product).
+     */
+    public function isInvoiceable(): bool
+    {
+        return (bool) ($this->has_product ?? ($this->provision?->product_id !== null));
+    }
+
+    /**
      * The invoice position built from this provision element.
      *
      * @return array<string, mixed>

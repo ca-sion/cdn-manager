@@ -141,10 +141,9 @@ class InvoiceService
     /**
      * Ids of the provision elements covered by an invoice.
      * - invoices generated since tracking exists carry the ids in their positions
-     * - older invoices (or manual ones) are recognised by matching positions to the client's provisions
-     *   (same name + price + quantity first, then same name), each provision matched once
+     * - older invoices carry none: they cover the provisions that existed when the invoice was created
      *
-     * @param  Collection<int, ProvisionElement>  $elements  candidates (client's current provisions)
+     * @param  Collection<int, ProvisionElement>  $elements  candidates (client's invoiceable provisions)
      * @return array<int, int>
      */
     public static function invoicedElementIds(Invoice $invoice, $elements): array
@@ -154,33 +153,25 @@ class InvoiceService
             return $tracked;
         }
 
-        $remaining = $elements->keyBy('id');
-        $matched = [];
-        $positions = collect($invoice->positions ?? [])->filter(fn ($p) => ! empty($p['name']));
+        return $elements
+            ->filter(fn (ProvisionElement $element) => $element->created_at <= $invoice->created_at)
+            ->pluck('id')
+            ->all();
+    }
 
-        $norm = fn ($v) => mb_strtolower(trim((string) $v));
-        $same = fn ($a, $b) => abs((float) $a - (float) $b) < 0.005;
-
-        foreach ([true, false] as $strict) {
-            foreach ($positions as $key => $position) {
-                if (isset($matched[$key])) {
-                    continue;
-                }
-                $found = $remaining->first(function (ProvisionElement $element) use ($position, $strict, $norm, $same) {
-                    if ($norm($element->name) !== $norm($position['name'])) {
-                        return false;
-                    }
-
-                    return ! $strict || ($same($element->cost, $position['cost'] ?? 0) && $same($element->quantity ?? 1, $position['quantity'] ?? 1));
-                });
-                if ($found) {
-                    $matched[$key] = $found->id;
-                    $remaining->forget($found->id);
-                }
-            }
-        }
-
-        return array_values($matched);
+    /**
+     * The client's invoiceable provisions for the current edition.
+     *
+     * @return Collection<int, ProvisionElement>
+     */
+    public static function invoiceableElements(int $clientId)
+    {
+        return Client::findOrFail($clientId)
+            ->currentProvisionElements()
+            ->with('provision.category')
+            ->get()
+            ->filter(fn (ProvisionElement $element) => $element->isInvoiceable())
+            ->values();
     }
 
     /**
@@ -190,11 +181,7 @@ class InvoiceService
      */
     public static function uninvoicedProvisionElements(int $clientId)
     {
-        $client = Client::findOrFail($clientId);
-        $candidates = $client->currentProvisionElements()
-            ->with('provision')
-            ->where('has_product', true)
-            ->get();
+        $candidates = self::invoiceableElements($clientId);
 
         $invoicedIds = self::provisionInvoices($clientId)
             ->flatMap(fn (Invoice $invoice) => self::invoicedElementIds($invoice, $candidates))
@@ -217,9 +204,8 @@ class InvoiceService
      */
     public static function billingOverview(int $clientId): array
     {
-        $client = Client::findOrFail($clientId);
-        $all = $client->currentProvisionElements()->with('provision.category')->get();
-        $candidates = $all->where('has_product', true)->values();
+        $all = Client::findOrFail($clientId)->currentProvisionElements()->with('provision.category')->get();
+        $candidates = self::invoiceableElements($clientId);
 
         $invoiced = collect();
         $taken = [];
@@ -236,14 +222,13 @@ class InvoiceService
         return [
             'to_invoice'      => $candidates->reject(fn ($e) => in_array($e->id, $taken, true))->values(),
             'invoiced'        => $invoiced,
-            'without_product' => $all->where('has_product', false)->count(),
+            'without_product' => $all->count() - $candidates->count(),
             'legacy_invoices' => self::legacyProvisionInvoices($clientId),
         ];
     }
 
     /**
-     * Active provision invoices created before elements were tracked (positions without element ids).
-     * We cannot know which provisions they contain, so the user must be warned.
+     * Active provision invoices created before provisions were tracked (positions without ids).
      *
      * @return Collection<int, Invoice>
      */
@@ -321,8 +306,7 @@ class InvoiceService
      */
     protected static function currentElementsOf(int $clientId)
     {
-        return self::$elementsCache[$clientId] ??= Client::findOrFail($clientId)
-            ->currentProvisionElements()->with('provision')->where('has_product', true)->get();
+        return self::$elementsCache[$clientId] ??= self::invoiceableElements($clientId);
     }
 
     /**
@@ -333,7 +317,7 @@ class InvoiceService
      */
     public static function provisionElementInvoiceState(ProvisionElement $element): array
     {
-        if (! $element->has_product || $element->recipient_type !== Client::class) {
+        if (! $element->isInvoiceable() || $element->recipient_type !== Client::class) {
             return ['none', null];
         }
 
@@ -383,7 +367,7 @@ class InvoiceService
                 return $position;
             }
 
-            return $removed || ! $element->has_product ? null : $element->invoicePosition();
+            return $removed || ! $element->isInvoiceable() ? null : $element->invoicePosition();
         })->filter()->values()->all();
 
         $draft->positions = $positions;

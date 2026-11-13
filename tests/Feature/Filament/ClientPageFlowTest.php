@@ -223,9 +223,10 @@ class ClientPageFlowTest extends TestCase
     public function test_modal_explains_when_everything_is_already_invoiced(): void
     {
         $element = $this->element();
+        $element->forceFill(['created_at' => now()->subDays(3)])->saveQuietly();
         Invoice::create([
             'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => InvoiceStatusEnum::Sent,
-            'number'     => '2025001', 'positions' => [['name' => $element->name, 'quantity' => 1, 'cost' => 100, 'tax_rate' => 8.1]],
+            'number'     => '2025001', 'positions' => [['name' => 'Autre libellé', 'quantity' => 1, 'cost' => 100, 'tax_rate' => 8.1]],
         ]);
 
         Livewire::test(EditClient::class, ['record' => $this->client->getKey()])
@@ -263,7 +264,7 @@ class ClientPageFlowTest extends TestCase
 
         Livewire::test(EditClient::class, ['record' => $this->client->getKey()])
             ->mountAction('generateInvoice')
-            ->assertMountedActionModalSee('1 sans prix')
-            ->assertMountedActionModalSee('aucune prestation avec un prix');
+            ->assertMountedActionModalSee('1 sans produit')
+            ->assertMountedActionModalSee('aucune prestation avec un produit');
     }
 }

@@ -67,14 +67,14 @@ class GenerateClientInvoiceAction extends Action
                 // 1. Résumé
                 $summary = $toInvoice->count().' à facturer · '.$invoiced->count().' déjà facturée(s)';
                 if ($overview['without_product']) {
-                    $summary .= ' · '.$overview['without_product'].' sans prix (jamais facturées)';
+                    $summary .= ' · '.$overview['without_product'].' sans produit (non facturables)';
                 }
                 $components[] = Text::make($summary)->weight('bold');
 
                 // 2. Cas « rien à facturer »
                 if ($toInvoice->isEmpty()) {
                     $components[] = Text::make($invoiced->isEmpty()
-                        ? 'Ce client n\'a aucune prestation avec un prix pour cette édition : il n\'y a rien à facturer.'
+                        ? 'Ce client n\'a aucune prestation avec un produit pour cette édition : il n\'y a rien à facturer.'
                         : 'Rien à facturer : toutes les prestations de ce client sont déjà sur une facture (voir la liste ci-dessous). Pour facturer autre chose, créez une facture manuelle ou une proforma.')
                         ->color('success');
                 } else {
@@ -108,7 +108,7 @@ class GenerateClientInvoiceAction extends Action
                     $components[] = Text::make(new HtmlString($lines));
 
                     if ($overview['legacy_invoices']->isNotEmpty()) {
-                        $components[] = Text::make('Pour les factures '.$overview['legacy_invoices']->pluck('number')->implode(', ').', les prestations ont été retrouvées par leur nom (facture créée avant le suivi automatique). Si une facture contient des lignes avec d\'autres libellés, elles n\'ont pas pu être reconnues : vérifiez qu\'aucune prestation de la liste ci-dessus ne figure déjà dedans.')
+                        $components[] = Text::make('Les factures '.$overview['legacy_invoices']->pluck('number')->implode(', ').' ont été créées avant le suivi automatique : elles sont considérées comme contenant toutes les prestations qui existaient à leur création.')
                             ->color('warning');
                     }
                 }

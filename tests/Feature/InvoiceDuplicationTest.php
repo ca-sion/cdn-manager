@@ -7,6 +7,7 @@ use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Edition;
 use App\Models\Invoice;
+use App\Models\Product;
 use App\Models\Provision;
 use App\Models\RunRegistration;
 use App\Enums\InvoiceStatusEnum;
@@ -190,48 +191,46 @@ class InvoiceDuplicationTest extends TestCase
         $this->assertEquals(2, $same->fresh()->positions[0]['quantity']);
     }
 
-    public function test_legacy_invoice_is_recognised_by_name_without_manual_work(): void
+    public function test_legacy_invoice_covers_provisions_that_existed_when_it_was_created(): void
     {
-        $a = $this->element(100);
-        $b = $this->element(200);
-        $c = $this->element(300);
+        $before = $this->element(100);
+        $before->forceFill(['created_at' => now()->subDays(10)])->saveQuietly();
 
-        // Ancienne facture (sans identifiants) : A au même prix, B dont le prix a été modifié à la main
-        Invoice::create([
+        // Ancienne facture (sans identifiants), créée il y a 5 jours, libellés quelconques
+        $legacy = Invoice::create([
             'edition_id' => $this->edition->id,
             'client_id'  => $this->client->id,
             'status'     => InvoiceStatusEnum::Sent,
             'number'     => '2025-901',
-            'positions'  => [
-                ['name' => $a->name, 'quantity' => 1, 'cost' => 100, 'tax_rate' => 8.1],
-                ['name' => mb_strtoupper($b->name), 'quantity' => 1, 'cost' => 150, 'tax_rate' => 8.1],
-            ],
+            'positions'  => [['name' => 'Libellé sans rapport', 'quantity' => 1, 'cost' => 12, 'tax_rate' => 8.1]],
         ]);
+        $legacy->forceFill(['created_at' => now()->subDays(5)])->saveQuietly();
 
-        $todo = InvoiceService::uninvoicedProvisionElements($this->client->id)->pluck('id')->all();
+        // Prestation ajoutée après la facture
+        $after = $this->element(300);
 
-        $this->assertSame([$c->id], $todo);
-        $this->assertSame('invoiced', InvoiceService::provisionElementInvoiceState($a->fresh())[0]);
-        $this->assertSame('to_invoice', InvoiceService::provisionElementInvoiceState($c->fresh())[0]);
+        $this->assertSame([$after->id], InvoiceService::uninvoicedProvisionElements($this->client->id)->pluck('id')->all());
+        $this->assertSame('invoiced', InvoiceService::provisionElementInvoiceState($before->fresh())[0]);
+        $this->assertSame('to_invoice', InvoiceService::provisionElementInvoiceState($after->fresh())[0]);
     }
 
-    public function test_two_identical_provisions_are_matched_once_each(): void
+    public function test_provision_without_own_flag_uses_the_catalogue_product(): void
     {
-        $provision = Provision::factory()->create(['edition_id' => $this->edition->id, 'product_id' => null]);
-        foreach ([1, 2] as $_) {
+        $product = Product::factory()->create();
+        $withProduct = Provision::factory()->create(['edition_id' => $this->edition->id, 'product_id' => $product->id]);
+        $withoutProduct = Provision::factory()->create(['edition_id' => $this->edition->id, 'product_id' => null]);
+
+        foreach ([$withProduct, $withoutProduct] as $provision) {
             ProvisionElement::factory()->create([
                 'edition_id'   => $this->edition->id, 'recipient_id' => $this->client->id, 'recipient_type' => Client::class,
-                'provision_id' => $provision->id, 'has_product' => true, 'quantity' => 1, 'cost' => 50, 'tax_rate' => 8.1,
+                'provision_id' => $provision->id, 'has_product' => null, 'quantity' => 1, 'cost' => 10, 'tax_rate' => 8.1,
             ]);
         }
 
-        // L'ancienne facture ne contient qu'une seule des deux
-        Invoice::create([
-            'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => InvoiceStatusEnum::Sent,
-            'number'     => '2025-902', 'positions' => [['name' => $provision->name, 'quantity' => 1, 'cost' => 50, 'tax_rate' => 8.1]],
-        ]);
+        $todo = InvoiceService::uninvoicedProvisionElements($this->client->id);
 
-        $this->assertCount(1, InvoiceService::uninvoicedProvisionElements($this->client->id));
+        $this->assertCount(1, $todo);
+        $this->assertSame($withProduct->id, $todo->first()->provision_id);
     }
 
     public function test_pro_forma_invoice_does_not_count_as_invoiced(): void
@@ -245,10 +244,11 @@ class InvoiceDuplicationTest extends TestCase
 
     public function test_manual_invoice_is_never_blocked(): void
     {
-        Invoice::create([
+        $manual = Invoice::create([
             'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => InvoiceStatusEnum::Sent,
             'number'     => '2025-903', 'positions' => [['name' => 'Texte libre', 'quantity' => 1, 'cost' => 10, 'tax_rate' => 8.1]],
         ]);
+        $manual->forceFill(['created_at' => now()->subDay()])->saveQuietly();
         $this->element();
 
         $invoice = InvoiceService::generateInvoiceByClient($this->client->id);
