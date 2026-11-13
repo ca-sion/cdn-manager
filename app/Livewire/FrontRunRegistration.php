@@ -857,7 +857,9 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 
         $filePath = $this->importFile->getRealPath();
         try {
-            $rows = (new FastExcel)->import($filePath);
+            $rawRows = (new FastExcel)->withoutHeaders()->import($filePath)
+                ->map(fn ($r) => array_values(is_array($r) ? $r : $r->toArray()))
+                ->all();
         } catch (\Throwable $e) {
             report($e);
             $this->addError('importFile', 'Impossible de lire ce fichier. Vérifiez qu\'il s\'agit bien d\'un fichier Excel valide.');
@@ -866,17 +868,11 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         }
 
         $newRows = [];
-        foreach ($rows as $item) {
-            $normalized = [];
-            foreach ($item as $k => $v) {
-                $cleanKey = mb_strtolower(trim((string) $k));
-                $normalized[$cleanKey] = trim((string) $v);
-            }
+        foreach ($this->mapImportRows($rawRows) as $normalized) {
+            $firstName = $normalized['first_name'];
+            $lastName = $normalized['last_name'];
 
-            $firstName = $normalized['prenom'] ?? $normalized['prénom'] ?? $normalized['first_name'] ?? $normalized['first name'] ?? '';
-            $lastName = $normalized['nom'] ?? $normalized['last_name'] ?? $normalized['last name'] ?? '';
-
-            if (empty($firstName) && empty($lastName)) {
+            if ($firstName === '' && $lastName === '') {
                 continue;
             }
 
@@ -884,13 +880,10 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             $row['_k'] = 'l'.bin2hex(random_bytes(4));
             $row['first_name'] = $firstName;
             $row['last_name'] = $lastName;
-            $row['birthdate'] = $normalized['date_de_naissance'] ?? $normalized['birthdate'] ?? $normalized['date de naissance'] ?? $normalized['date'] ?? '';
-
-            $gender = strtoupper($normalized['genre'] ?? $normalized['gender'] ?? $normalized['sexe'] ?? 'M');
-            $row['gender'] = in_array($gender, ['M', 'F']) ? $gender : 'M';
-
-            $row['email'] = $normalized['email'] ?? $normalized['courriel'] ?? '';
-            $row['nationality'] = strtoupper(substr($normalized['nationalite'] ?? $normalized['nationalité'] ?? $normalized['country'] ?? 'SUI', 0, 3));
+            $row['birthdate'] = $normalized['birthdate'];
+            $row['gender'] = $normalized['gender'];
+            $row['email'] = $normalized['email'];
+            $row['nationality'] = $normalized['nationality'] !== '' ? $normalized['nationality'] : 'SUI';
 
             $availableRuns = $this->type === 'group'
                 ? $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M')
@@ -911,7 +904,110 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             }));
             $this->elements = array_merge($this->elements, $newRows);
             $this->closeImportModal();
+        } else {
+            $this->addError('importFile', 'Aucun participant reconnu dans ce fichier. Vérifiez que les colonnes « Prénom » et « Nom » sont présentes.');
         }
+    }
+
+    /**
+     * Transforme les lignes brutes d'un fichier Excel/CSV en participants normalisés.
+     * Tolère : lignes de titre avant les en-têtes, en-têtes avec accents/parenthèses/variantes,
+     * vraies dates Excel (objets date ou numéros de série), genres écrits en toutes lettres.
+     * Sans en-têtes reconnus, l'ordre des colonnes est : Prénom, Nom, Naissance, Genre, E-mail, Nationalité.
+     *
+     * @param  array<int, array<int, mixed>>  $rawRows
+     * @return array<int, array{first_name: string, last_name: string, birthdate: string, gender: string, email: string, nationality: string}>
+     */
+    protected function mapImportRows(array $rawRows): array
+    {
+        $aliases = [
+            'first_name'  => ['prenom', 'first name', 'firstname', 'first_name', 'prenom eleve', 'prenom de l eleve'],
+            'last_name'   => ['nom', 'last name', 'lastname', 'last_name', 'nom de famille', 'nom eleve', 'nom de l eleve'],
+            'birthdate'   => ['date de naissance', 'date naissance', 'naissance', 'birthdate', 'date', 'ne le', 'nee le', 'annee de naissance', 'annee', 'date of birth', 'dob'],
+            'gender'      => ['genre', 'sexe', 'gender', 'sex', 'm f', 'h f'],
+            'email'       => ['email', 'e mail', 'mail', 'courriel', 'adresse email', 'adresse e mail', 'adresse mail'],
+            'nationality' => ['nationalite', 'nationality', 'pays', 'country', 'nat'],
+        ];
+
+        $canon = function ($v): string {
+            $v = $this->importCellToString($v);
+            $v = preg_replace('/\(.*?\)/u', ' ', $v);
+            $v = mb_strtolower(\Illuminate\Support\Str::ascii($v));
+
+            return trim(preg_replace('/[^a-z0-9]+/', ' ', $v));
+        };
+
+        // Recherche de la ligne d'en-têtes (les 15 premières lignes) : doit contenir un prénom OU un nom
+        $headerIndex = null;
+        $map = [];
+        foreach (array_slice($rawRows, 0, 15, true) as $i => $cells) {
+            $found = [];
+            foreach ($cells as $col => $cell) {
+                $c = $canon($cell);
+                if ($c === '') {
+                    continue;
+                }
+                foreach ($aliases as $field => $names) {
+                    if (! isset($found[$field]) && in_array($c, $names, true)) {
+                        $found[$field] = $col;
+                    }
+                }
+            }
+            if (isset($found['first_name']) || isset($found['last_name'])) {
+                $headerIndex = $i;
+                $map = $found;
+                break;
+            }
+        }
+
+        if ($headerIndex === null) {
+            $headerIndex = -1;
+            $map = ['first_name' => 0, 'last_name' => 1, 'birthdate' => 2, 'gender' => 3, 'email' => 4, 'nationality' => 5];
+        }
+
+        $out = [];
+        foreach ($rawRows as $i => $cells) {
+            if ($i <= $headerIndex) {
+                continue;
+            }
+            $get = fn (string $f) => isset($map[$f]) ? $this->importCellToString($cells[$map[$f]] ?? '') : '';
+
+            $out[] = [
+                'first_name'  => $get('first_name'),
+                'last_name'   => $get('last_name'),
+                'birthdate'   => $get('birthdate'),
+                'gender'      => $this->importGender($get('gender')),
+                'email'       => $get('email'),
+                'nationality' => strtoupper(substr($get('nationality'), 0, 3)),
+            ];
+        }
+
+        return $out;
+    }
+
+    protected function importCellToString(mixed $v): string
+    {
+        if ($v instanceof \DateTimeInterface) {
+            return $v->format('d.m.Y');
+        }
+        if (is_int($v) || is_float($v) || (is_string($v) && is_numeric($v))) {
+            // Numéro de série Excel d'une date (ex. 43133 = 02.02.2018) ; une année seule (2018) reste telle quelle
+            if ($v >= 10000 && $v <= 80000) {
+                return \Carbon\Carbon::create(1899, 12, 30)->addDays((int) $v)->format('d.m.Y');
+            }
+        }
+        if (is_scalar($v) || $v === null) {
+            return trim((string) $v);
+        }
+
+        return '';
+    }
+
+    protected function importGender(string $v): string
+    {
+        $v = mb_strtolower(\Illuminate\Support\Str::ascii(trim($v)));
+
+        return in_array($v, ['f', 'fille', 'femme', 'feminin', 'female', 'w', 'madchen'], true) ? 'F' : 'M';
     }
 
     public function cleanEmptyRows(): void
