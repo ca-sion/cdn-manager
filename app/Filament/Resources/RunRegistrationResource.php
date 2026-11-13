@@ -437,6 +437,38 @@ class RunRegistrationResource extends Resource
         return (new FastExcel($data))->download('export_datasport_ecoles_'.date('Ymd_His').'.xlsx');
     }
 
+    /**
+     * Export interclasses : une ligne par classe (établissement, degré, titulaire, contact, nombre de participants).
+     */
+    public static function generateSchoolClassesExcel($registrations)
+    {
+        $data = collect();
+
+        foreach ($registrations as $registration) {
+            $classLevel = is_object($registration->school_class_level) ? $registration->school_class_level->value : ($registration->school_class_level ?? '');
+
+            $data->push([
+                'Établissement scolaire'    => $registration->school_name,
+                'Degré'                     => $classLevel,
+                'Nom du titulaire'          => $registration->school_class_holder_last_name,
+                'Prénom du titulaire'       => $registration->school_class_holder_first_name,
+                'E-mail du titulaire'       => $registration->school_class_holder_email,
+                'Prénom de la personne de contact' => $registration->contact_first_name,
+                'Nom de la personne de contact'    => $registration->contact_last_name,
+                'E-mail de la personne de contact' => $registration->contact_email,
+                'Nombre de participants'    => $registration->runRegistrationElements->count(),
+            ]);
+        }
+
+        if ($data->isEmpty()) {
+            Notification::make()->title('Aucune inscription interclasses à exporter.')->warning()->send();
+
+            return null;
+        }
+
+        return (new FastExcel($data))->download('export_classes_interclasses_'.date('Ymd_His').'.xlsx');
+    }
+
     public static function generateDatasportCompanyExcel($registrations)
     {
         $data = collect();

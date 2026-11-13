@@ -26,6 +26,11 @@ class RegistrationExportActions
                 'type'   => 'school', 'with' => ['runRegistrationElements.run'],
                 'export' => fn ($rows) => RunRegistrationResource::generateDatasportSchoolExcel($rows),
             ],
+            'exportSchoolClasses' => [
+                'label'  => 'Export classes interclasses', 'icon' => 'heroicon-o-table-cells', 'color' => 'info',
+                'type'   => 'school', 'with' => ['runRegistrationElements'],
+                'export' => fn ($rows) => RunRegistrationResource::generateSchoolClassesExcel($rows),
+            ],
             'exportDatasportCompany' => [
                 'label'  => 'Export Datasport entreprises', 'icon' => 'heroicon-o-building-office', 'color' => 'warning',
                 'type'   => 'company', 'with' => ['runRegistrationElements.run'],

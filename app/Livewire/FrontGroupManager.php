@@ -165,6 +165,15 @@ class FrontGroupManager extends Component
         return RunRegistrationResource::generateDatasportSchoolExcel($registrations);
     }
 
+    public function exportSchoolClasses()
+    {
+        $registrations = RunRegistration::where('run_registration_type', 'school')
+            ->with('runRegistrationElements')
+            ->get();
+
+        return RunRegistrationResource::generateSchoolClassesExcel($registrations);
+    }
+
     public function exportDatasportCompany()
     {
         $registrations = RunRegistration::where('run_registration_type', 'company')
