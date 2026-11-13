@@ -12,7 +12,9 @@ use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Actions\ClientPdfAction;
 use App\Filament\Resources\ClientResource;
+use App\Filament\Actions\SendClientVouchersAction;
 use App\Notifications\ClientAdvertiserFormCreated;
 use App\Filament\Actions\GenerateClientInvoiceAction;
 
@@ -23,13 +25,9 @@ class EditClient extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('pdf')
-                ->label('Fiche')
-                ->color('gray')
-                ->url(fn (Model $record): string => $record->pdfLink)
-                ->openUrlInNewTab()
-                ->icon('heroicon-o-document'),
+            ClientPdfAction::make()->label('Fiche')->color('gray'),
             GenerateClientInvoiceAction::make()->color('gray'),
+            SendClientVouchersAction::make()->color('gray'),
             Action::make('ClientAdvertiserFormCreated')
                 ->label('Envoyer commande')
                 ->icon('heroicon-o-envelope')

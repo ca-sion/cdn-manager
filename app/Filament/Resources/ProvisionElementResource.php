@@ -5,7 +5,6 @@ namespace App\Filament\Resources;
 use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Contact;
-use Livewire\Component;
 use App\Models\Provision;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
@@ -35,6 +34,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Tables\Columns\ColumnGroup;
 use App\Enums\ProvisionElementStatusEnum;
+use App\Filament\Actions\ClientPdfAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Fieldset;
@@ -46,13 +46,15 @@ use App\Filament\Actions\InvoiceActionGroup;
 use Filament\Forms\Components\MorphToSelect;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
+use App\Filament\Actions\CopyEmailBulkAction;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use App\Filament\Actions\ExportMediaBulkAction;
+use App\Filament\Actions\SendMediaMissingAction;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Forms\Components\MorphToSelect\Type;
 use App\Filament\Exports\ProvisionElementExporter;
-use App\Notifications\ClientAdvertiserMediaMissing;
+use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -564,15 +566,8 @@ class ProvisionElementResource extends Resource
                         ->icon('heroicon-o-pencil-square')
                         ->url(fn (Model $record) => $record->client?->frontEditLink)
                         ->openUrlInNewTab(),
-                    Action::make('pdfLink')
-                        ->label('Fiche client')
-                        ->icon('heroicon-o-document')
-                        ->url(fn (Model $record) => $record->client?->pdfLink)
-                        ->openUrlInNewTab(),
-                    Action::make('ClientAdvertiserMediaMissing')
-                        ->label('Envoyer (média manquant)')
-                        ->icon('heroicon-o-envelope')
-                        ->action(fn (Model $record) => $record->client?->notify(new ClientAdvertiserMediaMissing)),
+                    ClientPdfAction::make()->clientUsing(fn (Model $record) => $record->recipient),
+                    SendMediaMissingAction::make()->clientUsing(fn (Model $record) => $record->recipient),
                 ]),
                 InvoiceActionGroup::make(
                     invoice: fn (Model $record) => $record->recipient instanceof Client ? $record->recipient->latestInvoice() : null,
@@ -582,22 +577,10 @@ class ProvisionElementResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                    BulkAction::make('copyEmail')
-                        ->label('Copier emails')
-                        ->icon('heroicon-m-clipboard-document-list')
-                        ->action(function (Component $livewire, Collection $records) {
-                            $clipboard = '';
-                            foreach ($records as $record) {
-                                $email = $record->recipientContactEmail;
-                                $clipboard .= "$email\n";
-                            }
-                            $livewire->dispatch('copy-to-clipboard', $clipboard);
-                        })
-                        ->extraAttributes([
-                            'x-on:copy-to-clipboard.window' => 'navigator.clipboard.writeText($event.detail)',
-                        ]),
+                    CopyEmailBulkAction::make()->emailUsing(fn ($record) => $record->recipientContactEmail),
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
+                    SendMediaMissingBulkAction::make()->clientUsing(fn (Model $record) => $record->recipient),
                     BulkAction::make('bulkEdit')
                         ->icon('heroicon-m-pencil-square')
                         ->form([

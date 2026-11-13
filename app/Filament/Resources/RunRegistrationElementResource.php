@@ -33,6 +33,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Notifications\EliteRunnerFormLink;
 use Filament\Schemas\Components\Utilities\Get;
+use App\Filament\Actions\PrintEliteContractAction;
 use App\Notifications\EliteRunnerContractFinalized;
 
 class RunRegistrationElementResource extends Resource
@@ -345,13 +346,7 @@ class RunRegistrationElementResource extends Resource
                     EditAction::make(),
 
                     // Imprimer Contrat Élite PDF (URL Signée)
-                    Action::make('printEliteContract')
-                        ->label('Imprimer Contrat Élite (PDF)')
-                        ->icon('heroicon-o-document-text')
-                        ->color('warning')
-                        ->url(fn (RunRegistrationElement $record) => URL::signedRoute('pdf.elite-contract', ['registration' => $record->run_registration_id]))
-                        ->openUrlInNewTab()
-                        ->visible(fn (RunRegistrationElement $record) => ($record->runRegistration?->run_registration_type?->value ?? $record->runRegistration?->run_registration_type) === 'elite'),
+                    PrintEliteContractAction::make()->registrationUsing(fn (RunRegistrationElement $record) => $record->runRegistration),
 
                     // Step 1: Envoyer invitation à compléter la fiche coureur Élite
                     Action::make('sendEliteEditLink')

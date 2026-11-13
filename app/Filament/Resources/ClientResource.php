@@ -6,7 +6,6 @@ use Exception;
 use Filament\Forms;
 use App\Models\Client;
 use App\Models\Edition;
-use Livewire\Component;
 use App\Models\Provision;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
@@ -36,7 +35,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Filament\Exports\ClientExporter;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use App\Enums\ProvisionElementStatusEnum;
+use App\Filament\Actions\ClientPdfAction;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables\Filters\SelectFilter;
@@ -47,13 +46,16 @@ use App\Filament\Actions\InvoiceActionGroup;
 use Filament\Tables\Columns\TextInputColumn;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
+use App\Filament\Actions\CopyEmailBulkAction;
 use App\Filament\Actions\SendInvoiceBulkAction;
 use App\Notifications\ClientAdvertiserFormLink;
-use App\Notifications\RecipientSendVipInvitation;
+use App\Filament\Actions\SendMediaMissingAction;
+use App\Filament\Actions\SendClientVouchersAction;
 use App\Filament\Actions\RelaunchInvoiceBulkAction;
 use App\Notifications\ClientAdvertiserFormRelaunch;
-use App\Notifications\ClientAdvertiserMediaMissing;
 use App\Notifications\ClientInterclassDonorRequest;
+use App\Filament\Actions\SendMediaMissingBulkAction;
+use App\Filament\Actions\SendVipInvitationBulkAction;
 use App\Filament\Actions\GenerateClientInvoicesBulkAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use App\Filament\Resources\ClientResource\Pages\EditClient;
@@ -367,11 +369,9 @@ class ClientResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
-                    Action::make('pdf')
-                        ->label('Fiche')
-                        ->url(fn (Model $record): string => $record->pdfLink)
-                        ->openUrlInNewTab()
-                        ->icon('heroicon-o-document'),
+                    ClientPdfAction::make(),
+                    SendClientVouchersAction::make(),
+                    SendMediaMissingAction::make(),
                 ])->iconButton(),
                 InvoiceActionGroup::make(
                     invoice: fn (Client $record) => $record->latestInvoice(),
@@ -507,59 +507,8 @@ class ClientResource extends Resource
                                 ->success()
                                 ->send();
                         }),
-                    BulkAction::make('ClientAdvertiserMediaMissing')
-                        ->label('Envoyer demande pour média manquant (avec contrôle)')
-                        ->icon('heroicon-o-envelope')
-                        ->color('warning')
-                        ->action(function (Collection $records) {
-                            $sentCount = 0;
-                            foreach ($records as $client) {
-                                // Filter provision elements that require a visual (format_indicator is not null)
-                                $elementsRequiringMedia = $client->currentProvisionElements->filter(function ($pe) {
-                                    return $pe->provision?->format_indicator !== null;
-                                });
-
-                                // If there are such elements, check if any of them is missing media
-                                if ($elementsRequiringMedia->isNotEmpty()) {
-                                    $isMissingMedia = $elementsRequiringMedia->contains(function ($pe) {
-                                        return $pe->getMedia('*')->isEmpty();
-                                    });
-
-                                    if ($isMissingMedia) {
-                                        $client->notify(new ClientAdvertiserMediaMissing);
-                                        $sentCount++;
-                                    }
-                                }
-                            }
-                            Notification::make()
-                                ->title($sentCount.' email(s) pour médias manquants envoyé(s)')
-                                ->success()
-                                ->send();
-                        }),
-                    BulkAction::make('sendVipInvitation')
-                        ->label('Envoyer invitations VIP')
-                        ->icon('heroicon-m-envelope')
-                        ->color('warning')
-                        ->requiresConfirmation()
-                        ->action(function (Collection $clients): void {
-                            foreach ($clients as $client) {
-                                $vipProvisionElement = $client->currentProvisionElements()->where('provision_id', setting('vip_provision'))->first();
-                                if ($vipProvisionElement?->provision_id == (int) setting('vip_provision')) {
-                                    if ($client->vipContactEmail != null) {
-                                        $client->notify(new RecipientSendVipInvitation($vipProvisionElement));
-                                        $vipProvisionElement->status = ProvisionElementStatusEnum::Sent;
-                                        $vipProvisionElement->save();
-                                    } else {
-                                        $vipProvisionElement->status = ProvisionElementStatusEnum::ActionRequired;
-                                        $vipProvisionElement->save();
-                                    }
-                                }
-                            }
-                            Notification::make()
-                                ->title('Invitations VIP envoyées ('.$clients->count().')')
-                                ->success()
-                                ->send();
-                        }),
+                    SendMediaMissingBulkAction::make(),
+                    SendVipInvitationBulkAction::make()->forRecipients(),
                     BulkAction::make('mark_as_relaunched')
                         ->label('Marquer comme relancé (manuellement)')
                         ->icon('heroicon-o-check-badge')
@@ -580,20 +529,7 @@ class ClientResource extends Resource
                                 ->success()
                                 ->send();
                         }),
-                    BulkAction::make('copyEmail')
-                        ->label('Copier emails')
-                        ->icon('heroicon-m-clipboard-document-list')
-                        ->action(function (Component $livewire, Collection $records) {
-                            $clipboard = '';
-                            foreach ($records as $record) {
-                                $email = $record->contactEmail;
-                                $clipboard .= "$email\n";
-                            }
-                            $livewire->dispatch('copy-to-clipboard', $clipboard);
-                        })
-                        ->extraAttributes([
-                            'x-on:copy-to-clipboard.window' => 'navigator.clipboard.writeText($event.detail)',
-                        ]),
+                    CopyEmailBulkAction::make()->emailUsing(fn ($record) => $record->contactEmail),
                     BulkAction::make('update_engagement')
                         ->label('Modifier le statut')
                         ->icon('heroicon-o-briefcase')

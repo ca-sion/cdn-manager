@@ -5,7 +5,6 @@ namespace App\Filament\Resources;
 use Exception;
 use App\Models\Contact;
 use App\Models\Edition;
-use Livewire\Component;
 use App\Models\Provision;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
@@ -33,8 +32,9 @@ use Filament\Tables\Filters\TrashedFilter;
 use App\Notifications\ContactDonorFormLink;
 use Filament\Actions\ForceDeleteBulkAction;
 use Illuminate\Database\Eloquent\Collection;
-use App\Notifications\RecipientSendVipInvitation;
+use App\Filament\Actions\CopyEmailBulkAction;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Actions\SendVipInvitationBulkAction;
 use App\Filament\Resources\ContactResource\Pages\EditContact;
 use App\Filament\Resources\ContactResource\Pages\ListContacts;
 use App\Filament\Resources\ContactResource\Pages\CreateContact;
@@ -233,30 +233,7 @@ class ContactResource extends Resource
                                 ->success()
                                 ->send();
                         }),
-                    BulkAction::make('sendVipInvitation')
-                        ->label('Envoyer invitations VIP')
-                        ->icon('heroicon-m-envelope')
-                        ->color('warning')
-                        ->requiresConfirmation()
-                        ->action(function (Collection $contacts): void {
-                            foreach ($contacts as $contact) {
-                                $vipProvisionElement = $contact->currentProvisionElements()->where('provision_id', setting('vip_provision'))->first();
-                                if ($vipProvisionElement?->provision_id == (int) setting('vip_provision')) {
-                                    if ($contact->email != null) {
-                                        $contact->notify(new RecipientSendVipInvitation($vipProvisionElement));
-                                        $vipProvisionElement->status = ProvisionElementStatusEnum::Sent;
-                                        $vipProvisionElement->save();
-                                    } else {
-                                        $vipProvisionElement->status = ProvisionElementStatusEnum::ActionRequired;
-                                        $vipProvisionElement->save();
-                                    }
-                                }
-                            }
-                            Notification::make()
-                                ->title('Invitations VIP envoyées ('.$contacts->count().')')
-                                ->success()
-                                ->send();
-                        }),
+                    SendVipInvitationBulkAction::make()->forRecipients(),
                     BulkAction::make('addVipProvision')
                         ->label('Ajouter prestation VIP')
                         ->icon('heroicon-m-user-circle')
@@ -397,20 +374,7 @@ class ContactResource extends Resource
                             }
                         })
                         ->modalWidth(Width::FourExtraLarge),
-                    BulkAction::make('copyEmail')
-                        ->label('Copier emails')
-                        ->icon('heroicon-m-clipboard-document-list')
-                        ->action(function (Component $livewire, Collection $records) {
-                            $clipboard = '';
-                            foreach ($records as $record) {
-                                $email = $record->email;
-                                $clipboard .= "$email\n";
-                            }
-                            $livewire->dispatch('copy-to-clipboard', $clipboard);
-                        })
-                        ->extraAttributes([
-                            'x-on:copy-to-clipboard.window' => 'navigator.clipboard.writeText($event.detail)',
-                        ]),
+                    CopyEmailBulkAction::make(),
                     BulkAction::make('bulkEdit')
                         ->icon('heroicon-m-pencil-square')
                         ->form([

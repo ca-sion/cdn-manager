@@ -34,6 +34,9 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Actions\InvoicePdfAction;
 use App\Filament\Actions\SendInvoiceAction;
 use App\Filament\Actions\RelaunchInvoiceAction;
+use App\Filament\Actions\PrintEliteContractAction;
+use App\Filament\Actions\SendClientVouchersAction;
+use App\Filament\Actions\RegistrationExportActions;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Actions\GenerateRegistrationInvoiceAction;
 use App\Filament\Resources\RunRegistrationResource\Pages\EditRunRegistration;
@@ -319,13 +322,8 @@ class RunRegistrationResource extends Resource
                     RelaunchInvoiceAction::make()->invoiceUsing(fn (RunRegistration $record) => $record->invoice),
 
                     // Imprimer Contrat Élite (PDF)
-                    Action::make('printEliteContract')
-                        ->label('Imprimer Contrat Élite (PDF)')
-                        ->icon('heroicon-o-document-text')
-                        ->color('warning')
-                        ->url(fn (RunRegistration $record) => route('pdf.elite-contract', ['registration' => $record->id]))
-                        ->openUrlInNewTab()
-                        ->visible(fn (RunRegistration $record) => ($record->run_registration_type?->value ?? $record->run_registration_type) === 'elite'),
+                    PrintEliteContractAction::make(),
+                    SendClientVouchersAction::make(),
 
                     // Open Public Signed Form
                     Action::make('openPublicForm')
@@ -389,66 +387,7 @@ class RunRegistrationResource extends Resource
                             return (new FastExcel($data))->download('export_elite_'.date('Ymd_His').'.xlsx');
                         }),
 
-                    // Export Datasport Écoles
-                    Action::make('exportDatasportSchool')
-                        ->label('Export Datasport interclasses')
-                        ->icon('heroicon-o-academic-cap')
-                        ->color('info')
-                        ->action(function () {
-                            $registrations = RunRegistration::where('run_registration_type', 'school')
-                                ->with('runRegistrationElements.run')
-                                ->get();
-
-                            return RunRegistrationResource::generateDatasportSchoolExcel($registrations);
-                        }),
-
-                    // Export Datasport Entreprises
-                    Action::make('exportDatasportCompany')
-                        ->label('Export Datasport entreprises')
-                        ->icon('heroicon-o-building-office')
-                        ->color('warning')
-                        ->action(function () {
-                            $registrations = RunRegistration::where('run_registration_type', 'company')
-                                ->with('runRegistrationElements.run')
-                                ->get();
-
-                            return RunRegistrationResource::generateDatasportCompanyExcel($registrations);
-                        }),
-
-                    // Export Datasport Groupes
-                    Action::make('exportDatasportGroup')
-                        ->label('Export Datasport groupes')
-                        ->icon('heroicon-o-user-group')
-                        ->color('gray')
-                        ->action(function () {
-                            $registrations = RunRegistration::where('run_registration_type', 'group')
-                                ->with('runRegistrationElements.run')
-                                ->get();
-
-                            return RunRegistrationResource::generateDatasportGroupExcel($registrations);
-                        }),
-
-                    // Export Aggregated Data with Invoicing & Accounting details
-                    Action::make('exportAggregatedData')
-                        ->label('Export récapitulatif comptable')
-                        ->icon('heroicon-o-chart-bar')
-                        ->color('success')
-                        ->action(function () {
-                            $registrations = RunRegistration::with(['runRegistrationElements.run.provision.product', 'client', 'invoice'])->get();
-
-                            return RunRegistrationResource::generateAggregatedExcel($registrations);
-                        }),
-
-                    // Export Detailed Participants List
-                    Action::make('exportDetailedParticipants')
-                        ->label('Export participants détaillé')
-                        ->icon('heroicon-o-users')
-                        ->color('primary')
-                        ->action(function () {
-                            $registrations = RunRegistration::with(['runRegistrationElements.run.provision.product', 'client', 'invoice'])->get();
-
-                            return RunRegistrationResource::generateDetailedParticipantsExcel($registrations);
-                        }),
+                    ...RegistrationExportActions::header(),
                 ]),
             ])
             ->toolbarActions([
@@ -487,42 +426,7 @@ class RunRegistrationResource extends Resource
                                 ->send();
                         })
                         ->requiresConfirmation(),
-                    BulkAction::make('exportDatasportSchool')
-                        ->label('Export Datasport écoles (sélection)')
-                        ->icon('heroicon-o-academic-cap')
-                        ->action(function (Collection $records) {
-                            $filtered = $records->filter(fn ($r) => ($r->run_registration_type?->value ?? $r->run_registration_type) === 'school');
-
-                            return RunRegistrationResource::generateDatasportSchoolExcel($filtered);
-                        }),
-                    BulkAction::make('exportDatasportCompany')
-                        ->label('Export Datasport entreprises (sélection)')
-                        ->icon('heroicon-o-building-office')
-                        ->action(function (Collection $records) {
-                            $filtered = $records->filter(fn ($r) => ($r->run_registration_type?->value ?? $r->run_registration_type) === 'company');
-
-                            return RunRegistrationResource::generateDatasportCompanyExcel($filtered);
-                        }),
-                    BulkAction::make('exportDatasportGroup')
-                        ->label('Export Datasport groupes (sélection)')
-                        ->icon('heroicon-o-user-group')
-                        ->action(function (Collection $records) {
-                            $filtered = $records->filter(fn ($r) => ($r->run_registration_type?->value ?? $r->run_registration_type) === 'group');
-
-                            return RunRegistrationResource::generateDatasportGroupExcel($filtered);
-                        }),
-                    BulkAction::make('exportDetailedParticipants')
-                        ->label('Export participants détaillé (sélection)')
-                        ->icon('heroicon-o-users')
-                        ->action(function (Collection $records) {
-                            return RunRegistrationResource::generateDetailedParticipantsExcel($records);
-                        }),
-                    BulkAction::make('exportAggregatedData')
-                        ->label('Export récapitulatif comptable (sélection)')
-                        ->icon('heroicon-o-chart-bar')
-                        ->action(function (Collection $records) {
-                            return RunRegistrationResource::generateAggregatedExcel($records);
-                        }),
+                    ...RegistrationExportActions::bulk(),
                 ]),
             ]);
     }
