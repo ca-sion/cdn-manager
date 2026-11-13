@@ -497,10 +497,13 @@ class InvoiceService
         $edition = Edition::find(AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id'));
         $year = (string) $edition->year;
 
+        // Seuls les suffixes purement numériques comptent : « 2025007 » oui, « 2025-900 » ou « 2025A12 » non
         $max = Invoice::withoutGlobalScopes()
             ->where('number', 'like', $year.'%')
             ->pluck('number')
-            ->map(fn ($number) => (int) substr((string) $number, strlen($year)))
+            ->map(fn ($number) => substr((string) $number, strlen($year)))
+            ->filter(fn ($suffix) => $suffix !== '' && ctype_digit($suffix))
+            ->map(fn ($suffix) => (int) $suffix)
             ->max() ?? 0;
 
         do {

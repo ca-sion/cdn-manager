@@ -104,6 +104,19 @@ class InvoiceNumberingTest extends TestCase
         $this->assertSame('2025008', InvoiceService::generateInvoiceNumber());
     }
 
+    public function test_only_legacy_formatted_numbers_never_produce_an_invalid_number(): void
+    {
+        foreach (['2025-900', '2025-C01', '2025A12', '2025'] as $number) {
+            Invoice::create(['edition_id' => $this->edition->id, 'client_id' => Client::factory()->create()->id, 'status' => InvoiceStatusEnum::Paid, 'number' => $number, 'positions' => []]);
+        }
+
+        $number = InvoiceService::generateInvoiceNumber();
+
+        $this->assertSame('2025001', $number);
+        $this->assertMatchesRegularExpression('/^\d+$/', $number, 'le numéro doit rester numérique (référence QR)');
+        $this->assertNotEmpty(InvoiceService::generateInvoiceByClient($this->clientWithProvision()->id)->qr_reference);
+    }
+
     public function test_title_and_qr_reference_follow_the_number(): void
     {
         $invoice = InvoiceService::generateInvoiceByClient($this->clientWithProvision()->id);
