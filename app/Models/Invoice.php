@@ -41,11 +41,57 @@ class Invoice extends Model
     {
         return [
             'positions' => 'array',
+            'meta'      => 'array',
             'status'    => InvoiceStatusEnum::class,
             'date'      => 'date',
             'due_date'  => 'date',
             'paid_on'   => 'date',
         ];
+    }
+
+    /**
+     * Invoice that is not cancelled (still counts as « already invoiced »).
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('status', '!=', InvoiceStatusEnum::Cancelled->value);
+    }
+
+    /**
+     * Whether this invoice was generated from run registrations.
+     */
+    public function isRunInvoice(): bool
+    {
+        return ($this->meta['source'] ?? null) === 'run_registrations'
+            || str_starts_with((string) $this->note, 'Facture Inscriptions Courses');
+    }
+
+    /**
+     * Only a draft invoice may be modified automatically.
+     */
+    public function isDraft(): bool
+    {
+        return $this->status === InvoiceStatusEnum::Draft;
+    }
+
+    /**
+     * Ids of the provision elements present in the positions.
+     *
+     * @return array<int, int>
+     */
+    public function provisionElementIds(): array
+    {
+        return collect($this->positions ?? [])->pluck('provision_element_id')->filter()->map(fn ($id) => (int) $id)->values()->all();
+    }
+
+    /**
+     * Ids of the run registration elements present in the positions.
+     *
+     * @return array<int, int>
+     */
+    public function runRegistrationElementIds(): array
+    {
+        return collect($this->positions ?? [])->pluck('run_registration_element_ids')->flatten()->filter()->map(fn ($id) => (int) $id)->values()->all();
     }
 
     /**

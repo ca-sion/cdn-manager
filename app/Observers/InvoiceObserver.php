@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Enums\InvoiceStatusEnum;
 use App\Models\ClientEngagement;
 use App\Models\ProvisionElement;
+use App\Services\InvoiceService;
 use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
 
@@ -16,6 +17,7 @@ class InvoiceObserver
      */
     public function created(Invoice $invoice): void
     {
+        InvoiceService::flushCache();
         $engagement = ClientEngagement::firstOrCreate([
             'client_id'  => $invoice->client_id,
             'edition_id' => $invoice->edition_id,
@@ -39,6 +41,7 @@ class InvoiceObserver
      */
     public function updated(Invoice $invoice): void
     {
+        InvoiceService::flushCache();
         $engagement = ClientEngagement::firstOrCreate([
             'client_id'  => $invoice->client_id,
             'edition_id' => $invoice->edition_id,
@@ -134,7 +137,7 @@ class InvoiceObserver
      */
     public function deleted(Invoice $invoice): void
     {
-        //
+        InvoiceService::flushCache();
     }
 
     /**

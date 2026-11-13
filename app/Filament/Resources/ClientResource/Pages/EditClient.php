@@ -4,6 +4,8 @@ namespace App\Filament\Resources\ClientResource\Pages;
 
 use App\Helpers\AppHelper;
 use Filament\Actions\Action;
+use App\Models\RunRegistration;
+use Filament\Actions\ActionGroup;
 use App\Enums\EngagementStageEnum;
 use Filament\Actions\DeleteAction;
 use App\Enums\EngagementStatusEnum;
@@ -14,9 +16,11 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Actions\ClientPdfAction;
 use App\Filament\Resources\ClientResource;
+use App\Filament\Actions\SendMediaMissingAction;
 use App\Filament\Actions\SendClientVouchersAction;
 use App\Notifications\ClientAdvertiserFormCreated;
 use App\Filament\Actions\GenerateClientInvoiceAction;
+use App\Filament\Actions\GenerateRegistrationInvoiceAction;
 
 class EditClient extends EditRecord
 {
@@ -26,14 +30,30 @@ class EditClient extends EditRecord
     {
         return [
             ClientPdfAction::make()->label('Fiche')->color('gray'),
-            GenerateClientInvoiceAction::make()->color('gray'),
-            SendClientVouchersAction::make()->color('gray'),
-            Action::make('ClientAdvertiserFormCreated')
-                ->label('Envoyer commande')
-                ->icon('heroicon-o-envelope')
+            ActionGroup::make([
+                GenerateClientInvoiceAction::make(),
+                GenerateRegistrationInvoiceAction::make()
+                    ->label('Facturer les inscriptions de courses')
+                    ->color('gray')
+                    ->visible(fn (Model $record): bool => RunRegistration::where('client_id', $record->id)->exists()),
+            ])
+                ->label('Facturation')
+                ->icon('heroicon-o-document-currency-dollar')
                 ->color('gray')
-                ->requiresConfirmation()
-                ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated)),
+                ->button(),
+            ActionGroup::make([
+                Action::make('ClientAdvertiserFormCreated')
+                    ->label('Envoyer la commande')
+                    ->icon('heroicon-o-envelope')
+                    ->requiresConfirmation()
+                    ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated)),
+                SendClientVouchersAction::make(),
+                SendMediaMissingAction::make(),
+            ])
+                ->label('Envois')
+                ->icon('heroicon-o-paper-airplane')
+                ->color('gray')
+                ->button(),
             Action::make('ModifyStageStatus')
                 ->label('Modifier le statut')
                 ->icon('heroicon-o-briefcase')

@@ -13,6 +13,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\ReplicateAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreBulkAction;
@@ -25,12 +26,18 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
+use App\Filament\Actions\InvoiceActionGroup;
 use App\Filament\Actions\CopyEmailBulkAction;
 use App\Filament\Actions\ExportMediaBulkAction;
+use App\Filament\Actions\SendMediaMissingAction;
+use Filament\Tables\Enums\RecordActionsPosition;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Resources\ProvisionElementResource;
+use App\Filament\Actions\GenerateClientInvoiceAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
 use Filament\Resources\RelationManagers\RelationManager;
+use App\Filament\Actions\BulkEditProvisionElementsAction;
 
 class ProvisionElementsRelationManager extends RelationManager
 {
@@ -61,6 +68,7 @@ class ProvisionElementsRelationManager extends RelationManager
                 SelectColumn::make('status')
                     ->label('')
                     ->options(ProvisionElementStatusEnum::class),
+                ProvisionElementResource::invoiceStateColumn(),
                 TextColumn::make('precision')
                     ->label('Précision'),
                 TextColumn::make('price')
@@ -98,6 +106,8 @@ class ProvisionElementsRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make()->icon('heroicon-o-plus'),
+                GenerateClientInvoiceAction::make()
+                    ->clientIdUsing(fn () => $this->ownerRecord->id),
                 Action::make('copy_previous')
                     ->label("Reprendre de l'édition précédente")
                     ->icon('heroicon-o-clipboard-document-list')
@@ -151,11 +161,22 @@ class ProvisionElementsRelationManager extends RelationManager
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
+                    ReplicateAction::make(),
+                    Action::make('frontEditLink')
+                        ->label('Lien d\'édition client')
+                        ->icon('heroicon-o-pencil-square')
+                        ->url(fn () => $this->ownerRecord->frontEditLink)
+                        ->openUrlInNewTab(),
+                    SendMediaMissingAction::make()->clientUsing(fn () => $this->ownerRecord),
                     DeleteAction::make(),
                     ForceDeleteAction::make(),
                     RestoreAction::make(),
                 ]),
-            ])
+                InvoiceActionGroup::make(
+                    invoice: fn (Model $record) => $this->ownerRecord->latestInvoice(),
+                    clientId: fn () => $this->ownerRecord->id,
+                ),
+            ], position: RecordActionsPosition::BeforeColumns)
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
@@ -164,6 +185,8 @@ class ProvisionElementsRelationManager extends RelationManager
                     CopyEmailBulkAction::make()->emailUsing(fn ($record) => $record->recipientContactEmail),
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
+                    SendMediaMissingBulkAction::make()->clientUsing(fn () => $this->ownerRecord),
+                    BulkEditProvisionElementsAction::make(),
                 ]),
             ])
             ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition()->withoutGlobalScopes([

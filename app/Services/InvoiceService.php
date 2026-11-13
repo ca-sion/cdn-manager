@@ -8,6 +8,9 @@ use App\Models\Invoice;
 use App\Helpers\AppHelper;
 use Sprain\SwissQrBill\QrBill;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Enums\InvoiceStatusEnum;
+use App\Models\ProvisionElement;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
 use Sprain\SwissQrBill\QrCode\QrCode;
 use Sprain\SwissQrBill\PaymentPart\Output\DisplayOptions;
@@ -21,6 +24,14 @@ use Sprain\SwissQrBill\DataGroup\Element\PaymentAmountInformation;
 
 class InvoiceService
 {
+    /** @var array<int, Collection<int, Invoice>> */
+    protected static array $stateCache = [];
+
+    public static function flushCache(): void
+    {
+        self::$stateCache = [];
+    }
+
     public static function generatePdf(Invoice $invoice)
     {
         // qr
@@ -105,7 +116,70 @@ class InvoiceService
         return $qrBill;
     }
 
-    public static function generateInvoiceByClient(int $clientId)
+    /**
+     * Invoices of the client for the current edition that still count (not cancelled), excluding run invoices.
+     *
+     * @return Collection<int, Invoice>
+     */
+    public static function provisionInvoices(int $clientId): Collection
+    {
+        $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+
+        return Invoice::where('client_id', $clientId)
+            ->where('edition_id', $editionId)
+            ->active()
+            ->get()
+            ->reject(fn (Invoice $invoice) => $invoice->isRunInvoice())
+            ->values();
+    }
+
+    /**
+     * Provision elements of the client (current edition, with a product) not yet on any active invoice.
+     *
+     * @return Collection<int, ProvisionElement>
+     */
+    public static function uninvoicedProvisionElements(int $clientId)
+    {
+        $client = Client::findOrFail($clientId);
+        $invoicedIds = self::provisionInvoices($clientId)->flatMap(fn (Invoice $i) => $i->provisionElementIds())->all();
+
+        return $client->currentProvisionElements()
+            ->with('provision')
+            ->where('has_product', true)
+            ->get()
+            ->reject(fn (ProvisionElement $element) => in_array($element->id, $invoicedIds, true))
+            ->values();
+    }
+
+    /**
+     * Active provision invoices created before elements were tracked (positions without element ids).
+     * We cannot know which provisions they contain, so the user must be warned.
+     *
+     * @return Collection<int, Invoice>
+     */
+    public static function legacyProvisionInvoices(int $clientId)
+    {
+        return self::provisionInvoices($clientId)
+            ->filter(fn (Invoice $invoice) => $invoice->provisionElementIds() === [] && ! empty($invoice->positions));
+    }
+
+    /**
+     * Draft invoice of the client that can still receive new provisions.
+     */
+    public static function openDraftInvoice(int $clientId): ?Invoice
+    {
+        return self::provisionInvoices($clientId)
+            ->first(fn (Invoice $invoice) => $invoice->isDraft());
+    }
+
+    /**
+     * Generate an invoice from the client's not yet invoiced provisions.
+     * - a draft invoice is completed; otherwise a new « Ready » invoice is created
+     * - sent / paid / ready invoices are never modified
+     *
+     * @param  array<int, int>|null  $elementIds  restrict to these provision elements (null = all not yet invoiced)
+     */
+    public static function generateInvoiceByClient(int $clientId, ?array $elementIds = null): Invoice
     {
         $client = Client::find($clientId);
 
@@ -113,43 +187,104 @@ class InvoiceService
             abort(404);
         }
 
+        $elements = self::uninvoicedProvisionElements($clientId);
+
+        if ($elementIds !== null) {
+            $elements = $elements->filter(fn (ProvisionElement $e) => in_array($e->id, array_map('intval', $elementIds), true))->values();
+        }
+
+        if ($elements->isEmpty()) {
+            throw new \RuntimeException('Aucune prestation à facturer : tout est déjà facturé (ou rien n\'est sélectionné).');
+        }
+
+        $positions = $elements->map(fn (ProvisionElement $e) => $e->invoicePosition())->values()->all();
+
+        $draft = self::openDraftInvoice($clientId);
+        if ($draft) {
+            $draft->positions = array_merge($draft->positions ?? [], $positions);
+            $draft->save();
+
+            return $draft;
+        }
+
         $invoiceNumber = self::generateInvoiceNumber();
-
-        $provisionElementsWithProduct = $client->currentProvisionElements->where('has_product', true);
-        $positions = $provisionElementsWithProduct->map(function ($item) {
-            return [
-                'name'        => $item->provision->name,
-                'quantity'    => $item->quantity,
-                'unit'        => $item->unit,
-                'cost'        => $item->cost,
-                'tax_rate'    => $item->tax_rate,
-                'discount'    => $item->discount,
-                'include_vat' => $item->include_vat,
-            ];
-        });
-
-        $title = self::generateInvoicetitle();
-
-        $referenceNumber = QrPaymentReferenceGenerator::generate(
-            null,
-            $invoiceNumber,
-        );
 
         $invoice = new Invoice;
         $invoice->edition_id = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
         $invoice->client_id = $clientId;
-        $invoice->status = 'ready';
-        $invoice->title = $title;
+        $invoice->status = InvoiceStatusEnum::Ready;
+        $invoice->title = self::generateInvoicetitle();
         $invoice->number = $invoiceNumber;
         $invoice->date = now();
         $invoice->due_date = now()->addDays(30);
         $invoice->positions = $positions;
         $invoice->note = 'Généré automatiquement';
         $invoice->currency = 'CHF';
-        $invoice->qr_reference = $referenceNumber;
+        $invoice->qr_reference = QrPaymentReferenceGenerator::generate(null, $invoiceNumber);
         $invoice->save();
 
         return $invoice;
+    }
+
+    /**
+     * State of a provision element regarding invoicing.
+     * Returns [state, invoice|null] where state is one of: none, to_invoice, invoiced, modified.
+     *
+     * @return array{0: string, 1: ?Invoice}
+     */
+    public static function provisionElementInvoiceState(ProvisionElement $element): array
+    {
+        if (! $element->has_product || $element->recipient_type !== Client::class) {
+            return ['none', null];
+        }
+
+        $clientId = (int) $element->recipient_id;
+        self::$stateCache[$clientId] ??= self::provisionInvoices($clientId);
+
+        foreach (self::$stateCache[$clientId] as $invoice) {
+            if (in_array($element->id, $invoice->provisionElementIds(), true)) {
+                $snapshot = collect($invoice->positions)->firstWhere('provision_element_id', $element->id);
+                $current = $element->invoicePosition();
+                foreach (['quantity', 'cost', 'tax_rate', 'discount', 'include_vat'] as $key) {
+                    if ((string) ($snapshot[$key] ?? '') !== (string) ($current[$key] ?? '')) {
+                        return ['modified', $invoice];
+                    }
+                }
+
+                return ['invoiced', $invoice];
+            }
+        }
+
+        return ['to_invoice', null];
+    }
+
+    /**
+     * Keep a draft invoice in sync with a provision element that changed or was removed.
+     * Non-draft invoices are never touched (the element is flagged as « modified » instead).
+     */
+    public static function syncDraftInvoiceWith(ProvisionElement $element, bool $removed = false): void
+    {
+        if ($element->recipient_type !== Client::class || ! $element->recipient_id) {
+            return;
+        }
+
+        $draft = self::provisionInvoices((int) $element->recipient_id)
+            ->first(fn (Invoice $invoice) => $invoice->isDraft() && in_array($element->id, $invoice->provisionElementIds(), true));
+
+        if (! $draft) {
+            return;
+        }
+
+        $positions = collect($draft->positions)->map(function ($position) use ($element, $removed) {
+            if ((int) ($position['provision_element_id'] ?? 0) !== $element->id) {
+                return $position;
+            }
+
+            return $removed || ! $element->has_product ? null : $element->invoicePosition();
+        })->filter()->values()->all();
+
+        $draft->positions = $positions;
+        $draft->save();
     }
 
     public static function generateInvoiceNumber()

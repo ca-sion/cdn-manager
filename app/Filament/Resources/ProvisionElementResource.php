@@ -12,8 +12,8 @@ use Filament\Schemas\Schema;
 use App\Enums\MediaStatusEnum;
 use Illuminate\Support\Number;
 use App\Models\ProvisionElement;
+use App\Services\InvoiceService;
 use App\Services\PricingService;
-use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
@@ -44,7 +44,6 @@ use Filament\Forms\Components\Placeholder;
 use App\Filament\Actions\InvoiceActionGroup;
 use Filament\Forms\Components\MorphToSelect;
 use Filament\Tables\Columns\Summarizers\Sum;
-use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Actions\CopyEmailBulkAction;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -54,6 +53,7 @@ use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Forms\Components\MorphToSelect\Type;
 use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
+use App\Filament\Actions\BulkEditProvisionElementsAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ProvisionElementResource\Pages\EditProvisionElement;
@@ -334,6 +334,32 @@ class ProvisionElementResource extends Resource
             ]);
     }
 
+    /**
+     * Badge « facturation » d'une prestation (à facturer / facturée / modifiée après facturation).
+     */
+    public static function invoiceStateColumn(): TextColumn
+    {
+        return TextColumn::make('invoice_state')
+            ->label('Facturation')
+            ->badge()
+            ->toggleable()
+            ->state(function (Model $record): ?string {
+                [$state, $invoice] = InvoiceService::provisionElementInvoiceState($record);
+
+                return match ($state) {
+                    'to_invoice' => 'À facturer',
+                    'invoiced'   => 'Facturée '.($invoice?->number),
+                    'modified'   => 'Modifiée après facturation ('.($invoice?->number).')',
+                    default      => null,
+                };
+            })
+            ->color(fn (?string $state): string => match (true) {
+                $state === 'À facturer'                      => 'warning',
+                str_starts_with((string) $state, 'Modifiée') => 'danger',
+                default                                      => 'success',
+            });
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -376,6 +402,7 @@ class ProvisionElementResource extends Resource
                 SelectColumn::make('status')
                     ->label('')
                     ->options(ProvisionElementStatusEnum::class),
+                static::invoiceStateColumn(),
 
                 TextColumn::make('precision')
                     ->label('Précision')
@@ -579,30 +606,7 @@ class ProvisionElementResource extends Resource
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
                     SendMediaMissingBulkAction::make()->clientUsing(fn (Model $record) => $record->recipient),
-                    BulkAction::make('bulkEdit')
-                        ->icon('heroicon-m-pencil-square')
-                        ->form([
-                            Select::make('status')
-                                ->label('Statut')
-                                ->options(ProvisionElementStatusEnum::class),
-                            Select::make('media_status')
-                                ->label('Statut du média')
-                                ->options(MediaStatusEnum::class),
-                            Select::make('edition_id')
-                                ->searchable()
-                                ->label('Edition')
-                                ->relationship('edition', 'year'),
-                        ])
-                        ->action(function (Collection $records, array $data): void {
-                            foreach ($records as $record) {
-                                foreach (collect($data)->keys() as $key) {
-                                    if ($data[$key]) {
-                                        $record->$key = $data[$key];
-                                    }
-                                }
-                                $record->save();
-                            }
-                        }),
+                    BulkEditProvisionElementsAction::make(),
                 ]),
             ])
             ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition());

@@ -16,6 +16,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Tables\Columns\Column;
 use Filament\Support\Enums\TextSize;
 use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteBulkAction;
@@ -139,6 +140,8 @@ class InvoiceResource extends Resource
                         fn (Action $action) => $action->after(fn (Get $get, Set $set) => self::updateTotals($get, $set)),
                     )
                     ->schema([
+                        Hidden::make('provision_element_id'),
+                        Hidden::make('run_registration_element_ids'),
                         TextInput::make('name')
                             ->label('Nom'),
                         TextInput::make('quantity')

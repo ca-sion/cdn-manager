@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Classes\Price;
 use App\Traits\Editionable;
 use App\Enums\MediaStatusEnum;
+use App\Services\InvoiceService;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\EloquentSortable\Sortable;
 use Illuminate\Database\Eloquent\Model;
@@ -166,6 +167,31 @@ class ProvisionElement extends Model implements HasMedia, Sortable
         return Attribute::make(
             get: fn () => Price::of($this->cost)->taxRate($this->tax_rate)->includeTaxInPrice($this->include_vat ?? false),
         );
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn (self $element) => InvoiceService::syncDraftInvoiceWith($element));
+        static::deleted(fn (self $element) => InvoiceService::syncDraftInvoiceWith($element, removed: true));
+    }
+
+    /**
+     * The invoice position built from this provision element.
+     *
+     * @return array<string, mixed>
+     */
+    public function invoicePosition(): array
+    {
+        return [
+            'provision_element_id' => $this->id,
+            'name'                 => $this->provision?->name,
+            'quantity'             => $this->quantity,
+            'unit'                 => $this->unit,
+            'cost'                 => $this->cost,
+            'tax_rate'             => $this->tax_rate,
+            'discount'             => $this->discount,
+            'include_vat'          => $this->include_vat,
+        ];
     }
 
     /**
