@@ -4,13 +4,13 @@ namespace App\Filament\Actions;
 
 use Throwable;
 use App\Models\Client;
-use Illuminate\Support\Number;
 use Filament\Actions\BulkAction;
 use Filament\Schemas\Components\Text;
 use App\Services\RunRegistrationService;
 use Filament\Forms\Components\CheckboxList;
 use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Actions\Support\BulkInvoiceReport;
+use App\Filament\Actions\Support\BulkInvoicePreview;
 
 /**
  * Génère, en masse, les factures de courses des clients liés aux inscriptions sélectionnées.
@@ -26,6 +26,30 @@ class GenerateRegistrationInvoicesBulkAction extends BulkAction
         return 'generateInvoices';
     }
 
+    /**
+     * Facture les clients cochés et alimente le rapport.
+     *
+     * @param  iterable<int|string>  $clientIds
+     */
+    public static function process(iterable $clientIds, BulkInvoiceReport $report, string $suffix = ''): void
+    {
+        $service = app(RunRegistrationService::class);
+        $names = Client::whereIn('id', collect($clientIds)->all())->pluck('name', 'id');
+
+        foreach ($clientIds as $clientId) {
+            $name = ($names[$clientId] ?? 'Client #'.$clientId).$suffix;
+
+            try {
+                $draftBefore = $service->plan((int) $clientId)['draft'];
+                $invoice = $service->createInvoiceForClient((int) $clientId);
+                $draftBefore ? $report->completed($name, $invoice) : $report->created($name, $invoice);
+            } catch (Throwable $e) {
+                report($e);
+                $report->failed($name, $e->getMessage());
+            }
+        }
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,49 +61,12 @@ class GenerateRegistrationInvoicesBulkAction extends BulkAction
             ->modalSubmitActionLabel('Créer les factures cochées')
             ->deselectRecordsAfterCompletion()
             ->schema(function (Collection $records): array {
-                $service = app(RunRegistrationService::class);
                 $withoutClient = $records->whereNull('client_id')->count();
-                $selectedByClient = $records->whereNotNull('client_id')->groupBy('client_id');
-                $names = Client::whereIn('id', $selectedByClient->keys())->pluck('name', 'id');
-
-                $options = [];
-                $descriptions = [];
-                $default = [];
-                $disabled = [];
-                $todo = 0;
-
-                foreach ($selectedByClient as $clientId => $selection) {
-                    $plan = $service->plan((int) $clientId);
-                    $options[$clientId] = $names[$clientId] ?? 'Client #'.$clientId;
-
-                    if ($plan['elements']->isEmpty()) {
-                        $descriptions[$clientId] = $plan['registrations']->isEmpty() && $plan['elite_excluded'] > 0
-                            ? 'Rien à facturer (inscriptions Élite uniquement)'
-                            : 'Rien à facturer (toutes les inscriptions sont déjà facturées)';
-                        $disabled[] = $clientId;
-
-                        continue;
-                    }
-
-                    $todo++;
-                    $default[] = $clientId;
-                    $selectedIds = $selection->pluck('id');
-                    $inSelection = $plan['elements']->whereIn('run_registration_id', $selectedIds)->count();
-                    $amount = Number::currency($plan['amount'], 'CHF', 'fr_CH');
-
-                    $text = ($plan['draft'] ? "Recalcule le brouillon {$plan['draft']->number}" : 'Nouvelle facture')
-                        ." · {$plan['elements']->count()} inscription(s) ({$inSelection} dans votre sélection) · {$amount}";
-                    if ($plan['quota_ids'] !== []) {
-                        $text .= ' · '.count($plan['quota_ids']).' marquée(s) « incluse(s) » par le quota';
-                    }
-                    if ($plan['warnings'] !== []) {
-                        $text .= ' ⚠ '.implode(' ; ', $plan['warnings']);
-                    }
-                    $descriptions[$clientId] = $text;
-                }
+                $clientIds = $records->whereNotNull('client_id')->pluck('client_id')->unique()->map(fn ($id) => (int) $id)->values()->all();
+                $preview = BulkInvoicePreview::registrations($clientIds, $records);
 
                 $components = [
-                    Text::make($selectedByClient->count().' client(s) · '.$todo.' avec des inscriptions à facturer'.($withoutClient ? ' · '.$withoutClient.' inscription(s) sans client ignorée(s)' : ''))->weight('bold'),
+                    Text::make(count($clientIds).' client(s) · '.$preview['counts']['todo'].' avec des inscriptions à facturer'.($withoutClient ? ' · '.$withoutClient.' inscription(s) sans client ignorée(s)' : ''))->weight('bold'),
                 ];
 
                 if ($withoutClient > 0) {
@@ -88,10 +75,10 @@ class GenerateRegistrationInvoicesBulkAction extends BulkAction
 
                 $components[] = CheckboxList::make('client_ids')
                     ->label('Clients à facturer')
-                    ->options($options)
-                    ->descriptions($descriptions)
-                    ->default($default)
-                    ->disableOptionWhen(fn (string $value) => in_array((int) $value, $disabled, true))
+                    ->options($preview['options'])
+                    ->descriptions($preview['descriptions'])
+                    ->default($preview['default'])
+                    ->disableOptionWhen(fn (string $value) => in_array((int) $value, $preview['disabled'], true))
                     ->bulkToggleable()
                     ->searchable()
                     ->required();
@@ -99,34 +86,20 @@ class GenerateRegistrationInvoicesBulkAction extends BulkAction
                 return $components;
             })
             ->action(function (Collection $records, array $data) {
-                $service = app(RunRegistrationService::class);
-                $report = new BulkInvoiceReport('Génération en masse des factures de courses');
+                $report = new BulkInvoiceReport('Génération en masse des factures d\'inscriptions');
                 $selected = collect($data['client_ids'] ?? [])->map(fn ($id) => (int) $id);
-                $clientIds = $records->whereNotNull('client_id')->pluck('client_id')->unique();
+                $clientIds = $records->whereNotNull('client_id')->pluck('client_id')->unique()->map(fn ($id) => (int) $id);
                 $names = Client::whereIn('id', $clientIds)->pluck('name', 'id');
 
                 if (($without = $records->whereNull('client_id')->count()) > 0) {
                     $report->skipped($without.' inscription(s) sans client', 'associez-leur un client avant de facturer');
                 }
 
-                foreach ($clientIds as $clientId) {
-                    $name = $names[$clientId] ?? 'Client #'.$clientId;
-
-                    if (! $selected->contains((int) $clientId)) {
-                        $report->skipped($name, 'non coché');
-
-                        continue;
-                    }
-
-                    try {
-                        $draftBefore = $service->plan((int) $clientId)['draft'];
-                        $invoice = $service->createInvoiceForClient((int) $clientId);
-                        $draftBefore ? $report->completed($name, $invoice) : $report->created($name, $invoice);
-                    } catch (Throwable $e) {
-                        $report->failed($name, $e->getMessage());
-                    }
+                foreach ($clientIds->reject(fn ($id) => $selected->contains($id)) as $id) {
+                    $report->skipped($names[$id] ?? 'Client #'.$id, 'non coché');
                 }
 
+                self::process($selected->intersect($clientIds), $report);
                 $report->send();
             });
     }

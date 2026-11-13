@@ -121,7 +121,7 @@ class BulkInvoicingTest extends TestCase
         InvoiceService::generateInvoiceByClient($done->id);
 
         Livewire::test(ListClients::class)
-            ->callTableBulkAction('generateInvoices', [$a, $b, $done], data: ['client_ids' => [$a->id]])
+            ->callTableBulkAction('generateInvoices', [$a, $b, $done], data: ['provision_client_ids' => [$a->id]])
             ->assertNotified();
 
         $this->assertEquals(1, Invoice::where('client_id', $a->id)->count());
@@ -134,7 +134,7 @@ class BulkInvoicingTest extends TestCase
         $a = $this->clientWithProvision();
 
         Livewire::test(ListClients::class)
-            ->callTableBulkAction('generateInvoices', [$a], data: ['client_ids' => [$a->id]]);
+            ->callTableBulkAction('generateInvoices', [$a], data: ['provision_client_ids' => [$a->id]]);
 
         $notification = $this->lastNotification();
         $this->assertTrue($notification['duration'] === 'persistent');
@@ -164,6 +164,45 @@ class BulkInvoicingTest extends TestCase
         $this->assertEquals(InvoiceStatusEnum::Sent, $invoiceB->fresh()->status, 'une facture envoyée n\'est jamais annulée');
         $this->assertCount(1, InvoiceService::uninvoicedProvisionElements($a->id));
         $this->assertCount(0, InvoiceService::uninvoicedProvisionElements($b->id));
+    }
+
+    public function test_clients_bulk_also_covers_course_registrations(): void
+    {
+        // Reproduit le cas réel : client sans prestation mais avec des inscriptions à facturer
+        $schoolClient = Client::factory()->create(['name' => 'Ville de Test']);
+        $this->registration($schoolClient, 4, fn ($f) => $f->school());
+        $provisionsClient = $this->clientWithProvision();
+
+        Livewire::test(ListClients::class)
+            ->mountTableBulkAction('generateInvoices', [$schoolClient, $provisionsClient])
+            ->assertMountedActionModalSee('Prestations : 1 nouvelle(s) facture(s)')
+            ->assertMountedActionModalSee('Inscriptions de courses : 1 client(s) avec des inscriptions à facturer')
+            ->assertMountedActionModalSee('Factures d\'INSCRIPTIONS de courses')
+            ->assertMountedActionModalSee('Ville de Test')
+            ->assertMountedActionModalSee('Nouvelle facture · 4 inscription(s)');
+
+        Livewire::test(ListClients::class)
+            ->callTableBulkAction('generateInvoices', [$schoolClient, $provisionsClient], data: [
+                'provision_client_ids'    => [$provisionsClient->id],
+                'registration_client_ids' => [$schoolClient->id],
+            ]);
+
+        $this->assertEquals('courses', Invoice::where('client_id', $schoolClient->id)->firstOrFail()->type());
+        $this->assertEquals('prestations', Invoice::where('client_id', $provisionsClient->id)->firstOrFail()->type());
+
+        $notification = $this->lastNotification();
+        $this->assertStringContainsString('2 facture(s) créée(s)', $notification['title']);
+        $this->assertStringContainsString('Ville de Test (inscriptions)', $notification['body']);
+        $this->assertCount(2, $notification['actions'][0]['eventData']['invoiceIds']);
+    }
+
+    public function test_clients_bulk_hides_the_registrations_list_when_no_client_has_registrations(): void
+    {
+        $client = $this->clientWithProvision();
+
+        Livewire::test(ListClients::class)
+            ->mountTableBulkAction('generateInvoices', [$client])
+            ->assertMountedActionModalDontSee('Factures d\'INSCRIPTIONS de courses');
     }
 
     // ───────────── Courses : aperçu, périmètre, Élite, quota ─────────────
@@ -423,7 +462,7 @@ class BulkInvoicingTest extends TestCase
 
         $qrBill = InvoiceService::generateQrBill($client, $invoice);
 
-        $this->assertSame('Facture d\'inscriptions - Banque Test', $qrBill->getAdditionalInformation()->getUnstructuredMessage());
+        $this->assertSame('Facture d\'inscriptions - Banque Test', $qrBill->getAdditionalInformation()->getMessage());
     }
 
     public function test_legacy_titles_are_cleaned_at_display_time_without_touching_the_database(): void
