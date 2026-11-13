@@ -247,7 +247,7 @@ class RunRegistrationResource extends Resource
                     ->openUrlInNewTab(),
                 TextColumn::make('created_at')
                     ->label('Créé le')
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable(),
             ])
             ->filters([

@@ -13,6 +13,7 @@ use App\Services\PricingService;
 use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
+use Filament\Tables\Columns\Column;
 use Filament\Support\Enums\TextSize;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
@@ -23,6 +24,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\BaseFilter;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
@@ -185,77 +187,95 @@ class InvoiceResource extends Resource
             ]);
     }
 
+    /**
+     * Colonnes partagées avec le RelationManager des factures d'un client.
+     *
+     * @return array<int, Column>
+     */
+    public static function columns(bool $withClient = true): array
+    {
+        return array_values(array_filter([
+            TextColumn::make('status_view')
+                ->label('Statut')
+                ->badge()
+                ->sortable(['status'])
+                ->state(fn (Model $record) => $record->status),
+            SelectColumn::make('status')
+                ->label('')
+                ->options(InvoiceStatusEnum::class),
+            TextColumn::make('date')
+                ->label('Date')
+                ->date()
+                ->sortable()
+                ->toggleable(),
+            TextColumn::make('viewed_at')
+                ->label('Vu à')
+                ->since()
+                ->dateTimeTooltip('d.m.y H:i')
+                ->timezone('Europe/Zurich')
+                ->sortable()
+                ->toggleable(),
+            $withClient ? TextColumn::make('client.name')
+                ->label('Client')
+                ->searchable() : null,
+            TextColumn::make('number')
+                ->label('Numéro')
+                ->copyable()
+                ->sortable(),
+            TextColumn::make('qr_reference')
+                ->label('QR')
+                ->copyable()
+                ->searchable()
+                ->sortable()
+                ->formatStateUsing(fn (string $state) => '…'.substr($state, -9))
+                ->size(TextSize::ExtraSmall)
+                ->toggleable(),
+            IconColumn::make('is_pro_forma')
+                ->label('Pro forma')
+                ->boolean()
+                ->trueColor('info')
+                ->falseColor('gray')
+                ->falseIcon('')
+                ->sortable()
+                ->toggleable(),
+            TextColumn::make('total')
+                ->label('Montant')
+                ->money(),
+            TextColumn::make('totalTax')
+                ->label('Taxes')
+                ->money(),
+            TextColumn::make('paid_on_view')
+                ->label('Payé le')
+                ->date()
+                ->sortable(['paid_on'])
+                ->state(fn (Model $record) => $record->paid_on),
+            TextInputColumn::make('paid_on')
+                ->label('Payé le')
+                ->rules(['date', 'nullable']),
+            TextColumn::make('client.invoicingContactEmail')
+                ->label('Email')
+                ->toggleable(),
+        ]));
+    }
+
+    /**
+     * @return array<int, BaseFilter>
+     */
+    public static function filters(): array
+    {
+        return [
+            SelectFilter::make('status')
+                ->label('Statut')
+                ->multiple()
+                ->options(InvoiceStatusEnum::class),
+        ];
+    }
+
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
-                TextColumn::make('status_view')
-                    ->label('Statut')
-                    ->badge()
-                    ->sortable(['status'])
-                    ->state(fn (Model $record) => $record->status),
-                SelectColumn::make('status')
-                    ->label('')
-                    ->options(InvoiceStatusEnum::class),
-                TextColumn::make('date')
-                    ->label('Date')
-                    ->date('d.m.Y')
-                    ->sortable()
-                    ->toggleable(),
-                TextColumn::make('viewed_at')
-                    ->label('Vu à')
-                    ->since()
-                    ->dateTimeTooltip('d.m.y H:i')
-                    ->timezone('Europe/Zurich')
-                    ->sortable()
-                    ->toggleable(),
-                TextColumn::make('client.name')
-                    ->label('Client')
-                    ->searchable(),
-                TextColumn::make('number')
-                    ->label('Numéro')
-                    ->copyable()
-                    ->sortable(),
-                TextColumn::make('qr_reference')
-                    ->label('QR')
-                    ->copyable()
-                    ->searchable()
-                    ->sortable()
-                    ->formatStateUsing(fn (string $state) => '…'.substr($state, -9))
-                    ->size(TextSize::ExtraSmall)
-                    ->toggleable(),
-                IconColumn::make('is_pro_forma')
-                    ->label('Pro forma')
-                    ->boolean()
-                    ->trueColor('info')
-                    ->falseColor('gray')
-                    ->falseIcon('')
-                    ->sortable()
-                    ->toggleable(),
-                TextColumn::make('total')
-                    ->label('Montant')
-                    ->money('CHF', 0, 'fr_CH'),
-                TextColumn::make('totalTax')
-                    ->label('Taxes')
-                    ->money('CHF', 0, 'fr_CH'),
-                TextColumn::make('paid_on_view')
-                    ->label('Payé le')
-                    ->date('d.m.Y')
-                    ->sortable(['paid_on'])
-                    ->state(fn (Model $record) => $record->paid_on),
-                TextInputColumn::make('paid_on')
-                    ->label('Payé le')
-                    ->rules(['date', 'nullable']),
-                TextColumn::make('client.invoicingContactEmail')
-                    ->label('Email')
-                    ->toggleable(),
-            ])
-            ->filters([
-                SelectFilter::make('status')
-                    ->label('Statut')
-                    ->multiple()
-                    ->options(InvoiceStatusEnum::class),
-            ])
+            ->columns(static::columns())
+            ->filters(static::filters())
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),

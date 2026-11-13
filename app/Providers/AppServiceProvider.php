@@ -26,7 +26,11 @@ class AppServiceProvider extends ServiceProvider
         require_once app_path('Helpers/AppHelper.php');
 
         Table::configureUsing(fn (Table $table) => $table
-            ->deferFilters(false));
+            ->deferFilters(false)
+            ->defaultDateDisplayFormat('d.m.Y')
+            ->defaultDateTimeDisplayFormat('d.m.Y H:i')
+            ->defaultNumberLocale('fr_CH')
+            ->defaultCurrency('CHF'));
 
         FileUpload::configureUsing(fn (FileUpload $fileUpload) => $fileUpload
             ->visibility('public'));

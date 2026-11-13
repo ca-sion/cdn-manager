@@ -13,7 +13,6 @@ use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\Width;
-use Filament\Actions\ExportAction;
 use Filament\Forms\Components\Radio;
 use App\Services\ContactMergeService;
 use Filament\Actions\BulkActionGroup;
@@ -24,7 +23,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use App\Enums\ProvisionElementStatusEnum;
-use App\Filament\Exports\ContactExporter;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
@@ -401,11 +399,6 @@ class ContactResource extends Resource
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ])->dropdownWidth(Width::Large),
-            ])
-            ->headerActions([
-                ExportAction::make()
-                    ->label('Exporter')
-                    ->exporter(ContactExporter::class),
             ]);
     }
 

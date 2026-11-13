@@ -98,7 +98,7 @@ class ProductResource extends Resource
                     ->searchable(),
                 TextColumn::make('cost')
                     ->label('Prix')
-                    ->money('CHF', locale: 'fr_CH'),
+                    ->money(),
                 TextColumn::make('tax_rate')
                     ->label('TVA')
                     ->numeric(),

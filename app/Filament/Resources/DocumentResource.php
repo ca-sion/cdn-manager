@@ -104,7 +104,7 @@ class DocumentResource extends Resource
                 TextColumn::make('status')
                     ->label('Statut'),
                 TextColumn::make('date')
-                    ->date('d.m.Y')
+                    ->date()
                     ->sortable(),
                 TextColumn::make('validity_year_start')
                     ->toggleable(isToggledHiddenByDefault: true),

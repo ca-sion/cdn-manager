@@ -150,7 +150,7 @@ class RunResource extends Resource
                     }),
                 TextColumn::make('cost')
                     ->label('Prix')
-                    ->money('CHF')
+                    ->money()
                     ->sortable(),
                 TextColumn::make('available_for_types')
                     ->label('Types')
@@ -162,7 +162,7 @@ class RunResource extends Resource
                     ->badge(),
                 TextColumn::make('registrations_deadline')
                     ->label('Délai')
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable(),
                 TextColumn::make('registrations_limit')
                     ->label('Limite')

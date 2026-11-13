@@ -106,7 +106,7 @@ class VoucherResource extends Resource
 
                 TextColumn::make('used_at')
                     ->label('Utilisé le')
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->placeholder('Non utilisé')
                     ->sortable(),
 
@@ -117,7 +117,7 @@ class VoucherResource extends Resource
 
                 TextColumn::make('created_at')
                     ->label('Importé le')
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

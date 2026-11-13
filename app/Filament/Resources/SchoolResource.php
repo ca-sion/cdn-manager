@@ -101,7 +101,7 @@ class SchoolResource extends Resource
                     ->boolean(),
                 TextColumn::make('created_at')
                     ->label('Créé le')
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

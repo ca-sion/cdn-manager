@@ -84,7 +84,7 @@ class RunRegistrationElementsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('first_name')->label('Prénom')->searchable()->sortable(),
                 TextColumn::make('last_name')->label('Nom')->searchable()->sortable(),
-                TextColumn::make('birthdate')->label('Né le')->date('d.m.Y')->sortable(),
+                TextColumn::make('birthdate')->label('Né le')->date()->sortable(),
                 TextColumn::make('gender')->label('Sexe'),
                 TextColumn::make('run.name')->label('Course')->sortable(),
                 TextColumn::make('team')->label('Équipe')->searchable(),

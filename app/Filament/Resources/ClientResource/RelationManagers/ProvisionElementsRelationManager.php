@@ -21,9 +21,11 @@ use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
 use App\Enums\ProvisionElementStatusEnum;
 use Filament\Tables\Columns\SelectColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
+use App\Filament\Actions\CopyEmailBulkAction;
 use App\Filament\Actions\ExportMediaBulkAction;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProvisionElementResource;
@@ -48,7 +50,9 @@ class ProvisionElementsRelationManager extends RelationManager
             ->reorderable('order_column')
             ->defaultSort('order_column')
             ->columns([
-                TextColumn::make('provision.name'),
+                TextColumn::make('provision.name')
+                    ->label('Prestation')
+                    ->searchable(),
                 TextColumn::make('status_view')
                     ->label('Statut')
                     ->badge()
@@ -80,6 +84,17 @@ class ProvisionElementsRelationManager extends RelationManager
             ])
             ->filters([
                 TrashedFilter::make(),
+                SelectFilter::make('status')
+                    ->label('Statut')
+                    ->multiple()
+                    ->searchable()
+                    ->options(ProvisionElementStatusEnum::class),
+                SelectFilter::make('provision')
+                    ->label('Prestation')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->relationship('provision', 'name'),
             ])
             ->headerActions([
                 CreateAction::make()->icon('heroicon-o-plus'),
@@ -146,6 +161,7 @@ class ProvisionElementsRelationManager extends RelationManager
                     DeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                     ForceDeleteBulkAction::make(),
+                    CopyEmailBulkAction::make()->emailUsing(fn ($record) => $record->recipientContactEmail),
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
                 ]),

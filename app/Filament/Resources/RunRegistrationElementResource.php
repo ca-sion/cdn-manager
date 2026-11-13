@@ -254,7 +254,7 @@ class RunRegistrationElementResource extends Resource
 
                 TextColumn::make('birthdate')
                     ->label('Date Naissance')
-                    ->date('d.m.Y')
+                    ->date()
                     ->sortable(),
 
                 TextColumn::make('gender')
@@ -267,7 +267,7 @@ class RunRegistrationElementResource extends Resource
 
                 TextColumn::make('bonus_start_amount')
                     ->label('Prime Départ')
-                    ->money('CHF')
+                    ->money()
                     ->placeholder('-')
                     ->sortable(),
 
@@ -279,7 +279,7 @@ class RunRegistrationElementResource extends Resource
 
                 TextColumn::make('created_at')
                     ->label('Inscrit le')
-                    ->dateTime('d.m.Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

@@ -4,16 +4,12 @@ namespace App\Filament\Resources\ClientResource\RelationManagers;
 
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
-use App\Enums\InvoiceStatusEnum;
 use Filament\Actions\EditAction;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Tables\Columns\TextColumn;
-use Illuminate\Database\Eloquent\Model;
-use Filament\Tables\Columns\SelectColumn;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Actions\InvoicePdfAction;
 use App\Filament\Actions\SendInvoiceAction;
@@ -43,43 +39,8 @@ class InvoicesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('number')
             ->defaultSort('number', 'desc')
-            ->columns([
-                TextColumn::make('edition.year')
-                    ->label('Édition')
-                    ->sortable(),
-                TextColumn::make('date')
-                    ->label('Date')
-                    ->dateTime('d.m.Y')
-                    ->sortable(),
-                TextColumn::make('number')
-                    ->label('Numéro')
-                    ->sortable(),
-                TextColumn::make('title')
-                    ->label('Titre')
-                    ->sortable(),
-                TextColumn::make('status_view')
-                    ->label('Statut')
-                    ->badge()
-                    ->sortable(['status'])
-                    ->state(fn (Model $record) => $record->status),
-                SelectColumn::make('status')
-                    ->label('')
-                    ->options(InvoiceStatusEnum::class),
-                TextColumn::make('paid_on')
-                    ->label('Payé le')
-                    ->dateTime('d.m.Y')
-                    ->sortable(),
-                TextColumn::make('total')
-                    ->label('Montant')
-                    ->money('CHF', 0, 'fr_CH'),
-                TextColumn::make('client_reference')
-                    ->label('Référence client'),
-                TextColumn::make('client.invoicingContactEmail')
-                    ->label('Email'),
-            ])
-            ->filters([
-                //
-            ])
+            ->columns(InvoiceResource::columns(withClient: false))
+            ->filters(InvoiceResource::filters())
             ->headerActions([
                 CreateAction::make(),
                 GenerateClientInvoiceAction::make()

@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\ProvisionElementResource\Pages;
 
 use Filament\Actions\CreateAction;
+use Filament\Actions\ExportAction;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Exports\ProvisionElementExporter;
 use App\Filament\Resources\ProvisionElementResource;
 
 class ListProvisionElements extends ListRecords
@@ -14,6 +16,10 @@ class ListProvisionElements extends ListRecords
     {
         return [
             CreateAction::make(),
+            ExportAction::make()
+                ->label('Exporter')
+                ->exporter(ProvisionElementExporter::class)
+                ->columnMapping(false),
         ];
     }
 }

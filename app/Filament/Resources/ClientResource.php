@@ -19,7 +19,6 @@ use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
 use Filament\Support\Enums\Width;
 use App\Enums\EngagementStageEnum;
-use Filament\Actions\ExportAction;
 use App\Enums\EngagementStatusEnum;
 use Illuminate\Contracts\View\View;
 use App\Services\ClientMergeService;
@@ -32,7 +31,6 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
-use App\Filament\Exports\ClientExporter;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use App\Filament\Actions\ClientPdfAction;
@@ -276,19 +274,19 @@ class ClientResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('currentEngagement.sent_at')
                     ->label('Env. le')
-                    ->date('d.m.y')
+                    ->date()
                     ->dateTimeTooltip('d.m.Y H:i:s')
                     ->toggleable()
                     ->sortable(),
                 TextColumn::make('currentEngagement.viewed_at')
                     ->label('Vu le')
-                    ->date('d.m.y')
+                    ->date()
                     ->dateTimeTooltip('d.m.Y H:i:s')
                     ->toggleable()
                     ->sortable(),
                 TextColumn::make('currentEngagement.relaunched_at')
                     ->label('Rel. le')
-                    ->date('d.m.y')
+                    ->date()
                     ->dateTimeTooltip('d.m.Y H:i:s')
                     ->toggleable()
                     ->sortable(),
@@ -866,9 +864,6 @@ class ClientResource extends Resource
                     })
                     ->openUrlInNewTab()
                     ->modalSubmitActionLabel('Générer le rapport'),
-                ExportAction::make()
-                    ->label('Exporter')
-                    ->exporter(ClientExporter::class),
             ]);
     }
 

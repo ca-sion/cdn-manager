@@ -18,7 +18,6 @@ use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ExportAction;
 use Illuminate\Support\HtmlString;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\ReplicateAction;
@@ -53,7 +52,6 @@ use App\Filament\Actions\ExportMediaBulkAction;
 use App\Filament\Actions\SendMediaMissingAction;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Forms\Components\MorphToSelect\Type;
-use App\Filament\Exports\ProvisionElementExporter;
 use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
@@ -413,7 +411,7 @@ class ProvisionElementResource extends Resource
                     ->toggleable(),
                 TextColumn::make('contact_date')
                     ->label('Date')
-                    ->dateTime('d.m.Y')
+                    ->date()
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('contact_time')
@@ -606,12 +604,6 @@ class ProvisionElementResource extends Resource
                             }
                         }),
                 ]),
-            ])
-            ->headerActions([
-                ExportAction::make()
-                    ->label('Exporter')
-                    ->exporter(ProvisionElementExporter::class)
-                    ->columnMapping(false),
             ])
             ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition());
     }
