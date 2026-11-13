@@ -57,9 +57,11 @@ class ProvisionResource extends Resource
                             ->label('Code'),
                         */
                         Select::make('dicastry_id')
+                            ->searchable()
                             ->label('Dicastère')
                             ->relationship('dicastry', 'name'),
                         Select::make('category_id')
+                            ->searchable()
                             ->label('Catégorie')
                             ->relationship('category', 'name'),
                         Toggle::make('is_active')

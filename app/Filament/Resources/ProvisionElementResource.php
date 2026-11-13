@@ -79,6 +79,7 @@ class ProvisionElementResource extends Resource
             ->components([
                 Group::make([
                     Select::make('edition_id')
+                        ->searchable()
                         ->label('Edition')
                         ->relationship('edition', 'year')
                         ->default(session('edition_id'))
@@ -129,6 +130,7 @@ class ProvisionElementResource extends Resource
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_goods_to_be_delivered : false),
                         Select::make('contact_id')
+                            ->searchable()
                             ->label('Contact')
                             ->relationship('contact', 'name')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
@@ -167,6 +169,7 @@ class ProvisionElementResource extends Resource
                             ->maxLength(255)
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_responsible : false),
                         Select::make('dicastry_id')
+                            ->searchable()
                             ->label('Dicastère')
                             ->relationship('dicastry', 'name')
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_responsible : false),
@@ -530,6 +533,7 @@ class ProvisionElementResource extends Resource
                 SelectFilter::make('provision')
                     ->label('Prestation')
                     ->multiple()
+                    ->searchable()
                     ->preload()
                     ->relationship('provision', 'name'),
                 SelectFilter::make('media_status')
@@ -539,11 +543,13 @@ class ProvisionElementResource extends Resource
                 SelectFilter::make('client')
                     ->label('Client')
                     ->multiple()
+                    ->searchable()
                     ->preload()
                     ->relationship('client', 'name'),
                 SelectFilter::make('edition')
                     ->label('Édition')
                     ->multiple()
+                    ->searchable()
                     ->preload()
                     ->relationship('edition', 'year'),
             ])
@@ -597,6 +603,7 @@ class ProvisionElementResource extends Resource
                                 ->label('Statut du média')
                                 ->options(MediaStatusEnum::class),
                             Select::make('edition_id')
+                                ->searchable()
                                 ->label('Edition')
                                 ->relationship('edition', 'year'),
                         ])

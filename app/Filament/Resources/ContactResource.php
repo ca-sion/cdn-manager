@@ -88,6 +88,7 @@ class ContactResource extends Resource
                 TextInput::make('locality')
                     ->label('Localité'),
                 Select::make('country_code')
+                    ->searchable()
                     ->label('Pays')
                     ->options(['CH', 'FR', 'DE', 'IT']),
                 TextInput::make('salutation')
@@ -96,6 +97,7 @@ class ContactResource extends Resource
                     ->label('Langue')
                     ->options(['fr', 'de', 'en', 'it']),
                 Select::make('category_id')
+                    ->searchable()
                     ->label('Catégorie')
                     ->relationship('category', 'name'),
             ]);
@@ -171,16 +173,19 @@ class ContactResource extends Resource
                 SelectFilter::make('category_id')
                     ->label('Catégorie')
                     ->multiple()
+                    ->searchable()
                     ->preload()
                     ->relationship('category', 'name'),
                 SelectFilter::make('clients')
                     ->label('Clients')
                     ->multiple()
+                    ->searchable()
                     ->preload()
                     ->relationship('clients', 'name'),
                 SelectFilter::make('provision_in')
                     ->label('Prestations')
                     ->multiple()
+                    ->searchable()
                     ->options(Provision::all()->pluck('name', 'id'))
                     ->query(function (Builder $query, array $data): Builder {
                         $values = $data['values'];
@@ -196,6 +201,7 @@ class ContactResource extends Resource
                 SelectFilter::make('provision_not_in')
                     ->label('N\'a pas les prestations')
                     ->multiple()
+                    ->searchable()
                     ->options(Provision::all()->pluck('name', 'id'))
                     ->query(function (Builder $query, array $data): Builder {
                         $values = $data['values'];
@@ -278,6 +284,7 @@ class ContactResource extends Resource
                                 ->numeric()
                                 ->default(1),
                             Select::make('edition_id')
+                                ->searchable()
                                 ->label('Edition')
                                 ->options(Edition::all()->pluck('year', 'id'))
                                 ->default(session('edition_id'))
@@ -408,6 +415,7 @@ class ContactResource extends Resource
                         ->icon('heroicon-m-pencil-square')
                         ->form([
                             Select::make('category_id')
+                                ->searchable()
                                 ->label('Catégorie')
                                 ->relationship('category', 'name'),
                             TextInput::make('role')

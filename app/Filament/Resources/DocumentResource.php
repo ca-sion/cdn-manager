@@ -35,6 +35,7 @@ class DocumentResource extends Resource
         return $schema
             ->components([
                 Select::make('edition_id')
+                    ->searchable()
                     ->relationship('edition', 'year')
                     ->default(session('edition_id'))
                     ->required(),

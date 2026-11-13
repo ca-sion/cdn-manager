@@ -43,6 +43,7 @@ class RunRegistrationElementsRelationManager extends RelationManager
                         TextInput::make('nationality')->label('Nationalité')->default('SUI'),
                         TextInput::make('email')->label('Email')->email(),
                         Select::make('run_id')
+                            ->searchable()
                             ->label('Course')
                             ->relationship('run', 'name'),
                         TextInput::make('bloc')->label('Bloc'),

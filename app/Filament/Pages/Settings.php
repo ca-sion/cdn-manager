@@ -32,54 +32,67 @@ class Settings extends BaseSettings
             ->columns(1)
             ->components([
                 Select::make('edition_id')
+                    ->searchable()
                     ->options(Edition::all()->pluck('name', 'id'))
                     ->default(config('cdn.default_edition_id')),
                 Section::make('Formulaire annonceur')
                     ->schema([
                         Select::make('advertiser_form_client_category')
+                            ->searchable()
                             ->label('Catégorie des clients')
                             ->options(ClientCategory::all()->pluck('name', 'id')),
                         Select::make('advertiser_form_journal_category')
+                            ->searchable()
                             ->label('Journal : Catégorie des prestations')
                             ->options(ProvisionCategory::all()->pluck('name', 'id')),
                         Select::make('advertiser_form_banner_category')
+                            ->searchable()
                             ->label('Banderole : Catégorie des prestations')
                             ->options(ProvisionCategory::all()->pluck('name', 'id')),
                         Select::make('advertiser_form_screen_category')
+                            ->searchable()
                             ->label('Ecran : Catégorie des prestations')
                             ->options(ProvisionCategory::all()->pluck('name', 'id')),
                         Select::make('advertiser_form_pack_category')
+                            ->searchable()
                             ->label('Packs : Catégorie des prestations')
                             ->options(ProvisionCategory::all()->pluck('name', 'id')),
                         Select::make('advertiser_form_donation_provision')
+                            ->searchable()
                             ->label('Donation : Prestation')
                             ->options(Provision::all()->pluck('name', 'id')),
                     ]),
                 Section::make('VIP')
                     ->schema([
                         Select::make('vip_provision')
+                            ->searchable()
                             ->label('Prestation')
                             ->options(Provision::all()->pluck('name', 'id')),
                     ]),
                 Section::make('Rapports')
                     ->schema([
                         Select::make('reports_advertisers_categories')
+                            ->searchable()
                             ->label('Catégories des annonceurs')
                             ->options(ClientCategory::all()->pluck('name', 'id'))
                             ->multiple(),
                         Select::make('reports_banners_provisions')
+                            ->searchable()
                             ->label('Prestations pour les banderoles')
                             ->options(Provision::all()->pluck('name', 'id'))
                             ->multiple(),
                         Select::make('reports_screens_provisions')
+                            ->searchable()
                             ->label('Prestations pour les écrans')
                             ->options(Provision::all()->pluck('name', 'id'))
                             ->multiple(),
                         Select::make('reports_advertisers_journal_provisions')
+                            ->searchable()
                             ->label('Prestations pour le journal')
                             ->options(Provision::all()->pluck('name', 'id'))
                             ->multiple(),
                         Select::make('reports_interclass_donor_provision')
+                            ->searchable()
                             ->label('Donation interclasse : Prestation')
                             ->options(Provision::all()->pluck('name', 'id')),
                     ]),

@@ -76,6 +76,7 @@ class RunRegistrationElementResource extends Resource
                                     ]),
 
                                 Select::make('nationality')
+                                    ->searchable()
                                     ->label('Nationalité')
                                     ->options(CountryHelper::getOptions())
                                     ->default('SUI'),
@@ -285,6 +286,8 @@ class RunRegistrationElementResource extends Resource
                 SelectFilter::make('run_id')
                     ->label('Filtrer par Course')
                     ->relationship('run', 'name')
+                    ->multiple()
+                    ->preload()
                     ->searchable(),
 
                 SelectFilter::make('type')

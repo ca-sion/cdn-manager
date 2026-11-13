@@ -96,6 +96,7 @@ class ClientResource extends Resource
                                 TextInput::make('long_name')
                                     ->label('Nom long'),
                                 Select::make('category_id')
+                                    ->searchable()
                                     ->label('Catégorie')
                                     ->required()
                                     ->relationship('category', 'name'),
@@ -298,6 +299,7 @@ class ClientResource extends Resource
                 SelectFilter::make('category')
                     ->label('Catégorie')
                     ->multiple()
+                    ->searchable()
                     ->preload()
                     ->relationship('category', 'name'),
                 SelectFilter::make('stage')
@@ -328,6 +330,7 @@ class ClientResource extends Resource
                 SelectFilter::make('provision_in')
                     ->label('Prestations')
                     ->multiple()
+                    ->searchable()
                     ->options(Provision::all()->pluck('name', 'id'))
                     ->query(function (Builder $query, array $data): Builder {
                         $values = $data['values'];
@@ -343,6 +346,7 @@ class ClientResource extends Resource
                 SelectFilter::make('provision_not_in')
                     ->label('N\'a pas les prestations')
                     ->multiple()
+                    ->searchable()
                     ->options(Provision::all()->pluck('name', 'id'))
                     ->query(function (Builder $query, array $data): Builder {
                         $values = $data['values'];
@@ -826,6 +830,7 @@ class ClientResource extends Resource
 
                         return [
                             Select::make('edition_id')
+                                ->searchable()
                                 ->label('Édition')
                                 ->options($editions)
                                 ->default($currentEdition?->id)
@@ -878,11 +883,13 @@ class ClientResource extends Resource
 
                         return [
                             Select::make('reference_edition_id')
+                                ->searchable()
                                 ->label('Édition de référence')
                                 ->options($editions)
                                 ->default($currentEdition?->id)
                                 ->required(),
                             Select::make('comparison_edition_id')
+                                ->searchable()
                                 ->label('Édition de comparaison')
                                 ->options($editions)
                                 ->default($previousEdition?->id)

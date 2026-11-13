@@ -130,11 +130,15 @@ class VoucherResource extends Resource
                 SelectFilter::make('client_id')
                     ->label('Client')
                     ->relationship('client', 'name')
+                    ->multiple()
+                    ->preload()
                     ->searchable(),
 
                 SelectFilter::make('run_id')
                     ->label('Course')
                     ->relationship('run', 'name')
+                    ->multiple()
+                    ->preload()
                     ->searchable(),
             ])
             ->headerActions([
