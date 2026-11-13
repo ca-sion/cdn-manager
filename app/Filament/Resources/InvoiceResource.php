@@ -10,12 +10,9 @@ use Illuminate\Support\Number;
 use App\Enums\InvoiceStatusEnum;
 use App\Services\InvoiceService;
 use App\Services\PricingService;
-use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\URL;
 use Filament\Support\Enums\TextSize;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
@@ -27,19 +24,24 @@ use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
-use App\Notifications\ClientSendInvoice;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Actions\InvoicePdfAction;
 use Filament\Forms\Components\Placeholder;
+use App\Filament\Actions\SendInvoiceAction;
 use Filament\Tables\Columns\TextInputColumn;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
-use App\Notifications\ClientSendInvoiceRelaunch;
+use App\Filament\Actions\RelaunchInvoiceAction;
+use App\Filament\Actions\SendInvoiceBulkAction;
 use Filament\Tables\Enums\RecordActionsPosition;
+use App\Filament\Actions\DownloadInvoiceEmlAction;
+use App\Filament\Actions\RelaunchInvoiceBulkAction;
+use App\Filament\Actions\ResetInvoiceViewedAtAction;
 use App\Filament\Actions\ExportInvoicesPdfBulkAction;
 use App\Filament\Resources\InvoiceResource\Pages\EditInvoice;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
@@ -88,7 +90,7 @@ class InvoiceResource extends Resource
                     ->label('Numéro de facture')
                     ->default(fn () => InvoiceService::generateInvoiceNumber())
                     ->hintAction(
-                        Action::make('syncQrReference')
+                        Action::make('syncNumber')
                             ->label('Générer')
                             ->icon('heroicon-m-arrow-path')
                             ->action(function (Set $set) {
@@ -257,75 +259,20 @@ class InvoiceResource extends Resource
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
-                    Action::make('ClientSendInvoice')
-                        ->label('Envoyer')
-                        ->icon('heroicon-o-envelope')
-                        ->action(function (Model $record) {
-                            $record->client?->notify(new ClientSendInvoice($record));
-                            $record->status = InvoiceStatusEnum::Sent;
-                            $record->save();
-                        })
-                        ->requiresConfirmation(),
-                    Action::make('ClientSendInvoiceRelauch')
-                        ->label('Relancer')
-                        ->icon('heroicon-o-envelope')
-                        ->action(function (Model $record) {
-                            $record->client?->notify(new ClientSendInvoiceRelaunch($record));
-                            $record->status = InvoiceStatusEnum::Relaunched;
-                            $record->save();
-                        })
-                        ->requiresConfirmation(),
-                    Action::make('ClientDownloadInvoice')
-                        ->label('Télécharger')
-                        ->icon('heroicon-o-document-arrow-down')
-                        ->url(fn (Invoice $record): string => URL::signedRoute('invoices.eml', ['invoice' => $record]))
-                        ->openUrlInNewTab(),
-                    Action::make('ClientDownloadInvoiceRelauch')
-                        ->label('Relancer')
-                        ->icon('heroicon-o-document-arrow-down')
-                        ->url(fn (Invoice $record): string => URL::signedRoute('invoices.emlRelaunch', ['invoice' => $record]))
-                        ->openUrlInNewTab(),
-                    Action::make('ResetViewedAt')
-                        ->label('Réinitialiser « Vu à »')
-                        ->icon('heroicon-o-arrow-path')
-                        ->action(function (Model $record) {
-                            $record->viewed_at = null;
-                            $record->save();
-                        })
-                        ->requiresConfirmation(),
+                    SendInvoiceAction::make(),
+                    RelaunchInvoiceAction::make(),
+                    DownloadInvoiceEmlAction::make(),
+                    DownloadInvoiceEmlAction::make('downloadInvoiceEmlRelaunch')->relaunch(),
+                    ResetInvoiceViewedAtAction::make(),
                 ]),
-                Action::make('pdf')
-                    ->label('PDF')
-                    ->url(fn (Invoice $record): string => $record->link)
-                    ->openUrlInNewTab()
-                    ->icon('heroicon-o-document'),
+                InvoicePdfAction::make(),
             ], position: RecordActionsPosition::BeforeColumns)
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                     ExportInvoicesPdfBulkAction::make(),
-                    BulkAction::make('ClientsSendInvoice')
-                        ->label('Envoyer facture')
-                        ->icon('heroicon-o-envelope')
-                        ->action(function (Collection $records) {
-                            foreach ($records as $record) {
-                                $record->client?->notify(new ClientSendInvoice($record));
-                                $record->status = InvoiceStatusEnum::Sent;
-                                $record->save();
-                            }
-                        })
-                        ->requiresConfirmation(),
-                    BulkAction::make('ClientsSendInvoiceRelaunch')
-                        ->label('Envoyer relance')
-                        ->icon('heroicon-o-envelope')
-                        ->action(function (Collection $records) {
-                            foreach ($records as $record) {
-                                $record->client?->notify(new ClientSendInvoiceRelaunch($record));
-                                $record->status = InvoiceStatusEnum::Relaunched;
-                                $record->save();
-                            }
-                        })
-                        ->requiresConfirmation(),
+                    SendInvoiceBulkAction::make(),
+                    RelaunchInvoiceBulkAction::make(),
                 ]),
             ])
             ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition());

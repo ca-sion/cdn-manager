@@ -99,6 +99,14 @@ class Client extends Model implements HasMedia
     }
 
     /**
+     * The most recent invoice of the current edition.
+     */
+    public function latestInvoice(): ?Invoice
+    {
+        return $this->invoices()->currentEdition()->latest('id')->first();
+    }
+
+    /**
      * The vouchers that belong to the client.
      */
     public function vouchers(): HasMany

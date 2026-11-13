@@ -43,14 +43,18 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
+use App\Filament\Actions\InvoiceActionGroup;
 use Filament\Tables\Columns\TextInputColumn;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
+use App\Filament\Actions\SendInvoiceBulkAction;
 use App\Notifications\ClientAdvertiserFormLink;
 use App\Notifications\RecipientSendVipInvitation;
+use App\Filament\Actions\RelaunchInvoiceBulkAction;
 use App\Notifications\ClientAdvertiserFormRelaunch;
 use App\Notifications\ClientAdvertiserMediaMissing;
 use App\Notifications\ClientInterclassDonorRequest;
+use App\Filament\Actions\GenerateClientInvoicesBulkAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use App\Filament\Resources\ClientResource\Pages\EditClient;
 use App\Notifications\ClientInterclassDonorRequestRelaunch;
@@ -369,9 +373,17 @@ class ClientResource extends Resource
                         ->openUrlInNewTab()
                         ->icon('heroicon-o-document'),
                 ])->iconButton(),
+                InvoiceActionGroup::make(
+                    invoice: fn (Client $record) => $record->latestInvoice(),
+                    clientId: fn (?Model $record) => $record?->id,
+                    withRegistrations: true,
+                )->iconButton(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    GenerateClientInvoicesBulkAction::make(),
+                    SendInvoiceBulkAction::make()->invoiceUsing(fn (Client $record) => $record->latestInvoice()),
+                    RelaunchInvoiceBulkAction::make()->invoiceUsing(fn (Client $record) => $record->latestInvoice()),
                     BulkAction::make('send_advertiser_form')
                         ->label('Envoyer le formulaire annonceur')
                         ->icon('heroicon-o-envelope')

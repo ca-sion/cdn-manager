@@ -31,7 +31,11 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Actions\InvoicePdfAction;
+use App\Filament\Actions\SendInvoiceAction;
+use App\Filament\Actions\RelaunchInvoiceAction;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Actions\GenerateRegistrationInvoiceAction;
 use App\Filament\Resources\RunRegistrationResource\Pages\EditRunRegistration;
 use App\Filament\Resources\RunRegistrationResource\Pages\ListRunRegistrations;
 use App\Filament\Resources\RunRegistrationResource\Pages\CreateRunRegistration;
@@ -298,20 +302,8 @@ class RunRegistrationResource extends Resource
                         ->visible(fn ($record) => $record->client_id === null),
 
                     // Automatic / Update Invoice Generation
-                    Action::make('generateInvoice')
-                        ->label(fn (RunRegistration $record) => $record->invoice_id ? 'Mettre à jour la facture' : 'Générer la facture')
-                        ->icon('heroicon-o-document-currency-dollar')
-                        ->color('success')
-                        ->action(function (RunRegistration $record) {
-                            try {
-                                app(RunRegistrationService::class)->createInvoice($record);
-                                Notification::make()->title('Facture générée / mise à jour avec succès !')->success()->send();
-                            } catch (Exception $e) {
-                                Notification::make()->title('Erreur')->body($e->getMessage())->danger()->send();
-                            }
-                        })
-                        ->requiresConfirmation()
-                        ->visible(fn ($record) => $record->client_id !== null),
+                    GenerateRegistrationInvoiceAction::make()
+                        ->label(fn (RunRegistration $record) => $record->invoice_id ? 'Mettre à jour la facture' : 'Générer la facture'),
 
                     // Open Generated Invoice Direct Link
                     Action::make('openInvoice')
@@ -321,6 +313,10 @@ class RunRegistrationResource extends Resource
                         ->url(fn (RunRegistration $record) => $record->invoice_id ? InvoiceResource::getUrl('edit', ['record' => $record->invoice_id]) : null)
                         ->openUrlInNewTab()
                         ->visible(fn (RunRegistration $record) => $record->invoice_id !== null),
+
+                    InvoicePdfAction::make()->invoiceUsing(fn (RunRegistration $record) => $record->invoice),
+                    SendInvoiceAction::make()->invoiceUsing(fn (RunRegistration $record) => $record->invoice),
+                    RelaunchInvoiceAction::make()->invoiceUsing(fn (RunRegistration $record) => $record->invoice),
 
                     // Imprimer Contrat Élite (PDF)
                     Action::make('printEliteContract')

@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\ClientResource;
 use App\Notifications\ClientAdvertiserFormCreated;
+use App\Filament\Actions\GenerateClientInvoiceAction;
 
 class EditClient extends EditRecord
 {
@@ -28,13 +29,14 @@ class EditClient extends EditRecord
                 ->url(fn (Model $record): string => $record->pdfLink)
                 ->openUrlInNewTab()
                 ->icon('heroicon-o-document'),
+            GenerateClientInvoiceAction::make()->color('gray'),
             Action::make('ClientAdvertiserFormCreated')
                 ->label('Envoyer commande')
                 ->icon('heroicon-o-envelope')
                 ->color('gray')
                 ->requiresConfirmation()
                 ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated)),
-            Action::make('ClientMofidyStageStatus')
+            Action::make('ModifyStageStatus')
                 ->label('Modifier le statut')
                 ->icon('heroicon-o-briefcase')
                 ->color('gray')

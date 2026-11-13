@@ -3,10 +3,8 @@
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
 use Filament\Tables\Table;
-use Filament\Actions\Action;
 use Filament\Schemas\Schema;
 use App\Enums\InvoiceStatusEnum;
-use App\Services\InvoiceService;
 use Filament\Actions\EditAction;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
@@ -15,11 +13,18 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
-use App\Notifications\ClientSendInvoice;
 use Filament\Tables\Columns\SelectColumn;
 use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Actions\InvoicePdfAction;
+use App\Filament\Actions\SendInvoiceAction;
 use App\Filament\Resources\InvoiceResource;
+use App\Filament\Actions\RelaunchInvoiceAction;
+use App\Filament\Actions\SendInvoiceBulkAction;
 use Filament\Tables\Enums\RecordActionsPosition;
+use App\Filament\Actions\DownloadInvoiceEmlAction;
+use App\Filament\Actions\RelaunchInvoiceBulkAction;
+use App\Filament\Actions\ResetInvoiceViewedAtAction;
+use App\Filament\Actions\GenerateClientInvoiceAction;
 use Filament\Resources\RelationManagers\RelationManager;
 
 class InvoicesRelationManager extends RelationManager
@@ -77,33 +82,28 @@ class InvoicesRelationManager extends RelationManager
             ])
             ->headerActions([
                 CreateAction::make(),
-                Action::make('generateInvoice')
+                GenerateClientInvoiceAction::make()
                     ->label('Générer')
                     ->tooltip(fn (): ?string => $this->ownerRecord->invoicing_note)
-                    ->action(fn () => InvoiceService::generateInvoiceByClient($this->ownerRecord->id)),
+                    ->clientIdUsing(fn () => $this->ownerRecord->id),
             ])
             ->recordActions([
-                Action::make('pdf')
-                    ->url(fn (Model $record): string => $record->link)
-                    ->openUrlInNewTab()
-                    ->icon('heroicon-o-document'),
-                Action::make('ClientSendInvoice')
-                    ->label('Envoyer')
-                    ->icon('heroicon-o-envelope')
-                    ->action(function (Model $record) {
-                        $record->client?->notify(new ClientSendInvoice($record));
-                        $record->status = InvoiceStatusEnum::Sent;
-                        $record->save();
-                    })
-                    ->requiresConfirmation(),
                 ActionGroup::make([
                     EditAction::make(),
+                    SendInvoiceAction::make(),
+                    RelaunchInvoiceAction::make(),
+                    DownloadInvoiceEmlAction::make(),
+                    DownloadInvoiceEmlAction::make('downloadInvoiceEmlRelaunch')->relaunch(),
+                    ResetInvoiceViewedAtAction::make(),
                     DeleteAction::make(),
                 ]),
+                InvoicePdfAction::make(),
             ], position: RecordActionsPosition::BeforeColumns)
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    SendInvoiceBulkAction::make(),
+                    RelaunchInvoiceBulkAction::make(),
                 ]),
             ])
             ->modifyQueryUsing(fn (Builder $query) => $query->currentEdition());

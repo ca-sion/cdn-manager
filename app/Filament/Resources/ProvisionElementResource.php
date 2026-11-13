@@ -42,6 +42,7 @@ use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Placeholder;
+use App\Filament\Actions\InvoiceActionGroup;
 use Filament\Forms\Components\MorphToSelect;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\Collection;
@@ -573,6 +574,10 @@ class ProvisionElementResource extends Resource
                         ->icon('heroicon-o-envelope')
                         ->action(fn (Model $record) => $record->client?->notify(new ClientAdvertiserMediaMissing)),
                 ]),
+                InvoiceActionGroup::make(
+                    invoice: fn (Model $record) => $record->recipient instanceof Client ? $record->recipient->latestInvoice() : null,
+                    clientId: fn (?Model $record) => $record?->recipient instanceof Client ? $record->recipient->id : null,
+                ),
             ], position: RecordActionsPosition::BeforeColumns)
             ->toolbarActions([
                 BulkActionGroup::make([
