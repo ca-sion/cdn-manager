@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Models\Run;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Client;
@@ -10,9 +11,12 @@ use App\Models\Edition;
 use App\Models\Invoice;
 use App\Models\Provision;
 use App\Models\ClientCategory;
+use App\Models\RunRegistration;
 use App\Enums\InvoiceStatusEnum;
 use App\Models\ProvisionElement;
 use App\Services\InvoiceService;
+use App\Models\RunRegistrationElement;
+use App\Services\RunRegistrationService;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Filament\Resources\ClientResource\Pages\EditClient;
@@ -266,5 +270,97 @@ class ClientPageFlowTest extends TestCase
             ->mountAction('generateInvoice')
             ->assertMountedActionModalSee('1 sans produit')
             ->assertMountedActionModalSee('aucune prestation avec un produit');
+    }
+
+    private function runInvoice(InvoiceStatusEnum $status = InvoiceStatusEnum::Sent): Invoice
+    {
+        return Invoice::create([
+            'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => $status,
+            'number'     => '2025-C01', 'note' => 'Facture Inscriptions Courses regroupant les dossiers #1',
+            'meta'       => ['source' => 'run_registrations'],
+            'positions'  => [['name' => 'Trail (2 participants)', 'quantity' => 2, 'cost' => 35, 'tax_rate' => 0]],
+        ]);
+    }
+
+    public function test_invoice_type_is_detected_and_shown_in_the_list(): void
+    {
+        $this->element();
+        $provisions = InvoiceService::generateInvoiceByClient($this->client->id);
+        $runs = $this->runInvoice();
+        $proforma = Invoice::create([
+            'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => InvoiceStatusEnum::Draft,
+            'number'     => '2025-P01', 'is_pro_forma' => true, 'positions' => [],
+        ]);
+
+        $this->assertSame('prestations', $provisions->type());
+        $this->assertSame('courses', $runs->type());
+        $this->assertSame('proforma', $proforma->type());
+
+        Livewire::test(ListInvoices::class)
+            ->assertTableColumnStateSet('type', 'Prestations', record: $provisions)
+            ->assertTableColumnStateSet('type', 'Courses', record: $runs)
+            ->assertTableColumnStateSet('type', 'Proforma', record: $proforma)
+            ->filterTable('type', 'courses')
+            ->assertCanSeeTableRecords([$runs])
+            ->assertCanNotSeeTableRecords([$provisions, $proforma]);
+
+        Livewire::test(ListInvoices::class)
+            ->filterTable('type', 'prestations')
+            ->assertCanSeeTableRecords([$provisions])
+            ->assertCanNotSeeTableRecords([$runs, $proforma]);
+
+        Livewire::test(ListInvoices::class)
+            ->filterTable('type', 'proforma')
+            ->assertCanSeeTableRecords([$proforma])
+            ->assertCanNotSeeTableRecords([$provisions, $runs]);
+    }
+
+    public function test_provisions_modal_shows_run_invoices_with_status_and_what_to_do(): void
+    {
+        $this->element();
+        $this->runInvoice(InvoiceStatusEnum::Sent);
+
+        Livewire::test(EditClient::class, ['record' => $this->client->getKey()])
+            ->mountAction('generateInvoice')
+            ->assertMountedActionModalSee('Autres factures de ce client')
+            ->assertMountedActionModalSee('Courses · facture 2025-C01')
+            ->assertMountedActionModalSee('Envoyé')
+            ->assertMountedActionModalSee('Facturer les inscriptions de courses');
+    }
+
+    public function test_registrations_modal_explains_the_situation(): void
+    {
+        $run = Run::factory()->create(['cost' => 50]);
+        $registration = RunRegistration::factory()->create(['client_id' => $this->client->id]);
+        RunRegistrationElement::factory()->count(3)->create(['run_registration_id' => $registration->id, 'run_id' => $run->id, 'has_free_registration_fee' => false]);
+
+        $page = fn () => Livewire::test(EditClient::class, ['record' => $this->client->getKey()]);
+
+        $page()->mountAction('generateRegistrationInvoice')
+            ->assertMountedActionModalSee('3 inscription(s) · 0 déjà facturée(s) · 3 à facturer')
+            ->assertMountedActionModalSee('Une nouvelle facture');
+
+        app(RunRegistrationService::class)->createInvoiceForClient($this->client->id);
+        $invoice = Invoice::firstOrFail();
+        $invoice->update(['status' => InvoiceStatusEnum::Sent]);
+
+        $page()->mountAction('generateRegistrationInvoice')
+            ->assertMountedActionModalSee('3 inscription(s) · 3 déjà facturée(s) · 0 à facturer')
+            ->assertMountedActionModalSee('Rien à facturer')
+            ->assertMountedActionModalSee('Facture '.$invoice->number)
+            ->assertMountedActionModalSee('Envoyé');
+    }
+
+    public function test_registrations_modal_mentions_a_draft_that_will_be_recalculated(): void
+    {
+        $run = Run::factory()->create(['cost' => 50]);
+        $registration = RunRegistration::factory()->create(['client_id' => $this->client->id]);
+        RunRegistrationElement::factory()->create(['run_registration_id' => $registration->id, 'run_id' => $run->id, 'has_free_registration_fee' => false]);
+        $invoice = app(RunRegistrationService::class)->createInvoiceForClient($this->client->id);
+        $invoice->update(['status' => InvoiceStatusEnum::Draft]);
+
+        Livewire::test(EditClient::class, ['record' => $this->client->getKey()])
+            ->mountAction('generateRegistrationInvoice')
+            ->assertMountedActionModalSee('brouillon n° '.$invoice->number.' sera recalculée');
     }
 }

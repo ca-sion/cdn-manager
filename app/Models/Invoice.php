@@ -58,12 +58,37 @@ class Invoice extends Model
     }
 
     /**
+     * Invoices generated from run registrations (same rule as isRunInvoice()).
+     */
+    public function scopeRunInvoices(Builder $query): void
+    {
+        $query->where(fn ($q) => $q->where('meta->source', 'run_registrations')->orWhere('note', 'like', 'Facture Inscriptions Courses%'));
+    }
+
+    /**
      * Whether this invoice was generated from run registrations.
      */
     public function isRunInvoice(): bool
     {
         return ($this->meta['source'] ?? null) === 'run_registrations'
             || str_starts_with((string) $this->note, 'Facture Inscriptions Courses');
+    }
+
+    /**
+     * Invoice family: 'proforma', 'courses' (run registrations) or 'prestations'.
+     */
+    public function type(): string
+    {
+        return match (true) {
+            (bool) $this->is_pro_forma => 'proforma',
+            $this->isRunInvoice()      => 'courses',
+            default                    => 'prestations',
+        };
+    }
+
+    public static function typeLabels(): array
+    {
+        return ['prestations' => 'Prestations', 'courses' => 'Courses', 'proforma' => 'Proforma'];
     }
 
     /**
@@ -140,7 +165,7 @@ class Invoice extends Model
                 'cost'        => $item->cost,
                 'quantity'    => $item->quantity,
                 'tax_rate'    => $item->tax_rate,
-                'include_vat' => $item->include_vat,
+                'include_vat' => $item->include_vat ?? false,
                 'price'       => $price,
             ];
         });

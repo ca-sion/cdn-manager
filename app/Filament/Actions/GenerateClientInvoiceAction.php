@@ -3,6 +3,7 @@
 namespace App\Filament\Actions;
 
 use Exception;
+use App\Models\Invoice;
 use Filament\Actions\Action;
 use App\Services\InvoiceService;
 use Illuminate\Support\HtmlString;
@@ -110,6 +111,20 @@ class GenerateClientInvoiceAction extends Action
                     if ($overview['legacy_invoices']->isNotEmpty()) {
                         $components[] = Text::make('Les factures '.$overview['legacy_invoices']->pluck('number')->implode(', ').' ont été créées avant le suivi automatique : elles sont considérées comme contenant toutes les prestations qui existaient à leur création.')
                             ->color('warning');
+                    }
+                }
+
+                // 6. Autres factures du client (courses, proformas) : visibles ici, gérées ailleurs
+                $others = Invoice::where('client_id', $this->resolveClientId($record))
+                    ->active()
+                    ->get()
+                    ->filter(fn ($invoice) => $invoice->type() !== 'prestations')
+                    ->values();
+
+                if ($others->isNotEmpty()) {
+                    $components[] = Text::make('Autres factures de ce client (non concernées par cette action) :')->weight('bold');
+                    foreach ($others as $invoice) {
+                        $components[] = Text::make(Invoice::typeLabels()[$invoice->type()].' · facture '.$invoice->number.' — '.$invoice->status?->getLabel().($invoice->type() === 'courses' ? ' (à gérer via « Facturation › Facturer les inscriptions de courses »)' : ''));
                     }
                 }
 

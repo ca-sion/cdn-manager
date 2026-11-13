@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Helpers\AppHelper;
 use App\Models\RunRegistration;
 use App\Enums\InvoiceStatusEnum;
+use Illuminate\Support\Collection;
 use App\Models\RunRegistrationElement;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 
@@ -98,24 +99,7 @@ class RunRegistrationService
         $draft = $runInvoices->first(fn (Invoice $invoice) => $invoice->isDraft());
         $lockedInvoices = $runInvoices->reject(fn (Invoice $invoice) => $invoice->isDraft());
 
-        // Inscriptions déjà facturées : identifiants mémorisés dans la facture, ou (anciennes factures)
-        // lien invoice_id posé sur les dossiers au moment de la génération.
-        $alreadyInvoiced = $lockedInvoices->flatMap(function (Invoice $invoice) use ($allElements) {
-            $tracked = $invoice->runRegistrationElementIds();
-            if ($tracked !== []) {
-                return $tracked;
-            }
-
-            // Ancienne facture : elle couvrait autant de participants que la somme de ses quantités,
-            // les plus anciens inscrits des dossiers qui lui sont liés.
-            $covered = (int) collect($invoice->positions ?? [])->sum('quantity');
-            $linked = $allElements
-                ->filter(fn ($el) => (int) $el->runRegistration?->invoice_id === $invoice->id)
-                ->sortBy('id');
-
-            return ($covered > 0 ? $linked->take($covered) : $linked)->pluck('id')->all();
-        })->all();
-
+        $alreadyInvoiced = $this->invoicedElementIds($lockedInvoices, $allElements);
         $elements = $allElements->reject(fn ($el) => in_array($el->id, $alreadyInvoiced, true))->values();
 
         if ($elements->isEmpty()) {
@@ -157,6 +141,61 @@ class RunRegistrationService
         RunRegistration::whereIn('id', $registrationIds)->update(['invoice_id' => $invoice->id]);
 
         return $invoice;
+    }
+
+    /**
+     * Inscriptions couvertes par des factures courses : identifiants mémorisés dans la facture, ou
+     * (anciennes factures) les plus anciens inscrits des dossiers liés, autant que la somme des quantités.
+     *
+     * @param  Collection<int, Invoice>  $invoices
+     * @return array<int, int>
+     */
+    protected function invoicedElementIds($invoices, $allElements): array
+    {
+        return $invoices->flatMap(function (Invoice $invoice) use ($allElements) {
+            $tracked = $invoice->runRegistrationElementIds();
+            if ($tracked !== []) {
+                return $tracked;
+            }
+
+            $covered = (int) collect($invoice->positions ?? [])->sum('quantity');
+            $linked = $allElements
+                ->filter(fn ($el) => (int) $el->runRegistration?->invoice_id === $invoice->id)
+                ->sortBy('id');
+
+            return ($covered > 0 ? $linked->take($covered) : $linked)->pluck('id')->all();
+        })->all();
+    }
+
+    /**
+     * Situation de facturation des inscriptions de courses d'un client (pour expliquer l'action à l'utilisateur).
+     *
+     * @return array{total: int, to_invoice: int, invoiced: int, invoices: Collection<int, Invoice>, draft: ?Invoice}
+     */
+    public function billingOverview(int $clientId): array
+    {
+        $registrationIds = RunRegistration::where('client_id', $clientId)->pluck('id');
+        $allElements = RunRegistrationElement::with('runRegistration')->whereIn('run_registration_id', $registrationIds)->get();
+
+        $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+        $invoices = Invoice::where('client_id', $clientId)
+            ->where('edition_id', $editionId)
+            ->active()
+            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
+            ->get()
+            ->filter(fn (Invoice $invoice) => $invoice->isRunInvoice())
+            ->values();
+
+        $locked = $invoices->reject(fn (Invoice $invoice) => $invoice->isDraft());
+        $invoiced = count($this->invoicedElementIds($locked, $allElements));
+
+        return [
+            'total'      => $allElements->count(),
+            'invoiced'   => $invoiced,
+            'to_invoice' => $allElements->count() - $invoiced,
+            'invoices'   => $invoices,
+            'draft'      => $invoices->first(fn (Invoice $invoice) => $invoice->isDraft()),
+        ];
     }
 
     /**

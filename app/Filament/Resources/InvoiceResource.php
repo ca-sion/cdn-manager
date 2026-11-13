@@ -206,6 +206,16 @@ class InvoiceResource extends Resource
             SelectColumn::make('status')
                 ->label('')
                 ->options(InvoiceStatusEnum::class),
+            TextColumn::make('type')
+                ->label('Type')
+                ->badge()
+                ->state(fn (Model $record) => Invoice::typeLabels()[$record->type()])
+                ->color(fn (string $state) => match ($state) {
+                    'Courses'  => 'info',
+                    'Proforma' => 'gray',
+                    default    => 'primary',
+                })
+                ->toggleable(),
             TextColumn::make('date')
                 ->label('Date')
                 ->date()
@@ -267,6 +277,19 @@ class InvoiceResource extends Resource
     public static function filters(): array
     {
         return [
+            SelectFilter::make('type')
+                ->label('Type')
+                ->options(Invoice::typeLabels())
+                ->query(function (Builder $query, array $data): Builder {
+                    $notProforma = fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma');
+
+                    return match ($data['value'] ?? null) {
+                        'proforma'    => $query->where('is_pro_forma', true),
+                        'courses'     => $query->where($notProforma)->runInvoices(),
+                        'prestations' => $query->where($notProforma)->whereNotIn('id', Invoice::runInvoices()->select('id')),
+                        default       => $query,
+                    };
+                }),
             SelectFilter::make('status')
                 ->label('Statut')
                 ->multiple()
