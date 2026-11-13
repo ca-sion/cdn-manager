@@ -76,11 +76,14 @@ class RunRegistrationService
      */
     public function isRegistrationOpen(Run $run): bool
     {
-        if (! $run->registrations_deadline) {
+        $deadline = $run->registrationsDeadlineAt();
+
+        if (! $deadline) {
             return true;
         }
 
-        return now()->lessThanOrEqualTo($run->registrations_deadline);
+        // L'échéance est une heure suisse (voir Run::registrationsDeadlineAt)
+        return now()->lessThanOrEqualTo($deadline);
     }
 
     /**

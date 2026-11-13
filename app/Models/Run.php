@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -41,6 +42,20 @@ class Run extends Model
         'cost'                   => 'decimal:2',
         'distance'               => 'decimal:2',
     ];
+
+    /**
+     * Échéance d'inscription comme instant réel.
+     *
+     * Le champ est saisi et stocké tel quel : « 18:00 » veut dire 18:00 heure suisse. Comparée à l'heure UTC,
+     * l'échéance se fermerait 1 à 2 heures trop tard : on la lit donc explicitement en Europe/Zurich
+     * (l'heure d'été et d'hiver sont gérées).
+     */
+    public function registrationsDeadlineAt(): ?Carbon
+    {
+        return $this->registrations_deadline
+            ? Carbon::parse($this->registrations_deadline->format('Y-m-d H:i:s'), 'Europe/Zurich')
+            : null;
+    }
 
     public function matchesAge(?int $age): bool
     {

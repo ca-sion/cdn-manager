@@ -939,7 +939,8 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             return false;
         }
 
-        return now()->greaterThan(Carbon::parse($deadline));
+        // Le délai est saisi en heure suisse : sans fuseau explicite, il serait lu en UTC et la grille se verrouillerait 1 à 2 h trop tard
+        return now()->greaterThan(Carbon::parse($deadline, 'Europe/Zurich'));
     }
 
     public function save()
