@@ -11,9 +11,12 @@ use App\Filament\Exports\InvoiceExporter;
 use Filament\Resources\Pages\ListRecords;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Imports\ReconcileInvoiceImporter;
+use App\Filament\Pages\Concerns\CancelsBulkInvoices;
 
 class ListInvoices extends ListRecords
 {
+    use CancelsBulkInvoices;
+
     protected static string $resource = InvoiceResource::class;
 
     protected function getHeaderActions(): array

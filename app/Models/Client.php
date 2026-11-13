@@ -99,11 +99,13 @@ class Client extends Model implements HasMedia
     }
 
     /**
-     * The most recent invoice of the current edition.
+     * The most recent real invoice (not cancelled, not pro forma) of the current edition.
      */
     public function latestInvoice(): ?Invoice
     {
-        return $this->invoices()->currentEdition()->latest('id')->first();
+        return $this->invoices()->currentEdition()->active()
+            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
+            ->latest('id')->first();
     }
 
     /**

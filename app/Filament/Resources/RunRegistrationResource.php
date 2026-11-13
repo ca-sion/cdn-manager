@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use Exception;
 use App\Models\Client;
 use App\Models\School;
 use Filament\Tables\Table;
@@ -11,12 +10,10 @@ use Filament\Schemas\Schema;
 use App\Helpers\CountryHelper;
 use App\Enums\SchoolClassLevel;
 use App\Models\RunRegistration;
-use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
 use App\Enums\RunRegistrationType;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
 use Rap2hpoutre\FastExcel\FastExcel;
 use Filament\Actions\BulkActionGroup;
@@ -25,7 +22,6 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
-use App\Services\RunRegistrationService;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -39,6 +35,7 @@ use App\Filament\Actions\SendClientVouchersAction;
 use App\Filament\Actions\RegistrationExportActions;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Actions\GenerateRegistrationInvoiceAction;
+use App\Filament\Actions\GenerateRegistrationInvoicesBulkAction;
 use App\Filament\Resources\RunRegistrationResource\Pages\EditRunRegistration;
 use App\Filament\Resources\RunRegistrationResource\Pages\ListRunRegistrations;
 use App\Filament\Resources\RunRegistrationResource\Pages\CreateRunRegistration;
@@ -306,7 +303,7 @@ class RunRegistrationResource extends Resource
 
                     // Automatic / Update Invoice Generation
                     GenerateRegistrationInvoiceAction::make()
-                        ->label(fn (RunRegistration $record) => $record->invoice_id ? 'Mettre à jour la facture' : 'Générer la facture'),
+                        ->label('Facturer les inscriptions'),
 
                     // Open Generated Invoice Direct Link
                     Action::make('openInvoice')
@@ -393,39 +390,7 @@ class RunRegistrationResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                    BulkAction::make('generateInvoices')
-                        ->label('Générer / Regrouper factures par client')
-                        ->icon('heroicon-o-document-currency-dollar')
-                        ->action(function (Collection $records) {
-                            $clientIds = $records->pluck('client_id')->filter()->unique();
-
-                            if ($clientIds->isEmpty()) {
-                                Notification::make()
-                                    ->title('Aucun client associé dans la sélection.')
-                                    ->warning()
-                                    ->send();
-
-                                return;
-                            }
-
-                            $successCount = 0;
-                            $errorCount = 0;
-
-                            foreach ($clientIds as $clientId) {
-                                try {
-                                    app(RunRegistrationService::class)->createInvoiceForClient($clientId);
-                                    $successCount++;
-                                } catch (Exception $e) {
-                                    $errorCount++;
-                                }
-                            }
-
-                            Notification::make()
-                                ->title($successCount.' facture(s) consolidée(s) générée(s) pour '.$clientIds->count().' client(s)'.($errorCount > 0 ? ' ('.$errorCount.' erreurs)' : ''))
-                                ->success()
-                                ->send();
-                        })
-                        ->requiresConfirmation(),
+                    GenerateRegistrationInvoicesBulkAction::make(),
                     ...RegistrationExportActions::bulk(),
                 ]),
             ]);

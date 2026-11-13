@@ -7,6 +7,7 @@ use App\Models\Edition;
 use App\Models\Invoice;
 use App\Helpers\AppHelper;
 use Sprain\SwissQrBill\QrBill;
+use App\Models\RunRegistration;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Enums\InvoiceStatusEnum;
 use App\Models\ProvisionElement;
@@ -245,6 +246,65 @@ class InvoiceService
     {
         return self::provisionInvoices($clientId)
             ->first(fn (Invoice $invoice) => $invoice->isDraft());
+    }
+
+    /**
+     * Dry run of generateInvoiceByClient() for all not yet invoiced provisions: nothing is written.
+     *
+     * @return array{action: string, count: int, amount: float, draft: ?Invoice, reason: ?string}
+     *                                                                                            action: 'new' (new invoice), 'draft' (completes a draft), 'nothing'
+     */
+    public static function previewInvoiceByClient(int $clientId): array
+    {
+        $elements = self::uninvoicedProvisionElements($clientId);
+
+        if ($elements->isEmpty()) {
+            $overview = self::billingOverview($clientId);
+            $reason = $overview['invoiced']->isNotEmpty()
+                ? 'tout est déjà facturé'
+                : ($overview['without_product'] > 0 ? 'prestations sans produit' : 'aucune prestation');
+
+            return ['action' => 'nothing', 'count' => 0, 'amount' => 0.0, 'draft' => null, 'reason' => $reason];
+        }
+
+        $draft = self::openDraftInvoice($clientId);
+
+        return [
+            'action' => $draft ? 'draft' : 'new',
+            'count'  => $elements->count(),
+            'amount' => (float) $elements->sum(fn (ProvisionElement $e) => $e->price->amount),
+            'draft'  => $draft,
+            'reason' => null,
+        ];
+    }
+
+    /**
+     * Cancel invoices created by a bulk generation (frees their provisions / registrations).
+     * Only invoices still in Ready or Draft status are cancelled: anything sent or paid is left untouched.
+     *
+     * @param  array<int, int>  $invoiceIds
+     * @return array{cancelled: int, skipped: int}
+     */
+    public static function cancelGeneratedInvoices(array $invoiceIds): array
+    {
+        $cancelled = 0;
+        $skipped = 0;
+
+        foreach (Invoice::whereIn('id', $invoiceIds)->get() as $invoice) {
+            if (! in_array($invoice->status, [InvoiceStatusEnum::Ready, InvoiceStatusEnum::Draft], true)) {
+                $skipped++;
+
+                continue;
+            }
+
+            $invoice->update(['status' => InvoiceStatusEnum::Cancelled]);
+            RunRegistration::where('invoice_id', $invoice->id)->update(['invoice_id' => null]);
+            $cancelled++;
+        }
+
+        self::flushCache();
+
+        return ['cancelled' => $cancelled, 'skipped' => $skipped];
     }
 
     /**

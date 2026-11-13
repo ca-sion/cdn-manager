@@ -10,6 +10,7 @@ use App\Helpers\AppHelper;
 use App\Models\RunRegistration;
 use App\Enums\InvoiceStatusEnum;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use App\Models\RunRegistrationElement;
 use Sprain\SwissQrBill\Reference\QrPaymentReferenceGenerator;
 
@@ -52,95 +53,155 @@ class RunRegistrationService
     }
 
     /**
-     * Facture les inscriptions d'un client qui ne sont pas encore facturées.
+     * Simulation de la facturation des inscriptions d'un client : RIEN n'est écrit.
+     * Sert à la fois à l'aperçu (actions en masse) et à la génération réelle.
      *
-     * - une facture « Brouillon » existante est recalculée (elle reçoit toutes les inscriptions non facturées ailleurs)
-     * - une facture Prête / Envoyée / Payée n'est JAMAIS modifiée : les inscriptions ajoutées depuis vont sur une nouvelle facture
-     * - une facture annulée ne compte pas ; les factures de prestations ne sont jamais touchées
+     * Règles :
+     * - les inscriptions Élite ne sont jamais facturées automatiquement
+     * - une facture « Brouillon » existante est recalculée ; Prête / Envoyée / Payée n'est jamais modifiée
+     * - une facture annulée ou une proforma ne compte pas ; les factures de prestations ne sont jamais touchées
+     * - le quota « inscriptions incluses » ne s'applique qu'aux inscriptions pas encore facturées
+     *
+     * @return array<string, mixed>
      */
-    public function createInvoiceForClient(int $clientId): Invoice
+    public function plan(int $clientId): array
     {
-        $registrations = RunRegistration::where('client_id', $clientId)->get();
+        $isElite = fn ($registration) => ($registration->run_registration_type?->value ?? $registration->run_registration_type) === 'elite';
 
-        if ($registrations->isEmpty()) {
-            throw new Exception('Aucune inscription trouvée pour ce client.');
-        }
+        $all = RunRegistration::where('client_id', $clientId)->get();
+        $registrations = $all->reject($isElite)->values();
+        $eliteExcluded = RunRegistrationElement::whereIn('run_registration_id', $all->filter($isElite)->pluck('id'))->count();
 
-        $allElements = RunRegistrationElement::whereIn('run_registration_id', $registrations->pluck('id'))->get();
+        $allElements = RunRegistrationElement::with('runRegistration')
+            ->whereIn('run_registration_id', $registrations->pluck('id'))
+            ->get();
 
-        if ($allElements->isEmpty()) {
-            throw new Exception('Impossible de générer une facture : aucune inscription trouvée pour ce client.');
-        }
-
-        $client = $registrations->first()->client ?? Client::find($clientId);
-        $quota = $client ? (int) $client->cdn_vouchers_quota : 0;
-
-        // Auto-application du quota d'inscriptions incluses selon le contrat de partenariat
-        if ($quota > 0) {
-            $currentFreeCount = $allElements->where('has_free_registration_fee', true)->count();
-            if ($currentFreeCount < $quota) {
-                $toUpdate = $allElements->where('has_free_registration_fee', false)->take($quota - $currentFreeCount);
-                foreach ($toUpdate as $el) {
-                    $el->update(['has_free_registration_fee' => true]);
-                }
-                $allElements = RunRegistrationElement::whereIn('run_registration_id', $registrations->pluck('id'))->get();
-            }
-        }
-
-        // Factures « courses » du client pour l'édition courante
         $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
         $runInvoices = Invoice::where('client_id', $clientId)
             ->where('edition_id', $editionId)
             ->active()
             ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
             ->get()
-            ->filter(fn (Invoice $invoice) => $invoice->isRunInvoice());
+            ->filter(fn (Invoice $invoice) => $invoice->isRunInvoice())
+            ->values();
 
         $draft = $runInvoices->first(fn (Invoice $invoice) => $invoice->isDraft());
-        $lockedInvoices = $runInvoices->reject(fn (Invoice $invoice) => $invoice->isDraft());
+        $locked = $runInvoices->reject(fn (Invoice $invoice) => $invoice->isDraft());
 
-        $alreadyInvoiced = $this->invoicedElementIds($lockedInvoices, $allElements);
-        $elements = $allElements->reject(fn ($el) => in_array($el->id, $alreadyInvoiced, true))->values();
+        $invoicedIds = $this->invoicedElementIds($locked, $allElements);
+        $elements = $allElements->reject(fn ($el) => in_array($el->id, $invoicedIds, true))->values();
 
-        if ($elements->isEmpty()) {
+        // Quota d'inscriptions incluses (contrat de partenariat), uniquement sur ce qui reste à facturer
+        $client = Client::find($clientId);
+        $quota = $client ? (int) $client->cdn_vouchers_quota : 0;
+        $quotaIds = [];
+        if ($quota > 0) {
+            $alreadyFree = $allElements->where('has_free_registration_fee', true)->count();
+            if ($alreadyFree < $quota) {
+                $quotaIds = $elements->where('has_free_registration_fee', false)->take($quota - $alreadyFree)->pluck('id')->all();
+            }
+        }
+
+        $simulated = $elements->map(function ($el) use ($quotaIds) {
+            $copy = clone $el;
+            if (in_array($el->id, $quotaIds, true)) {
+                $copy->has_free_registration_fee = true;
+            }
+
+            return $copy;
+        });
+
+        $positions = $this->buildPositions($simulated);
+        $total = (float) (new Invoice(['positions' => $positions->toArray()]))->total;
+
+        $warnings = [];
+        $zeroLines = $positions->filter(fn ($p) => ($p['cost'] ?? 0) == 0 && ! str_starts_with($p['name'], 'Inscriptions incluses'));
+        if ($zeroLines->isNotEmpty()) {
+            $warnings[] = 'ligne(s) à 0 CHF (course ou produit introuvable) : '.$zeroLines->pluck('name')->implode(', ');
+        }
+        if ($eliteExcluded > 0) {
+            $warnings[] = $eliteExcluded.' inscription(s) Élite non facturée(s)';
+        }
+
+        return [
+            'client_id'        => $clientId,
+            'client'           => $client,
+            'total_elements'   => $allElements->count(),
+            'invoiced'         => count($invoicedIds),
+            'elements'         => $elements,
+            'positions'        => $positions,
+            'amount'           => $total,
+            'quota_ids'        => $quotaIds,
+            'registration_ids' => $elements->pluck('run_registration_id')->unique()->values(),
+            'draft'            => $draft,
+            'invoices'         => $runInvoices,
+            'elite_excluded'   => $eliteExcluded,
+            'warnings'         => $warnings,
+            'registrations'    => $registrations,
+        ];
+    }
+
+    /**
+     * Facture les inscriptions d'un client qui ne sont pas encore facturées (voir plan() pour les règles).
+     * Tout est exécuté dans une transaction : quota, facture et liaison des dossiers réussissent ensemble ou pas du tout.
+     */
+    public function createInvoiceForClient(int $clientId): Invoice
+    {
+        $plan = $this->plan($clientId);
+
+        if ($plan['registrations']->isEmpty()) {
+            throw new Exception($plan['elite_excluded'] > 0
+                ? 'Seules des inscriptions Élite : elles ne sont pas facturées automatiquement.'
+                : 'Aucune inscription trouvée pour ce client.');
+        }
+
+        if ($plan['total_elements'] === 0) {
+            throw new Exception('Impossible de générer une facture : aucune inscription trouvée pour ce client.');
+        }
+
+        if ($plan['elements']->isEmpty()) {
             throw new Exception('Toutes les inscriptions de ce client sont déjà facturées.');
         }
 
-        $positions = $this->buildPositions($elements);
-        $registrationIds = $elements->pluck('run_registration_id')->unique()->values();
-        $dossierNumbers = $registrationIds->implode(', #');
-        $clientName = $client ? $client->name : 'Client #'.$clientId;
-        $invoiceTitle = 'Facture Inscriptions Courses - '.$clientName.' (Dossiers #'.$dossierNumbers.')';
+        return DB::transaction(function () use ($plan, $clientId) {
+            // Applique réellement le quota calculé
+            if ($plan['quota_ids'] !== []) {
+                RunRegistrationElement::whereIn('id', $plan['quota_ids'])->update(['has_free_registration_fee' => true]);
+            }
 
-        if ($draft) {
-            $draft->positions = $positions->toArray();
-            $draft->title = $invoiceTitle;
-            $draft->note = 'Facture Inscriptions Courses regroupant les dossiers #'.$dossierNumbers;
-            $draft->save();
-            $invoice = $draft;
-        } else {
-            $invoiceNumber = InvoiceService::generateInvoiceNumber();
+            $clientName = $plan['client'] ? $plan['client']->name : 'Client #'.$clientId;
+            $title = 'Facture d\'inscriptions - '.$clientName;
+            $note = 'Facture d\'inscriptions';
 
-            $invoice = new Invoice;
-            $invoice->edition_id = $editionId;
-            $invoice->client_id = $clientId;
-            $invoice->status = InvoiceStatusEnum::Ready;
-            $invoice->title = $invoiceTitle;
-            $invoice->number = $invoiceNumber;
-            $invoice->date = now();
-            $invoice->due_date = now()->addDays(30);
-            $invoice->positions = $positions->toArray();
-            $invoice->note = 'Facture Inscriptions Courses regroupant les dossiers #'.$dossierNumbers;
-            $invoice->meta = ['source' => 'run_registrations'];
-            $invoice->currency = 'CHF';
-            $invoice->qr_reference = QrPaymentReferenceGenerator::generate(null, $invoiceNumber);
-            $invoice->save();
-        }
+            if ($draft = $plan['draft']) {
+                $draft->positions = $plan['positions']->toArray();
+                $draft->title = $title;
+                $draft->note = $note;
+                $draft->save();
+                $invoice = $draft;
+            } else {
+                $invoiceNumber = InvoiceService::generateInvoiceNumber();
 
-        // Lie les inscriptions facturées à cette facture
-        RunRegistration::whereIn('id', $registrationIds)->update(['invoice_id' => $invoice->id]);
+                $invoice = new Invoice;
+                $invoice->edition_id = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+                $invoice->client_id = $clientId;
+                $invoice->status = InvoiceStatusEnum::Ready;
+                $invoice->title = $title;
+                $invoice->number = $invoiceNumber;
+                $invoice->date = now();
+                $invoice->due_date = now()->addDays(30);
+                $invoice->positions = $plan['positions']->toArray();
+                $invoice->note = $note;
+                $invoice->meta = ['source' => 'run_registrations'];
+                $invoice->currency = 'CHF';
+                $invoice->qr_reference = QrPaymentReferenceGenerator::generate(null, $invoiceNumber);
+                $invoice->save();
+            }
 
-        return $invoice;
+            RunRegistration::whereIn('id', $plan['registration_ids'])->update(['invoice_id' => $invoice->id]);
+
+            return $invoice;
+        });
     }
 
     /**
@@ -174,27 +235,14 @@ class RunRegistrationService
      */
     public function billingOverview(int $clientId): array
     {
-        $registrationIds = RunRegistration::where('client_id', $clientId)->pluck('id');
-        $allElements = RunRegistrationElement::with('runRegistration')->whereIn('run_registration_id', $registrationIds)->get();
-
-        $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
-        $invoices = Invoice::where('client_id', $clientId)
-            ->where('edition_id', $editionId)
-            ->active()
-            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
-            ->get()
-            ->filter(fn (Invoice $invoice) => $invoice->isRunInvoice())
-            ->values();
-
-        $locked = $invoices->reject(fn (Invoice $invoice) => $invoice->isDraft());
-        $invoiced = count($this->invoicedElementIds($locked, $allElements));
+        $plan = $this->plan($clientId);
 
         return [
-            'total'      => $allElements->count(),
-            'invoiced'   => $invoiced,
-            'to_invoice' => $allElements->count() - $invoiced,
-            'invoices'   => $invoices,
-            'draft'      => $invoices->first(fn (Invoice $invoice) => $invoice->isDraft()),
+            'total'      => $plan['total_elements'],
+            'invoiced'   => $plan['invoiced'],
+            'to_invoice' => $plan['elements']->count(),
+            'invoices'   => $plan['invoices'],
+            'draft'      => $plan['draft'],
         ];
     }
 

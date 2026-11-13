@@ -2,19 +2,32 @@
 
 namespace App\Filament\Actions;
 
+use App\Models\Invoice;
 use App\Enums\InvoiceStatusEnum;
-use Filament\Actions\BulkAction;
-use Illuminate\Database\Eloquent\Collection;
+use App\Filament\Actions\Support\InvoiceMailing;
 use App\Notifications\ClientSendInvoiceRelaunch;
-use App\Filament\Actions\Concerns\ResolvesInvoice;
 
-class RelaunchInvoiceBulkAction extends BulkAction
+class RelaunchInvoiceBulkAction extends InvoiceMailingBulkAction
 {
-    use ResolvesInvoice;
-
     public static function getDefaultName(): ?string
     {
         return 'relaunchInvoices';
+    }
+
+    protected function verb(): string
+    {
+        return 'Relance des factures';
+    }
+
+    protected function reason(?Invoice $invoice): ?string
+    {
+        return InvoiceMailing::relaunchReason($invoice);
+    }
+
+    protected function dispatchMail(Invoice $invoice): void
+    {
+        $invoice->client->notify(new ClientSendInvoiceRelaunch($invoice));
+        $invoice->update(['status' => InvoiceStatusEnum::Relaunched]);
     }
 
     protected function setUp(): void
@@ -23,17 +36,6 @@ class RelaunchInvoiceBulkAction extends BulkAction
 
         $this->label('Envoyer les relances')
             ->icon('heroicon-o-envelope')
-            ->requiresConfirmation()
-            ->deselectRecordsAfterCompletion()
-            ->action(function (Collection $records) {
-                foreach ($records as $record) {
-                    $invoice = $this->resolveInvoice($record);
-                    if (! $invoice) {
-                        continue;
-                    }
-                    $invoice->client?->notify(new ClientSendInvoiceRelaunch($invoice));
-                    $invoice->update(['status' => InvoiceStatusEnum::Relaunched]);
-                }
-            });
+            ->modalSubmitActionLabel('Envoyer les relances cochées');
     }
 }

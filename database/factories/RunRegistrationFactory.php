@@ -19,7 +19,7 @@ class RunRegistrationFactory extends Factory
     public function definition(): array
     {
         return [
-            'run_registration_type'  => $this->faker->randomElement(RunRegistrationType::cases()),
+            'run_registration_type'  => RunRegistrationType::Company,
             'invoicing_company_name' => $this->faker->company,
             'invoicing_address'      => $this->faker->streetAddress,
             'invoicing_postal_code'  => $this->faker->postcode,
@@ -30,5 +30,15 @@ class RunRegistrationFactory extends Factory
             'contact_email'          => $this->faker->email,
             'contact_phone'          => $this->faker->phoneNumber,
         ];
+    }
+
+    public function elite(): static
+    {
+        return $this->state(['run_registration_type' => RunRegistrationType::Elite]);
+    }
+
+    public function school(): static
+    {
+        return $this->state(['run_registration_type' => RunRegistrationType::School]);
     }
 }

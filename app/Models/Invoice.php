@@ -62,7 +62,9 @@ class Invoice extends Model
      */
     public function scopeRunInvoices(Builder $query): void
     {
-        $query->where(fn ($q) => $q->where('meta->source', 'run_registrations')->orWhere('note', 'like', 'Facture Inscriptions Courses%'));
+        $query->where(fn ($q) => $q->where('meta->source', 'run_registrations')
+            ->orWhere('note', 'like', 'Facture Inscriptions Courses%')   // ancien libellé
+            ->orWhere('note', 'like', 'Facture d\'inscriptions%'));
     }
 
     /**
@@ -71,7 +73,8 @@ class Invoice extends Model
     public function isRunInvoice(): bool
     {
         return ($this->meta['source'] ?? null) === 'run_registrations'
-            || str_starts_with((string) $this->note, 'Facture Inscriptions Courses');
+            || str_starts_with((string) $this->note, 'Facture Inscriptions Courses') // ancien libellé
+            || str_starts_with((string) $this->note, 'Facture d\'inscriptions');
     }
 
     /**
@@ -133,6 +136,26 @@ class Invoice extends Model
     public function edition(): BelongsTo
     {
         return $this->belongsTo(Edition::class);
+    }
+
+    /**
+     * Invoice title as displayed (PDF, QR « Informations supplémentaires », lists).
+     * Older run invoices were titled « Facture Inscriptions Courses - Client (Dossiers #1, #4) » :
+     * the wording is modernised and the internal dossier numbers are never shown.
+     */
+    protected function title(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): ?string {
+                if ($value === null) {
+                    return null;
+                }
+
+                $value = preg_replace('/\s*\((?:Dossiers?|dossiers?)\s*#[^)]*\)/u', '', $value);
+
+                return trim(str_replace('Facture Inscriptions Courses', 'Facture d\'inscriptions', $value));
+            },
+        );
     }
 
     /**

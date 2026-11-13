@@ -45,6 +45,22 @@ enum InvoiceStatusEnum: string implements HasColor, HasLabel
         };
     }
 
+    /**
+     * Statuses from which the invoice may be (first) sent to the client.
+     */
+    public function canBeSent(): bool
+    {
+        return in_array($this, [self::Draft, self::Ready, self::ToModify], true);
+    }
+
+    /**
+     * Statuses from which a reminder may be sent.
+     */
+    public function canBeRelaunched(): bool
+    {
+        return in_array($this, [self::Sent, self::Relaunched, self::Overdue, self::ToRelaunch, self::SentByPost, self::ActionRequired], true);
+    }
+
     public function getColor(): string|array|null
     {
         return match ($this) {

@@ -9,9 +9,12 @@ use App\Filament\Exports\ClientExporter;
 use App\Filament\Imports\ClientImporter;
 use Filament\Resources\Pages\ListRecords;
 use App\Filament\Resources\ClientResource;
+use App\Filament\Pages\Concerns\CancelsBulkInvoices;
 
 class ListClients extends ListRecords
 {
+    use CancelsBulkInvoices;
+
     protected static string $resource = ClientResource::class;
 
     protected function getHeaderActions(): array

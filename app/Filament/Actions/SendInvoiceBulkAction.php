@@ -2,19 +2,32 @@
 
 namespace App\Filament\Actions;
 
+use App\Models\Invoice;
 use App\Enums\InvoiceStatusEnum;
-use Filament\Actions\BulkAction;
 use App\Notifications\ClientSendInvoice;
-use Illuminate\Database\Eloquent\Collection;
-use App\Filament\Actions\Concerns\ResolvesInvoice;
+use App\Filament\Actions\Support\InvoiceMailing;
 
-class SendInvoiceBulkAction extends BulkAction
+class SendInvoiceBulkAction extends InvoiceMailingBulkAction
 {
-    use ResolvesInvoice;
-
     public static function getDefaultName(): ?string
     {
         return 'sendInvoices';
+    }
+
+    protected function verb(): string
+    {
+        return 'Envoi des factures';
+    }
+
+    protected function reason(?Invoice $invoice): ?string
+    {
+        return InvoiceMailing::sendReason($invoice);
+    }
+
+    protected function dispatchMail(Invoice $invoice): void
+    {
+        $invoice->client->notify(new ClientSendInvoice($invoice));
+        $invoice->update(['status' => InvoiceStatusEnum::Sent]);
     }
 
     protected function setUp(): void
@@ -23,17 +36,6 @@ class SendInvoiceBulkAction extends BulkAction
 
         $this->label('Envoyer les factures')
             ->icon('heroicon-o-envelope')
-            ->requiresConfirmation()
-            ->deselectRecordsAfterCompletion()
-            ->action(function (Collection $records) {
-                foreach ($records as $record) {
-                    $invoice = $this->resolveInvoice($record);
-                    if (! $invoice) {
-                        continue;
-                    }
-                    $invoice->client?->notify(new ClientSendInvoice($invoice));
-                    $invoice->update(['status' => InvoiceStatusEnum::Sent]);
-                }
-            });
+            ->modalSubmitActionLabel('Envoyer les factures cochées');
     }
 }
