@@ -13,6 +13,7 @@ use App\Enums\InvoiceStatusEnum;
 use App\Models\ProvisionElement;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Cache;
 use Sprain\SwissQrBill\QrCode\QrCode;
 use Sprain\SwissQrBill\PaymentPart\Output\DisplayOptions;
 use Sprain\SwissQrBill\DataGroup\Element\PaymentReference;
@@ -390,23 +391,23 @@ class InvoiceService
             return $draft;
         }
 
-        $invoiceNumber = self::generateInvoiceNumber();
+        return self::createWithNumber(function (string $invoiceNumber) use ($clientId, $positions) {
+            $invoice = new Invoice;
+            $invoice->edition_id = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+            $invoice->client_id = $clientId;
+            $invoice->status = InvoiceStatusEnum::Ready;
+            $invoice->title = self::generateInvoicetitle($invoiceNumber);
+            $invoice->number = $invoiceNumber;
+            $invoice->date = now();
+            $invoice->due_date = now()->addDays(30);
+            $invoice->positions = $positions;
+            $invoice->note = 'Généré automatiquement';
+            $invoice->currency = 'CHF';
+            $invoice->qr_reference = QrPaymentReferenceGenerator::generate(null, $invoiceNumber);
+            $invoice->save();
 
-        $invoice = new Invoice;
-        $invoice->edition_id = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
-        $invoice->client_id = $clientId;
-        $invoice->status = InvoiceStatusEnum::Ready;
-        $invoice->title = self::generateInvoicetitle();
-        $invoice->number = $invoiceNumber;
-        $invoice->date = now();
-        $invoice->due_date = now()->addDays(30);
-        $invoice->positions = $positions;
-        $invoice->note = 'Généré automatiquement';
-        $invoice->currency = 'CHF';
-        $invoice->qr_reference = QrPaymentReferenceGenerator::generate(null, $invoiceNumber);
-        $invoice->save();
-
-        return $invoice;
+            return $invoice;
+        });
     }
 
     /**
@@ -482,20 +483,50 @@ class InvoiceService
         $draft->save();
     }
 
-    public static function generateInvoiceNumber()
+    /**
+     * Next free invoice number: edition year + sequence (« 2025007 »).
+     *
+     * The sequence is the highest number already used for that year + 1, and the result is checked against
+     * the database, so two invoices created within the same second (bulk generation) never get the same number
+     * and numbers of deleted invoices are never reused below the current maximum.
+     *
+     * Callers that create an invoice must do it inside createWithNumber() to be safe against simultaneous requests.
+     */
+    public static function generateInvoiceNumber(): string
     {
-        $lastInvoice = Invoice::latest()->first();
-        $lastInvoiceId = $lastInvoice ? $lastInvoice->id : 0;
         $edition = Edition::find(AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id'));
-        $editionYear = $edition->year;
+        $year = (string) $edition->year;
 
-        $invoiceNumber = str_pad($lastInvoiceId + 1, 3, '0', STR_PAD_LEFT);
+        $max = Invoice::withoutGlobalScopes()
+            ->where('number', 'like', $year.'%')
+            ->pluck('number')
+            ->map(fn ($number) => (int) substr((string) $number, strlen($year)))
+            ->max() ?? 0;
 
-        return $editionYear.$invoiceNumber;
+        do {
+            $max++;
+            $number = $year.str_pad((string) $max, 3, '0', STR_PAD_LEFT);
+        } while (Invoice::withoutGlobalScopes()->where('number', $number)->exists());
+
+        return $number;
     }
 
-    public static function generateInvoicetitle()
+    /**
+     * Runs $creator(string $number) while holding a lock, so that the number it receives cannot be handed
+     * to another request before the invoice is saved.
+     *
+     * @template T
+     *
+     * @param  callable(string): T  $creator
+     * @return T
+     */
+    public static function createWithNumber(callable $creator): mixed
     {
-        return 'Facture '.self::generateInvoiceNumber();
+        return Cache::lock('invoice-numbering', 15)->block(10, fn () => $creator(self::generateInvoiceNumber()));
+    }
+
+    public static function generateInvoicetitle(?string $number = null)
+    {
+        return 'Facture '.($number ?? self::generateInvoiceNumber());
     }
 }

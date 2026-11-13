@@ -92,6 +92,7 @@ class InvoiceResource extends Resource
                 TextInput::make('number')
                     ->label('Numéro de facture')
                     ->default(fn () => InvoiceService::generateInvoiceNumber())
+                    ->unique(ignoreRecord: true)
                     ->hintAction(
                         Action::make('syncNumber')
                             ->label('Générer')

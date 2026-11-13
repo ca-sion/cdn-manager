@@ -229,22 +229,24 @@ class RunRegistrationService
                 $draft->save();
                 $invoice = $draft;
             } else {
-                $invoiceNumber = InvoiceService::generateInvoiceNumber();
+                $invoice = InvoiceService::createWithNumber(function (string $invoiceNumber) use ($plan, $clientId, $note) {
+                    $invoice = new Invoice;
+                    $invoice->edition_id = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
+                    $invoice->client_id = $clientId;
+                    $invoice->status = InvoiceStatusEnum::Ready;
+                    $invoice->title = 'Facture d\'inscriptions '.$invoiceNumber;
+                    $invoice->number = $invoiceNumber;
+                    $invoice->date = now();
+                    $invoice->due_date = now()->addDays(30);
+                    $invoice->positions = $plan['positions']->toArray();
+                    $invoice->note = $note;
+                    $invoice->meta = ['source' => 'run_registrations'];
+                    $invoice->currency = 'CHF';
+                    $invoice->qr_reference = QrPaymentReferenceGenerator::generate(null, $invoiceNumber);
+                    $invoice->save();
 
-                $invoice = new Invoice;
-                $invoice->edition_id = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
-                $invoice->client_id = $clientId;
-                $invoice->status = InvoiceStatusEnum::Ready;
-                $invoice->title = 'Facture d\'inscriptions '.$invoiceNumber;
-                $invoice->number = $invoiceNumber;
-                $invoice->date = now();
-                $invoice->due_date = now()->addDays(30);
-                $invoice->positions = $plan['positions']->toArray();
-                $invoice->note = $note;
-                $invoice->meta = ['source' => 'run_registrations'];
-                $invoice->currency = 'CHF';
-                $invoice->qr_reference = QrPaymentReferenceGenerator::generate(null, $invoiceNumber);
-                $invoice->save();
+                    return $invoice;
+                });
             }
 
             RunRegistration::whereIn('id', $plan['registration_ids'])->update(['invoice_id' => $invoice->id]);
