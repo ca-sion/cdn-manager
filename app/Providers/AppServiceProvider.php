@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
 use Filament\Infolists\Components\ImageEntry;
+use Filament\Support\Facades\FilamentTimezone;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         require_once app_path('Helpers/AppHelper.php');
+
+        // Heures affichées et saisies dans le panel : heure suisse. La base reste en UTC (aucun décalage des données).
+        FilamentTimezone::set('Europe/Zurich');
 
         Table::configureUsing(fn (Table $table) => $table
             ->deferFilters(false)

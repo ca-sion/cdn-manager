@@ -91,7 +91,7 @@ class DocumentResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('edition.year')
-                    ->label('Edition')
+                    ->label('Édition')
                     ->sortable(),
                 TextColumn::make('client.name')
                     ->label('Client')
@@ -104,19 +104,25 @@ class DocumentResource extends Resource
                 TextColumn::make('status')
                     ->label('Statut'),
                 TextColumn::make('date')
+                    ->label('Date')
                     ->date()
                     ->sortable(),
                 TextColumn::make('validity_year_start')
+                    ->label('Début de validité')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('validity_year_end')
+                    ->label('Fin de validité')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('note')
+                    ->label('Note')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
+                    ->label('Créé le')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('Modifié le')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

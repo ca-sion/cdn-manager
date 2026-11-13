@@ -28,7 +28,7 @@ class DocumentsRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 TextColumn::make('edition.year')
-                    ->label('Edition')
+                    ->label('Édition')
                     ->sortable(),
                 TextColumn::make('name')
                     ->label('Nom')
@@ -36,6 +36,7 @@ class DocumentsRelationManager extends RelationManager
                 TextColumn::make('type')
                     ->label('Type'),
                 TextColumn::make('date')
+                    ->label('Date')
                     ->date()
                     ->sortable(),
             ])

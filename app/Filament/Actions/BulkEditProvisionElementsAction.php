@@ -34,7 +34,7 @@ class BulkEditProvisionElementsAction extends BulkAction
                     ->options(MediaStatusEnum::class),
                 Select::make('edition_id')
                     ->searchable()
-                    ->label('Edition')
+                    ->label('Édition')
                     ->relationship('edition', 'year'),
             ])
             ->action(function (Collection $records, array $data): void {

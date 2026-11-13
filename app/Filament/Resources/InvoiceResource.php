@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Models\Invoice;
+use App\Support\VatRates;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
@@ -158,11 +159,7 @@ class InvoiceResource extends Resource
                         Select::make('tax_rate')
                             ->label('TVA')
                             ->default(null)
-                            ->options([
-                                '8.1' => '8.1',
-                                '3.8' => '3.8',
-                                '2.6' => '2.1',
-                            ])
+                            ->options(VatRates::options())
                             ->suffix('%')
                             ->live(),
                         Checkbox::make('include_vat')
@@ -226,7 +223,6 @@ class InvoiceResource extends Resource
                 ->label('Vu à')
                 ->since()
                 ->dateTimeTooltip('d.m.y H:i')
-                ->timezone('Europe/Zurich')
                 ->sortable()
                 ->toggleable(),
             $withClient ? TextColumn::make('client.name')

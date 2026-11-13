@@ -85,7 +85,9 @@ class RunResource extends Resource
                             ->numeric()
                             ->suffix('ans'),
                         DateTimePicker::make('registrations_deadline')
-                            ->label('Délai d\'inscription'),
+                            ->label('Délai d\'inscription')
+                            // Échéance saisie telle quelle : pas de conversion de fuseau (les données existantes ne glissent pas)
+                            ->timezone(config('app.timezone')),
                         TextInput::make('registrations_limit')
                             ->label('Limite d\'inscriptions')
                             ->numeric(),
@@ -163,6 +165,7 @@ class RunResource extends Resource
                 TextColumn::make('registrations_deadline')
                     ->label('Délai')
                     ->dateTime()
+                    ->timezone(config('app.timezone'))
                     ->sortable(),
                 TextColumn::make('registrations_limit')
                     ->label('Limite')

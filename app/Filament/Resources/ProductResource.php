@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use Filament\Tables;
 use App\Models\Product;
+use App\Support\VatRates;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
@@ -56,11 +57,7 @@ class ProductResource extends Resource
                     ->prefix('CHF'),
                 Select::make('tax_rate')
                     ->label('TVA')
-                    ->options([
-                        '8.1' => '8.1',
-                        '3.8' => '3.8',
-                        '2.6' => '2.1',
-                    ])
+                    ->options(VatRates::options())
                     ->suffix('%'),
                 Checkbox::make('include_vat')
                     ->label('Inclure TVA')
@@ -104,11 +101,7 @@ class ProductResource extends Resource
                     ->numeric(),
                 SelectColumn::make('tax_rate')
                     ->label('TVA')
-                    ->options([
-                        '8.1' => '8.1',
-                        '3.8' => '3.8',
-                        '2.6' => '2.1',
-                    ]),
+                    ->options(VatRates::options()),
 
                 CheckboxColumn::make('include_vat')
                     ->label('Inclure TVA'),

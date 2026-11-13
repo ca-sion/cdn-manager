@@ -6,6 +6,7 @@ use App\Classes\Price;
 use App\Models\Client;
 use App\Models\Contact;
 use App\Models\Provision;
+use App\Support\VatRates;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
@@ -84,7 +85,7 @@ class ProvisionElementResource extends Resource
                 Group::make([
                     Select::make('edition_id')
                         ->searchable()
-                        ->label('Edition')
+                        ->label('Édition')
                         ->relationship('edition', 'year')
                         ->default(session('edition_id'))
                         ->required(),
@@ -154,6 +155,8 @@ class ProvisionElementResource extends Resource
                         TimePicker::make('contact_time')
                             ->label('Heure du contact')
                             ->seconds(false)
+                            // Heure saisie telle quelle : pas de conversion de fuseau (sinon 14:30 s'afficherait 15:30)
+                            ->timezone(config('app.timezone'))
                             ->visible(fn (Get $get) => $get('provision_id') ? Provision::find($get('provision_id'))->has_contact : false),
                         Select::make('media_status')
                             ->label('Statut du média')
@@ -232,11 +235,7 @@ class ProvisionElementResource extends Resource
                                     ->visible(fn (Get $get) => $get('has_product')),
                                 Select::make('tax_rate')
                                     ->label('TVA')
-                                    ->options([
-                                        '8.1' => '8.1',
-                                        '3.8' => '3.8',
-                                        '2.6' => '2.1',
-                                    ])
+                                    ->options(VatRates::options())
                                     ->suffix('%')
                                     ->hintAction(
                                         Action::make('syncTaxRateFromProduct')
@@ -447,6 +446,7 @@ class ProvisionElementResource extends Resource
                 TextColumn::make('contact_time')
                     ->label('Heure')
                     ->time('H:i')
+                    ->timezone(config('app.timezone'))
                     ->sortable()
                     ->toggleable(),
                 SpatieMediaLibraryImageColumn::make('medias')

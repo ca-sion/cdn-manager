@@ -200,6 +200,7 @@ class ClientResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('category.name')
+                    ->label('Catégorie')
                     ->badge()
                     ->sortable()
                     ->toggleable(),
@@ -215,35 +216,44 @@ class ClientResource extends Resource
                     ->label('Responsable')
                     ->toggleable(),
                 TextColumn::make('name')
+                    ->label('Nom')
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('long_name')
+                    ->label('Raison sociale')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 SpatieMediaLibraryImageColumn::make('logo')
+                    ->label('Logo')
                     ->collection('logos'),
                 TextColumn::make('email')
+                    ->label('E-mail')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('phone')
+                    ->label('Téléphone')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('address')
+                    ->label('Adresse')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('address_extension')
+                    ->label('Complément d\'adresse')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('locality')
+                    ->label('Localité')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('postal_code')
+                    ->label('NPA')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->searchable(),

@@ -260,7 +260,7 @@ class ContactResource extends Resource
                                 ->default(1),
                             Select::make('edition_id')
                                 ->searchable()
-                                ->label('Edition')
+                                ->label('Édition')
                                 ->options(Edition::all()->pluck('year', 'id'))
                                 ->default(session('edition_id'))
                                 ->required(),
