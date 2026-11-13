@@ -123,4 +123,21 @@ class FrontRunRegistrationExcelImportTest extends TestCase
 
         $c->assertHasErrors('importFile');
     }
+
+    /** @test */
+    public function the_downloadable_template_can_be_reimported()
+    {
+        $response = Livewire::test(FrontRunRegistration::class, ['type' => 'group'])
+            ->call('downloadImportTemplate')->effects['download'];
+
+        $content = base64_decode($response['content']);
+        $this->assertNotEmpty($content);
+
+        $c = $this->import(UploadedFile::fake()->createWithContent('modele.xlsx', $content));
+        $c->assertHasNoErrors();
+        $this->assertSame([
+            ['Lucas', 'Rey', '02.02.2014', 'M', 'lucas@example.com'],
+            ['Emma', 'Dubois', '15.08.2012', 'F', ''],
+        ], $this->people($c));
+    }
 }

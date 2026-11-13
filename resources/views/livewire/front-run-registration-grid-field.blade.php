@@ -317,6 +317,11 @@
                         <div class="text-gray-600 dark:text-gray-400 text-2xs">
                             Exemple : <code class="font-mono font-bold text-gray-900 dark:text-gray-200">Lucas &nbsp; Rey &nbsp; 02.02.2018 &nbsp; M &nbsp; lucas@example.com &nbsp; SUI</code>
                         </div>
+                        <div>
+                            <button type="button" wire:click="downloadImportTemplate" class="inline-flex items-center gap-1 text-2xs font-semibold text-indigo-700 dark:text-indigo-300 underline hover:no-underline cursor-pointer">
+                                ⬇️ Télécharger le modèle Excel (.xlsx)
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Onglets Choisis (Copier-Coller vs Fichier Excel) -->

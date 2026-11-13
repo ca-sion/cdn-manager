@@ -842,6 +842,17 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         }
     }
 
+    /** Modèle Excel à remplir puis à réimporter (mêmes en-têtes que ceux attendus par l'import). */
+    public function downloadImportTemplate()
+    {
+        $rows = collect([
+            ['Prénom' => 'Lucas', 'Nom' => 'Rey', 'Date de naissance' => '02.02.2014', 'Genre' => 'M', 'Email' => 'lucas@example.com', 'Nationalité' => 'SUI'],
+            ['Prénom' => 'Emma', 'Nom' => 'Dubois', 'Date de naissance' => '15.08.2012', 'Genre' => 'F', 'Email' => '', 'Nationalité' => 'SUI'],
+        ]);
+
+        return (new FastExcel($rows))->download('modele_import_participants.xlsx');
+    }
+
     public function processExcelImport(): void
     {
         if (! $this->importFile) {
