@@ -206,6 +206,42 @@ class InvoiceService
     }
 
     /**
+     * Billing overview of a client's provisions (current edition), used to explain the situation in the UI.
+     *
+     * @return array{
+     *     to_invoice: Collection<int, ProvisionElement>,
+     *     invoiced: Collection<int, array{element: ProvisionElement, invoice: Invoice, recognised: bool}>,
+     *     without_product: int,
+     *     legacy_invoices: Collection<int, Invoice>
+     * }
+     */
+    public static function billingOverview(int $clientId): array
+    {
+        $client = Client::findOrFail($clientId);
+        $all = $client->currentProvisionElements()->with('provision.category')->get();
+        $candidates = $all->where('has_product', true)->values();
+
+        $invoiced = collect();
+        $taken = [];
+        foreach (self::provisionInvoices($clientId) as $invoice) {
+            $tracked = $invoice->provisionElementIds() !== [];
+            foreach (self::invoicedElementIds($invoice, $candidates) as $id) {
+                if ($element = $candidates->firstWhere('id', $id)) {
+                    $invoiced->push(['element' => $element, 'invoice' => $invoice, 'recognised' => ! $tracked]);
+                    $taken[] = $id;
+                }
+            }
+        }
+
+        return [
+            'to_invoice'      => $candidates->reject(fn ($e) => in_array($e->id, $taken, true))->values(),
+            'invoiced'        => $invoiced,
+            'without_product' => $all->where('has_product', false)->count(),
+            'legacy_invoices' => self::legacyProvisionInvoices($clientId),
+        ];
+    }
+
+    /**
      * Active provision invoices created before elements were tracked (positions without element ids).
      * We cannot know which provisions they contain, so the user must be warned.
      *

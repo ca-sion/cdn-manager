@@ -219,4 +219,51 @@ class ClientPageFlowTest extends TestCase
             ->assertCanSeeTableRecords([$invoice])
             ->assertTableActionExists('resetInvoiceViewedAt', record: $invoice);
     }
+
+    public function test_modal_explains_when_everything_is_already_invoiced(): void
+    {
+        $element = $this->element();
+        Invoice::create([
+            'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => InvoiceStatusEnum::Sent,
+            'number'     => '2025001', 'positions' => [['name' => $element->name, 'quantity' => 1, 'cost' => 100, 'tax_rate' => 8.1]],
+        ]);
+
+        Livewire::test(EditClient::class, ['record' => $this->client->getKey()])
+            ->mountAction('generateInvoice')
+            ->assertMountedActionModalSee('0 à facturer')
+            ->assertMountedActionModalSee('1 déjà facturée(s)')
+            ->assertMountedActionModalSee('Rien à facturer')
+            ->assertMountedActionModalSee('Facture 2025001')
+            ->assertMountedActionModalSee($element->name)
+            ->assertMountedActionModalDontSee('Prestations à mettre sur la facture');
+    }
+
+    public function test_modal_lists_provisions_to_invoice_and_what_is_already_invoiced(): void
+    {
+        $done = $this->element();
+        $todo = $this->element();
+        InvoiceService::generateInvoiceByClient($this->client->id, [$done->id]);
+
+        Livewire::test(EditClient::class, ['record' => $this->client->getKey()])
+            ->mountAction('generateInvoice')
+            ->assertMountedActionModalSee('1 à facturer')
+            ->assertMountedActionModalSee('1 déjà facturée(s)')
+            ->assertMountedActionModalSee('Prestations à mettre sur la facture')
+            ->assertMountedActionModalSee($todo->name)
+            ->assertMountedActionModalSee('Une nouvelle facture');
+    }
+
+    public function test_modal_mentions_provisions_without_price(): void
+    {
+        $provision = Provision::factory()->create(['edition_id' => $this->edition->id, 'product_id' => null]);
+        ProvisionElement::factory()->create([
+            'edition_id'   => $this->edition->id, 'recipient_id' => $this->client->id, 'recipient_type' => Client::class,
+            'provision_id' => $provision->id, 'has_product' => false,
+        ]);
+
+        Livewire::test(EditClient::class, ['record' => $this->client->getKey()])
+            ->mountAction('generateInvoice')
+            ->assertMountedActionModalSee('1 sans prix')
+            ->assertMountedActionModalSee('aucune prestation avec un prix');
+    }
 }
