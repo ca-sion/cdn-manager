@@ -27,8 +27,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
 use App\Filament\Actions\InvoiceActionGroup;
+use App\Filament\Actions\ClientMailingAction;
 use App\Filament\Actions\CopyEmailBulkAction;
 use App\Filament\Actions\ExportMediaBulkAction;
+use App\Filament\Actions\Support\ClientMailing;
 use App\Filament\Actions\SendMediaMissingAction;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -108,6 +110,15 @@ class ProvisionElementsRelationManager extends RelationManager
                 CreateAction::make()->icon('heroicon-o-plus'),
                 GenerateClientInvoiceAction::make()
                     ->clientIdUsing(fn () => $this->ownerRecord->id),
+                ActionGroup::make(
+                    collect(ClientMailing::DEFINITIONS)->keys()
+                        ->map(fn (string $key) => ClientMailingAction::for($key)->clientUsing(fn () => $this->ownerRecord))
+                        ->all()
+                )
+                    ->label('Envois')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->button()
+                    ->color('gray'),
                 Action::make('copy_previous')
                     ->label("Reprendre de l'édition précédente")
                     ->icon('heroicon-o-clipboard-document-list')

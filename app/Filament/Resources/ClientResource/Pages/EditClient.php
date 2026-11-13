@@ -16,6 +16,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Actions\ClientPdfAction;
 use App\Filament\Resources\ClientResource;
+use App\Filament\Actions\ClientMailingAction;
+use App\Filament\Actions\Support\ClientMailing;
 use App\Filament\Actions\SendMediaMissingAction;
 use App\Filament\Actions\SendClientVouchersAction;
 use App\Notifications\ClientAdvertiserFormCreated;
@@ -49,6 +51,7 @@ class EditClient extends EditRecord
                     ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated)),
                 SendClientVouchersAction::make(),
                 SendMediaMissingAction::make(),
+                ...collect(ClientMailing::DEFINITIONS)->keys()->map(fn (string $key) => ClientMailingAction::for($key))->all(),
             ])
                 ->label('Envois')
                 ->icon('heroicon-o-paper-airplane')

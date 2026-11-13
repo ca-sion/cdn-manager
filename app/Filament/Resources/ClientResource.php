@@ -44,20 +44,19 @@ use App\Filament\Actions\InvoiceActionGroup;
 use Filament\Tables\Columns\TextInputColumn;
 use Illuminate\Database\Eloquent\Collection;
 use Spatie\MediaLibrary\Support\MediaStream;
+use App\Filament\Actions\ClientMailingAction;
 use App\Filament\Actions\CopyEmailBulkAction;
 use App\Filament\Actions\SendInvoiceBulkAction;
-use App\Notifications\ClientAdvertiserFormLink;
+use App\Filament\Actions\Support\ClientMailing;
 use App\Filament\Actions\SendMediaMissingAction;
+use App\Filament\Actions\ClientMailingBulkAction;
 use App\Filament\Actions\SendClientVouchersAction;
 use App\Filament\Actions\RelaunchInvoiceBulkAction;
-use App\Notifications\ClientAdvertiserFormRelaunch;
-use App\Notifications\ClientInterclassDonorRequest;
 use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
 use App\Filament\Actions\GenerateClientInvoicesBulkAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use App\Filament\Resources\ClientResource\Pages\EditClient;
-use App\Notifications\ClientInterclassDonorRequestRelaunch;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use App\Filament\Resources\ClientResource\Pages\ListClients;
 use App\Filament\Resources\ClientResource\Pages\CreateClient;
@@ -371,6 +370,12 @@ class ClientResource extends Resource
                     SendClientVouchersAction::make(),
                     SendMediaMissingAction::make(),
                 ])->iconButton(),
+                ActionGroup::make(
+                    collect(ClientMailing::DEFINITIONS)->keys()->map(fn (string $key) => ClientMailingAction::for($key))->all()
+                )
+                    ->label('Envois')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->iconButton(),
                 InvoiceActionGroup::make(
                     invoice: fn (Client $record) => $record->latestInvoice(),
                     clientId: fn (?Model $record) => $record?->id,
@@ -382,29 +387,7 @@ class ClientResource extends Resource
                     GenerateClientInvoicesBulkAction::make(),
                     SendInvoiceBulkAction::make()->invoiceUsing(fn (Client $record) => $record->latestInvoice()),
                     RelaunchInvoiceBulkAction::make()->invoiceUsing(fn (Client $record) => $record->latestInvoice()),
-                    BulkAction::make('send_advertiser_form')
-                        ->label('Envoyer le formulaire annonceur')
-                        ->icon('heroicon-o-envelope')
-                        ->color('warning')
-                        ->action(function (Collection $records) {
-                            foreach ($records as $client) {
-                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
-                                $client->notify(new ClientAdvertiserFormLink($client, $previousOrderDetails));
-
-                                // ClientEngagement
-                                $engagement = $client->currentEngagement()->firstOrCreate([
-                                    'edition_id' => AppHelper::getCurrentEditionId(),
-                                ]);
-                                $engagement->stage = EngagementStageEnum::ProposalSent;
-                                $engagement->status = EngagementStatusEnum::Idle;
-                                $engagement->sent_at = now();
-                                $engagement->save();
-                            }
-                            Notification::make()
-                                ->title('Formulaires annonceurs envoyés')
-                                ->success()
-                                ->send();
-                        }),
+                    ClientMailingBulkAction::for('send_advertiser_form'),
                     BulkAction::make('send_company_registration_invitation')
                         ->label('Envoyer invitation inscription entreprise (Lien signé)')
                         ->icon('heroicon-o-paper-airplane')
@@ -436,75 +419,9 @@ class ClientResource extends Resource
                                 ->success()
                                 ->send();
                         }),
-                    BulkAction::make('relaunch_advertiser_form')
-                        ->label('Relancer annonceur avec formulaire')
-                        ->icon('heroicon-o-envelope')
-                        ->color('warning')
-                        ->action(function (Collection $records) {
-                            foreach ($records as $client) {
-                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
-                                $client->notify(new ClientAdvertiserFormRelaunch($client, $previousOrderDetails));
-
-                                // ClientEngagement
-                                $engagement = $client->currentEngagement()->firstOrCreate([
-                                    'edition_id' => AppHelper::getCurrentEditionId(),
-                                ]);
-                                $engagement->stage = EngagementStageEnum::ProposalSent;
-                                $engagement->status = EngagementStatusEnum::Relaunched;
-                                $engagement->relaunched_at = now();
-                                $engagement->save();
-                            }
-                            Notification::make()
-                                ->title('Formulaires annonceurs re-envoyés')
-                                ->success()
-                                ->send();
-                        }),
-                    BulkAction::make('send_interclass_donors_email')
-                        ->label('Envoyer la demande aux donateurs interclasses')
-                        ->icon('heroicon-o-envelope')
-                        ->color('warning')
-                        ->action(function (Collection $records) {
-                            foreach ($records as $client) {
-                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
-                                $client->notify(new ClientInterclassDonorRequest($client, $previousOrderDetails));
-
-                                // ClientEngagement
-                                $engagement = $client->currentEngagement()->firstOrCreate([
-                                    'edition_id' => AppHelper::getCurrentEditionId(),
-                                ]);
-                                $engagement->stage = EngagementStageEnum::ProposalSent;
-                                $engagement->status = EngagementStatusEnum::Idle;
-                                $engagement->sent_at = now();
-                                $engagement->save();
-                            }
-                            Notification::make()
-                                ->title('Emails donateurs interclasses envoyés')
-                                ->success()
-                                ->send();
-                        }),
-                    BulkAction::make('relaunch_interclass_donors_email')
-                        ->label('Relancer les donateurs interclasses')
-                        ->icon('heroicon-o-envelope')
-                        ->color('warning')
-                        ->action(function (Collection $records) {
-                            foreach ($records as $client) {
-                                $previousOrderDetails = $client->getPreviousEditionProvisionElementsDetails();
-                                $client->notify(new ClientInterclassDonorRequestRelaunch($client, $previousOrderDetails));
-
-                                // ClientEngagement
-                                $engagement = $client->currentEngagement()->firstOrCreate([
-                                    'edition_id' => AppHelper::getCurrentEditionId(),
-                                ]);
-                                $engagement->stage = EngagementStageEnum::ProposalSent;
-                                $engagement->status = EngagementStatusEnum::Relaunched;
-                                $engagement->sent_at = now();
-                                $engagement->save();
-                            }
-                            Notification::make()
-                                ->title('Emails donateurs interclasses envoyés')
-                                ->success()
-                                ->send();
-                        }),
+                    ClientMailingBulkAction::for('relaunch_advertiser_form'),
+                    ClientMailingBulkAction::for('send_interclass_donors_email'),
+                    ClientMailingBulkAction::for('relaunch_interclass_donors_email'),
                     SendMediaMissingBulkAction::make(),
                     SendVipInvitationBulkAction::make()->forRecipients(),
                     BulkAction::make('mark_as_relaunched')

@@ -44,12 +44,15 @@ use Filament\Forms\Components\Placeholder;
 use App\Filament\Actions\InvoiceActionGroup;
 use Filament\Forms\Components\MorphToSelect;
 use Filament\Tables\Columns\Summarizers\Sum;
+use App\Filament\Actions\ClientMailingAction;
 use App\Filament\Actions\CopyEmailBulkAction;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use App\Filament\Actions\ExportMediaBulkAction;
+use App\Filament\Actions\Support\ClientMailing;
 use App\Filament\Actions\SendMediaMissingAction;
 use Filament\Tables\Enums\RecordActionsPosition;
+use App\Filament\Actions\ClientMailingBulkAction;
 use Filament\Forms\Components\MorphToSelect\Type;
 use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
@@ -594,6 +597,13 @@ class ProvisionElementResource extends Resource
                     ClientPdfAction::make()->clientUsing(fn (Model $record) => $record->recipient),
                     SendMediaMissingAction::make()->clientUsing(fn (Model $record) => $record->recipient),
                 ]),
+                ActionGroup::make(
+                    collect(ClientMailing::DEFINITIONS)->keys()
+                        ->map(fn (string $key) => ClientMailingAction::for($key)->clientUsing(fn (Model $record) => $record->recipient))
+                        ->all()
+                )
+                    ->label('Envois')
+                    ->icon('heroicon-o-paper-airplane'),
                 InvoiceActionGroup::make(
                     invoice: fn (Model $record) => $record->recipient instanceof Client ? $record->recipient->latestInvoice() : null,
                     clientId: fn (?Model $record) => $record?->recipient instanceof Client ? $record->recipient->id : null,
@@ -606,6 +616,9 @@ class ProvisionElementResource extends Resource
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
                     SendMediaMissingBulkAction::make()->clientUsing(fn (Model $record) => $record->recipient),
+                    ...collect(ClientMailing::DEFINITIONS)->keys()
+                        ->map(fn (string $key) => ClientMailingBulkAction::for($key)->clientUsing(fn (Model $record) => $record->recipient))
+                        ->all(),
                     BulkEditProvisionElementsAction::make(),
                 ]),
             ])

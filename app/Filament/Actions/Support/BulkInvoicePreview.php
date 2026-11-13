@@ -108,7 +108,7 @@ class BulkInvoicePreview
      * @param  array{options: array, descriptions: array, default: array, disabled: array, counts: array}  $preview
      * @return array{preview: array, hidden: int, summary: ?string}
      */
-    public static function compact(array $preview, int $threshold = 15): array
+    public static function compact(array $preview, int $threshold = 15, string $label = 'sans rien à facturer'): array
     {
         if (count($preview['options']) <= $threshold) {
             return ['preview' => $preview, 'hidden' => 0, 'summary' => null];
@@ -116,15 +116,17 @@ class BulkInvoicePreview
 
         $reasons = [];
         foreach ($preview['disabled'] as $id) {
-            preg_match('/\((.+)\)/', $preview['descriptions'][$id] ?? '', $m);
-            $reasons[$m[1] ?? 'rien à facturer'] = ($reasons[$m[1] ?? 'rien à facturer'] ?? 0) + 1;
+            $description = $preview['descriptions'][$id] ?? '';
+            // « Rien à facturer (raison) » ou « Ignoré : raison »
+            $reason = preg_match('/\((.+)\)/', $description, $m) || preg_match('/^Ignoré : (.+)$/u', $description, $m) ? $m[1] : 'rien à faire';
+            $reasons[$reason] = ($reasons[$reason] ?? 0) + 1;
         }
 
         foreach ($preview['disabled'] as $id) {
             unset($preview['options'][$id], $preview['descriptions'][$id]);
         }
 
-        $summary = count($preview['disabled']).' client(s) sans rien à facturer, non listés : '
+        $summary = count($preview['disabled']).' client(s) '.$label.', non listés : '
             .collect($reasons)->map(fn ($n, $reason) => "{$n} × {$reason}")->implode(' · ');
 
         $hidden = count($preview['disabled']);
