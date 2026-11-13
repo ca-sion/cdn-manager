@@ -27,9 +27,13 @@ class InvoiceService
     /** @var array<int, Collection<int, Invoice>> */
     protected static array $stateCache = [];
 
+    /** @var array<int, Collection<int, ProvisionElement>> */
+    protected static array $elementsCache = [];
+
     public static function flushCache(): void
     {
         self::$stateCache = [];
+        self::$elementsCache = [];
     }
 
     public static function generatePdf(Invoice $invoice)
@@ -128,9 +132,55 @@ class InvoiceService
         return Invoice::where('client_id', $clientId)
             ->where('edition_id', $editionId)
             ->active()
+            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
             ->get()
             ->reject(fn (Invoice $invoice) => $invoice->isRunInvoice())
             ->values();
+    }
+
+    /**
+     * Ids of the provision elements covered by an invoice.
+     * - invoices generated since tracking exists carry the ids in their positions
+     * - older invoices (or manual ones) are recognised by matching positions to the client's provisions
+     *   (same name + price + quantity first, then same name), each provision matched once
+     *
+     * @param  Collection<int, ProvisionElement>  $elements  candidates (client's current provisions)
+     * @return array<int, int>
+     */
+    public static function invoicedElementIds(Invoice $invoice, $elements): array
+    {
+        $tracked = $invoice->provisionElementIds();
+        if ($tracked !== []) {
+            return $tracked;
+        }
+
+        $remaining = $elements->keyBy('id');
+        $matched = [];
+        $positions = collect($invoice->positions ?? [])->filter(fn ($p) => ! empty($p['name']));
+
+        $norm = fn ($v) => mb_strtolower(trim((string) $v));
+        $same = fn ($a, $b) => abs((float) $a - (float) $b) < 0.005;
+
+        foreach ([true, false] as $strict) {
+            foreach ($positions as $key => $position) {
+                if (isset($matched[$key])) {
+                    continue;
+                }
+                $found = $remaining->first(function (ProvisionElement $element) use ($position, $strict, $norm, $same) {
+                    if ($norm($element->name) !== $norm($position['name'])) {
+                        return false;
+                    }
+
+                    return ! $strict || ($same($element->cost, $position['cost'] ?? 0) && $same($element->quantity ?? 1, $position['quantity'] ?? 1));
+                });
+                if ($found) {
+                    $matched[$key] = $found->id;
+                    $remaining->forget($found->id);
+                }
+            }
+        }
+
+        return array_values($matched);
     }
 
     /**
@@ -141,12 +191,16 @@ class InvoiceService
     public static function uninvoicedProvisionElements(int $clientId)
     {
         $client = Client::findOrFail($clientId);
-        $invoicedIds = self::provisionInvoices($clientId)->flatMap(fn (Invoice $i) => $i->provisionElementIds())->all();
-
-        return $client->currentProvisionElements()
+        $candidates = $client->currentProvisionElements()
             ->with('provision')
             ->where('has_product', true)
-            ->get()
+            ->get();
+
+        $invoicedIds = self::provisionInvoices($clientId)
+            ->flatMap(fn (Invoice $invoice) => self::invoicedElementIds($invoice, $candidates))
+            ->all();
+
+        return $candidates
             ->reject(fn (ProvisionElement $element) => in_array($element->id, $invoicedIds, true))
             ->values();
     }
@@ -227,6 +281,15 @@ class InvoiceService
     }
 
     /**
+     * @return Collection<int, ProvisionElement>
+     */
+    protected static function currentElementsOf(int $clientId)
+    {
+        return self::$elementsCache[$clientId] ??= Client::findOrFail($clientId)
+            ->currentProvisionElements()->with('provision')->where('has_product', true)->get();
+    }
+
+    /**
      * State of a provision element regarding invoicing.
      * Returns [state, invoice|null] where state is one of: none, to_invoice, invoiced, modified.
      *
@@ -242,10 +305,14 @@ class InvoiceService
         self::$stateCache[$clientId] ??= self::provisionInvoices($clientId);
 
         foreach (self::$stateCache[$clientId] as $invoice) {
-            if (in_array($element->id, $invoice->provisionElementIds(), true)) {
-                $snapshot = collect($invoice->positions)->firstWhere('provision_element_id', $element->id);
+            $tracked = $invoice->provisionElementIds() !== [];
+            $ids = $tracked ? $invoice->provisionElementIds() : self::invoicedElementIds($invoice, self::currentElementsOf($clientId));
+
+            if (in_array($element->id, $ids, true)) {
+                // Only tracked invoices hold an exact snapshot to compare with
+                $snapshot = $tracked ? collect($invoice->positions)->firstWhere('provision_element_id', $element->id) : null;
                 $current = $element->invoicePosition();
-                foreach (['quantity', 'cost', 'tax_rate', 'discount', 'include_vat'] as $key) {
+                foreach ($snapshot ? ['quantity', 'cost', 'tax_rate', 'discount', 'include_vat'] : [] as $key) {
                     if ((string) ($snapshot[$key] ?? '') !== (string) ($current[$key] ?? '')) {
                         return ['modified', $invoice];
                     }

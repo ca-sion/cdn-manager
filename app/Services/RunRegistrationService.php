@@ -91,18 +91,31 @@ class RunRegistrationService
         $runInvoices = Invoice::where('client_id', $clientId)
             ->where('edition_id', $editionId)
             ->active()
+            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
             ->get()
             ->filter(fn (Invoice $invoice) => $invoice->isRunInvoice());
 
         $draft = $runInvoices->first(fn (Invoice $invoice) => $invoice->isDraft());
         $lockedInvoices = $runInvoices->reject(fn (Invoice $invoice) => $invoice->isDraft());
 
-        // Ancien format (sans identifiants d'inscriptions) déjà figé : on ne peut pas savoir ce qu'il contient.
-        if ($lockedInvoices->contains(fn (Invoice $invoice) => $invoice->runRegistrationElementIds() === [])) {
-            throw new Exception('Une facture courses existante (créée avant le suivi des inscriptions) est déjà prête/envoyée/payée : ajoutez les nouvelles inscriptions à la main pour éviter un doublon.');
-        }
+        // Inscriptions déjà facturées : identifiants mémorisés dans la facture, ou (anciennes factures)
+        // lien invoice_id posé sur les dossiers au moment de la génération.
+        $alreadyInvoiced = $lockedInvoices->flatMap(function (Invoice $invoice) use ($allElements) {
+            $tracked = $invoice->runRegistrationElementIds();
+            if ($tracked !== []) {
+                return $tracked;
+            }
 
-        $alreadyInvoiced = $lockedInvoices->flatMap(fn (Invoice $invoice) => $invoice->runRegistrationElementIds())->all();
+            // Ancienne facture : elle couvrait autant de participants que la somme de ses quantités,
+            // les plus anciens inscrits des dossiers qui lui sont liés.
+            $covered = (int) collect($invoice->positions ?? [])->sum('quantity');
+            $linked = $allElements
+                ->filter(fn ($el) => (int) $el->runRegistration?->invoice_id === $invoice->id)
+                ->sortBy('id');
+
+            return ($covered > 0 ? $linked->take($covered) : $linked)->pluck('id')->all();
+        })->all();
+
         $elements = $allElements->reject(fn ($el) => in_array($el->id, $alreadyInvoiced, true))->values();
 
         if ($elements->isEmpty()) {

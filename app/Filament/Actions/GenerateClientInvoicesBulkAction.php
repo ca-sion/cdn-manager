@@ -33,16 +33,8 @@ class GenerateClientInvoicesBulkAction extends BulkAction
                 $clientIds = $records->map(fn ($record) => $this->resolveClientId($record))->filter()->unique();
                 $generated = 0;
                 $nothing = 0;
-                $legacy = 0;
 
                 foreach ($clientIds as $clientId) {
-                    if (InvoiceService::legacyProvisionInvoices($clientId)->isNotEmpty()) {
-                        // Ancienne facture non traçable : on ne génère pas en masse, à faire client par client.
-                        $legacy++;
-
-                        continue;
-                    }
-
                     try {
                         InvoiceService::generateInvoiceByClient($clientId);
                         $generated++;
@@ -53,7 +45,6 @@ class GenerateClientInvoicesBulkAction extends BulkAction
 
                 $details = array_filter([
                     $nothing ? "{$nothing} sans prestation à facturer" : null,
-                    $legacy ? "{$legacy} ignoré(s) car ancienne facture à vérifier (à faire depuis la fiche client)" : null,
                 ]);
 
                 Notification::make()

@@ -171,8 +171,14 @@ class ProvisionElement extends Model implements HasMedia, Sortable
 
     protected static function booted(): void
     {
-        static::saved(fn (self $element) => InvoiceService::syncDraftInvoiceWith($element));
-        static::deleted(fn (self $element) => InvoiceService::syncDraftInvoiceWith($element, removed: true));
+        static::saved(function (self $element) {
+            InvoiceService::flushCache();
+            InvoiceService::syncDraftInvoiceWith($element);
+        });
+        static::deleted(function (self $element) {
+            InvoiceService::flushCache();
+            InvoiceService::syncDraftInvoiceWith($element, removed: true);
+        });
     }
 
     /**

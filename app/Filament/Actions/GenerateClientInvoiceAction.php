@@ -49,8 +49,8 @@ class GenerateClientInvoiceAction extends Action
                 $components = [];
 
                 if ($legacy->isNotEmpty()) {
-                    $components[] = Text::make('Attention : ce client a déjà '.$legacy->count().' facture(s) de prestations créée(s) avant le suivi ('.$legacy->pluck('number')->implode(', ').'). Je ne peux pas savoir ce qu\'elles contiennent : vérifiez que les prestations ci-dessous n\'y figurent pas déjà.')
-                        ->color('danger');
+                    $components[] = Text::make('Anciennes factures reconnues par nom de prestation : '.$legacy->pluck('number')->implode(', ').'. Les prestations qu\'elles contiennent ne sont pas proposées ; une facture saisie à la main avec d\'autres libellés ne peut pas être reconnue, vérifiez la liste.')
+                        ->color('warning');
                 }
 
                 $components[] = Text::make($draft

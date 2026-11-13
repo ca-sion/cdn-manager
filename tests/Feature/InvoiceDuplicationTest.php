@@ -189,4 +189,118 @@ class InvoiceDuplicationTest extends TestCase
         $this->assertEquals($invoice->id, $same->id);
         $this->assertEquals(2, $same->fresh()->positions[0]['quantity']);
     }
+
+    public function test_legacy_invoice_is_recognised_by_name_without_manual_work(): void
+    {
+        $a = $this->element(100);
+        $b = $this->element(200);
+        $c = $this->element(300);
+
+        // Ancienne facture (sans identifiants) : A au même prix, B dont le prix a été modifié à la main
+        Invoice::create([
+            'edition_id' => $this->edition->id,
+            'client_id'  => $this->client->id,
+            'status'     => InvoiceStatusEnum::Sent,
+            'number'     => '2025-901',
+            'positions'  => [
+                ['name' => $a->name, 'quantity' => 1, 'cost' => 100, 'tax_rate' => 8.1],
+                ['name' => mb_strtoupper($b->name), 'quantity' => 1, 'cost' => 150, 'tax_rate' => 8.1],
+            ],
+        ]);
+
+        $todo = InvoiceService::uninvoicedProvisionElements($this->client->id)->pluck('id')->all();
+
+        $this->assertSame([$c->id], $todo);
+        $this->assertSame('invoiced', InvoiceService::provisionElementInvoiceState($a->fresh())[0]);
+        $this->assertSame('to_invoice', InvoiceService::provisionElementInvoiceState($c->fresh())[0]);
+    }
+
+    public function test_two_identical_provisions_are_matched_once_each(): void
+    {
+        $provision = Provision::factory()->create(['edition_id' => $this->edition->id, 'product_id' => null]);
+        foreach ([1, 2] as $_) {
+            ProvisionElement::factory()->create([
+                'edition_id'   => $this->edition->id, 'recipient_id' => $this->client->id, 'recipient_type' => Client::class,
+                'provision_id' => $provision->id, 'has_product' => true, 'quantity' => 1, 'cost' => 50, 'tax_rate' => 8.1,
+            ]);
+        }
+
+        // L'ancienne facture ne contient qu'une seule des deux
+        Invoice::create([
+            'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => InvoiceStatusEnum::Sent,
+            'number'     => '2025-902', 'positions' => [['name' => $provision->name, 'quantity' => 1, 'cost' => 50, 'tax_rate' => 8.1]],
+        ]);
+
+        $this->assertCount(1, InvoiceService::uninvoicedProvisionElements($this->client->id));
+    }
+
+    public function test_pro_forma_invoice_does_not_count_as_invoiced(): void
+    {
+        $this->element();
+        $invoice = InvoiceService::generateInvoiceByClient($this->client->id);
+        $invoice->update(['is_pro_forma' => true]);
+
+        $this->assertCount(1, InvoiceService::uninvoicedProvisionElements($this->client->id));
+    }
+
+    public function test_manual_invoice_is_never_blocked(): void
+    {
+        Invoice::create([
+            'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => InvoiceStatusEnum::Sent,
+            'number'     => '2025-903', 'positions' => [['name' => 'Texte libre', 'quantity' => 1, 'cost' => 10, 'tax_rate' => 8.1]],
+        ]);
+        $this->element();
+
+        $invoice = InvoiceService::generateInvoiceByClient($this->client->id);
+
+        $this->assertCount(1, $invoice->positions);
+    }
+
+    public function test_legacy_run_invoice_is_recognised_through_registration_invoice_id(): void
+    {
+        $run = Run::factory()->create(['cost' => 50]);
+        $registration = RunRegistration::factory()->create(['client_id' => $this->client->id]);
+        RunRegistrationElement::factory()->create(['run_registration_id' => $registration->id, 'run_id' => $run->id, 'has_free_registration_fee' => false]);
+
+        $legacy = Invoice::create([
+            'edition_id' => $this->edition->id, 'client_id' => $this->client->id, 'status' => InvoiceStatusEnum::Sent,
+            'number'     => '2025-904', 'note' => 'Facture Inscriptions Courses regroupant les dossiers #1',
+            'positions'  => [['name' => 'Trail (1 participant)', 'quantity' => 1, 'cost' => 50, 'tax_rate' => 8.1]],
+        ]);
+        $registration->update(['invoice_id' => $legacy->id]);
+
+        $service = app(RunRegistrationService::class);
+
+        // Rien de nouveau : pas de doublon
+        try {
+            $service->createInvoiceForClient($this->client->id);
+            $this->fail('Une facture en doublon a été créée.');
+        } catch (\Exception $e) {
+            $this->assertStringContainsString('déjà facturées', $e->getMessage());
+        }
+
+        // Nouvelle inscription : nouvelle facture, l\'ancienne reste intacte
+        RunRegistrationElement::factory()->create(['run_registration_id' => $registration->id, 'run_id' => $run->id, 'has_free_registration_fee' => false]);
+        $new = $service->createInvoiceForClient($this->client->id);
+
+        $this->assertNotEquals($legacy->id, $new->id);
+        $this->assertEquals(1, $new->positions[0]['quantity']);
+        $this->assertEquals(50, $legacy->fresh()->positions[0]['cost']);
+    }
+
+    public function test_cancelled_run_invoice_is_ignored(): void
+    {
+        $run = Run::factory()->create(['cost' => 50]);
+        $registration = RunRegistration::factory()->create(['client_id' => $this->client->id]);
+        RunRegistrationElement::factory()->create(['run_registration_id' => $registration->id, 'run_id' => $run->id, 'has_free_registration_fee' => false]);
+
+        $service = app(RunRegistrationService::class);
+        $first = $service->createInvoiceForClient($this->client->id);
+        $first->update(['status' => InvoiceStatusEnum::Cancelled]);
+
+        $second = $service->createInvoiceForClient($this->client->id);
+
+        $this->assertNotEquals($first->id, $second->id);
+        $this->assertEquals(InvoiceStatusEnum::Cancelled, $first->fresh()->status);
+    }
 }
