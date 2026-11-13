@@ -13,11 +13,49 @@ use App\Enums\EngagementStatusEnum;
 class InvoiceObserver
 {
     /**
+     * Quand true, le suivi du client n'est pas synchronisé (restauration après « Annuler ces factures »).
+     */
+    public static bool $muted = false;
+
+    /**
+     * Le client a-t-il une AUTRE facture réelle (ni annulée, ni proforma) pour cette édition ?
+     */
+    protected function hasOtherActiveInvoice(Invoice $invoice): bool
+    {
+        return Invoice::withoutGlobalScopes()
+            ->where('client_id', $invoice->client_id)
+            ->where('edition_id', $invoice->edition_id)
+            ->where('id', '!=', $invoice->id)
+            ->where('status', '!=', InvoiceStatusEnum::Cancelled->value)
+            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
+            ->exists();
+    }
+
+    /**
+     * Le client a-t-il encore une facture réelle impayée ? Les factures annulées et les proformas ne comptent pas ;
+     * l'ancien statut « Payé (old) » compte comme payé.
+     */
+    protected function hasUnpaidInvoice(ClientEngagement $engagement): bool
+    {
+        return Invoice::withoutGlobalScopes()
+            ->where('client_id', $engagement->client_id)
+            ->where('edition_id', $engagement->edition_id)
+            ->whereNotIn('status', [InvoiceStatusEnum::Cancelled->value, InvoiceStatusEnum::Paid->value, InvoiceStatusEnum::Payed->value])
+            ->where(fn ($q) => $q->where('is_pro_forma', false)->orWhereNull('is_pro_forma'))
+            ->exists();
+    }
+
+    /**
      * Handle the Invoice "created" event.
      */
     public function created(Invoice $invoice): void
     {
         InvoiceService::flushCache();
+
+        if (self::$muted) {
+            return;
+        }
+
         $engagement = ClientEngagement::firstOrCreate([
             'client_id'  => $invoice->client_id,
             'edition_id' => $invoice->edition_id,
@@ -42,21 +80,23 @@ class InvoiceObserver
     public function updated(Invoice $invoice): void
     {
         InvoiceService::flushCache();
+
+        if (self::$muted || ! $invoice->wasChanged('status')) {
+            return;
+        }
+
         $engagement = ClientEngagement::firstOrCreate([
             'client_id'  => $invoice->client_id,
             'edition_id' => $invoice->edition_id,
         ]);
 
-        if (! $engagement || ! $invoice->isDirty('status')) {
+        if (! $engagement) {
             return;
         }
 
         // Cas : Facture payée
         if ($invoice->status === InvoiceStatusEnum::Paid) {
-            $allInvoicesPaid = Invoice::where('client_id', $engagement->client_id)
-                ->where('edition_id', $engagement->edition_id)
-                ->where('status', '!=', 'paid')
-                ->doesntExist();
+            $allInvoicesPaid = ! $this->hasUnpaidInvoice($engagement);
 
             if ($allInvoicesPaid) {
                 $engagement->stage = EngagementStageEnum::Paid;
@@ -94,9 +134,8 @@ class InvoiceObserver
 
         // Cas : Facture envoyée
         elseif ($invoice->status === InvoiceStatusEnum::Sent) {
-            if (! $engagement->stage === EngagementStageEnum::Billed) {
-                $engagement->stage = EngagementStageEnum::Billed;
-            }
+            // Envoyer une facture = le client a (de nouveau) quelque chose d'impayé, même s'il était « Payé »
+            $engagement->stage = EngagementStageEnum::Billed;
             $engagement->status = EngagementStatusEnum::Idle;
         }
 
@@ -125,6 +164,11 @@ class InvoiceObserver
 
         // Cas : Facture annulée
         elseif ($invoice->status === InvoiceStatusEnum::Cancelled) {
+            // Le client a encore une autre facture active : son suivi n'est pas touché
+            if ($this->hasOtherActiveInvoice($invoice)) {
+                return;
+            }
+
             $engagement->stage = EngagementStageEnum::Billed;
             $engagement->status = EngagementStatusEnum::Cancelled;
         }

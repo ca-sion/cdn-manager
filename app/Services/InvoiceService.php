@@ -11,6 +11,7 @@ use App\Models\RunRegistration;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Enums\InvoiceStatusEnum;
 use App\Models\ProvisionElement;
+use App\Observers\InvoiceObserver;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Cache;
@@ -331,26 +332,49 @@ class InvoiceService
      * Cancel invoices created by a bulk generation (frees their provisions / registrations).
      * Only invoices still in Ready or Draft status are cancelled: anything sent or paid is left untouched.
      *
+     * $engagements (clientId => ['before' => snapshot, 'after' => snapshot]) lets the client follow-up (stage + status)
+     * go back to what it was before the bulk. It is restored only if nobody changed it since, and only if every
+     * invoice created for that client could be cancelled.
+     *
      * @param  array<int, int>  $invoiceIds
+     * @param  array<int, array{before: array, after: array}>  $engagements
      * @return array{cancelled: int, skipped: int}
      */
-    public static function cancelGeneratedInvoices(array $invoiceIds): array
+    public static function cancelGeneratedInvoices(array $invoiceIds, array $engagements = []): array
     {
         $cancelled = 0;
         $skipped = 0;
+        $invoices = Invoice::whereIn('id', $invoiceIds)->get();
+        $cancellable = fn (Invoice $invoice) => in_array($invoice->status, [InvoiceStatusEnum::Ready, InvoiceStatusEnum::Draft], true);
 
-        foreach (Invoice::whereIn('id', $invoiceIds)->get() as $invoice) {
-            if (! in_array($invoice->status, [InvoiceStatusEnum::Ready, InvoiceStatusEnum::Draft], true)) {
+        // Clients dont on peut remettre le suivi comme avant : suivi inchangé depuis le bulk + toutes leurs factures annulables
+        $restorable = collect(EngagementSnapshot::untouchedSince($engagements))
+            ->filter(fn (int $clientId) => $invoices->where('client_id', $clientId)->every($cancellable))
+            ->values()
+            ->all();
+
+        foreach ($invoices as $invoice) {
+            if (! $cancellable($invoice)) {
                 $skipped++;
 
                 continue;
             }
 
-            $invoice->update(['status' => InvoiceStatusEnum::Cancelled]);
+            // Un client suivi par ce bulk : l'annulation ne touche JAMAIS son suivi elle-même
+            // (il est restauré plus bas, seulement s'il n'a pas été modifié entre-temps)
+            InvoiceObserver::$muted = array_key_exists($invoice->client_id, $engagements);
+
+            try {
+                $invoice->update(['status' => InvoiceStatusEnum::Cancelled]);
+            } finally {
+                InvoiceObserver::$muted = false;
+            }
+
             RunRegistration::where('invoice_id', $invoice->id)->update(['invoice_id' => null]);
             $cancelled++;
         }
 
+        EngagementSnapshot::restore($engagements, $restorable);
         self::flushCache();
 
         return ['cancelled' => $cancelled, 'skipped' => $skipped];

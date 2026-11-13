@@ -105,6 +105,7 @@ class GenerateRegistrationInvoicesBulkAction extends BulkAction
                     $report->skipped($names[$id] ?? 'Client #'.$id, 'non coché');
                 }
 
+                $report->rememberEngagements($selected->intersect($clientIds));
                 self::process($selected->intersect($clientIds), $report);
                 $report->send();
             });

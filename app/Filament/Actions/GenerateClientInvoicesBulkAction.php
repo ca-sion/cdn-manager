@@ -112,6 +112,7 @@ class GenerateClientInvoicesBulkAction extends BulkAction
                 InvoiceService::flushCache();
                 $report = new BulkInvoiceReport('Génération en masse des factures (prestations et inscriptions)');
                 $clientIds = $this->clientIds($records);
+                $report->rememberEngagements($clientIds);
                 $names = Client::whereIn('id', $clientIds)->pluck('name', 'id');
                 $provisionIds = collect($data['provision_client_ids'] ?? [])->map(fn ($id) => (int) $id);
                 $registrationIds = collect($data['registration_client_ids'] ?? [])->map(fn ($id) => (int) $id);

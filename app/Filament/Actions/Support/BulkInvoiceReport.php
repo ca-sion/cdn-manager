@@ -7,6 +7,7 @@ use Filament\Actions\Action;
 use Illuminate\Support\Number;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Log;
+use App\Services\EngagementSnapshot;
 use Filament\Notifications\Notification;
 use App\Filament\Resources\InvoiceResource;
 
@@ -29,7 +30,38 @@ class BulkInvoiceReport
     /** @var array<int, array{client: string, reason: string}> */
     protected array $failed = [];
 
+    /** @var array<int, array{existed: bool, stage: ?string, status: ?string}> suivi des clients AVANT l'action */
+    protected array $engagementsBefore = [];
+
     public function __construct(protected string $subject = 'Facturation en masse') {}
+
+    /**
+     * À appeler AVANT de générer : mémorise le suivi (étape/statut) des clients pour pouvoir le restaurer à l'annulation.
+     *
+     * @param  iterable<int|string>  $clientIds
+     */
+    public function rememberEngagements(iterable $clientIds): static
+    {
+        $this->engagementsBefore = EngagementSnapshot::capture($clientIds);
+
+        return $this;
+    }
+
+    /**
+     * Suivi avant / après pour les clients qui ont reçu au moins une nouvelle facture.
+     *
+     * @return array<int, array{before: array, after: array}>
+     */
+    protected function engagementPairs(): array
+    {
+        $clientIds = collect($this->created)->pluck('invoice.client_id')->unique()->values()->all();
+        $after = EngagementSnapshot::capture($clientIds);
+
+        return collect($clientIds)
+            ->filter(fn ($id) => isset($this->engagementsBefore[$id]))
+            ->mapWithKeys(fn ($id) => [$id => ['before' => $this->engagementsBefore[$id], 'after' => $after[$id]]])
+            ->all();
+    }
 
     public function created(string $client, Invoice $invoice): static
     {
@@ -145,7 +177,7 @@ class BulkInvoiceReport
                     ->label('Annuler ces factures')
                     ->color('danger')
                     ->button()
-                    ->dispatch('undo-bulk-invoices', ['invoiceIds' => $this->createdIds()])
+                    ->dispatch('undo-bulk-invoices', ['invoiceIds' => $this->createdIds(), 'engagements' => $this->engagementPairs()])
                     ->close(),
                 Action::make('close')->label('Fermer')->color('gray')->close(),
             ]);
