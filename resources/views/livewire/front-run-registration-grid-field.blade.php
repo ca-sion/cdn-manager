@@ -1,4 +1,20 @@
 <div class="space-y-4" x-data="{ activeTab: 'paste' }">
+    @if($this->isGridLocked())
+        <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-sm flex items-start gap-3" role="alert">
+            <span class="text-xl leading-none">🔒</span>
+            <div>
+                <div class="font-bold">Le délai d'inscription est dépassé</div>
+                <div class="text-xs mt-0.5">
+                    La liste des participants ne peut plus être modifiée
+                    @if($deadline = setting('registrations_deadline'))
+                        (clôture le {{ \Illuminate\Support\Carbon::parse($deadline, 'Europe/Zurich')->format('d.m.Y \à H:i') }}).
+                    @endif
+                    Les boutons « Importer » et « Ajouter une ligne » sont donc masqués. Pour une modification, contactez l'organisation.
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- En-tête & Boutons d'Action (Sober, Clair et Élégant) -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-gray-50 dark:bg-gray-800/60 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
         <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">

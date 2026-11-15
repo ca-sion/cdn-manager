@@ -149,4 +149,13 @@ class FrontRunRegistrationPasteImportTest extends TestCase
 
         $this->assertEmpty($c->get('integrityErrors'));
     }
+
+    /** @test */
+    public function a_locked_grid_explains_that_the_deadline_has_passed()
+    {
+        setting(['registrations_deadline' => now('Europe/Zurich')->subDay()->format('Y-m-d H:i:s')]);
+
+        Livewire::test(FrontRunRegistration::class, ['type' => 'group'])
+            ->assertSee('Le délai d\'inscription est dépassé', false);
+    }
 }
