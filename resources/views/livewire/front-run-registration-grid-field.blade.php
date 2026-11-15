@@ -312,10 +312,10 @@
                             <span>Format des colonnes attendu dans Excel :</span>
                         </div>
                         <div class="font-mono bg-white dark:bg-gray-900 p-2.5 rounded-lg border border-indigo-100 dark:border-indigo-900 text-2xs overflow-x-auto text-indigo-900 dark:text-indigo-300">
-                            Prénom &nbsp;|&nbsp; Nom &nbsp;|&nbsp; Date de naissance (jj.mm.aaaa) &nbsp;|&nbsp; Genre (M/F) &nbsp;|&nbsp; Email &nbsp;|&nbsp; Nationalité (ex: SUI)
+                            Prénom &nbsp;|&nbsp; Nom &nbsp;|&nbsp; Date de naissance (jj.mm.aaaa) &nbsp;|&nbsp; Genre (M/F) &nbsp;|&nbsp; Email &nbsp;|&nbsp; Nationalité (ex: SUI) &nbsp;|&nbsp; Course (nom)
                         </div>
                         <div class="text-gray-600 dark:text-gray-400 text-2xs">
-                            Exemple : <code class="font-mono font-bold text-gray-900 dark:text-gray-200">Lucas &nbsp; Rey &nbsp; 02.02.2018 &nbsp; M &nbsp; lucas@example.com &nbsp; SUI</code>
+                            Exemple : <code class="font-mono font-bold text-gray-900 dark:text-gray-200">Lucas &nbsp; Rey &nbsp; 02.02.2018 &nbsp; M &nbsp; lucas@example.com &nbsp; SUI</code><br>Les colonnes peuvent être dans un autre ordre si la 1re ligne contient les en-têtes (Prénom, Nom…). Les lignes qui ne sont pas des participants sont ignorées.
                         </div>
                         <div>
                             <button type="button" wire:click="downloadImportTemplate" class="inline-flex items-center gap-1 text-2xs font-semibold text-indigo-700 dark:text-indigo-300 underline hover:no-underline cursor-pointer">
@@ -347,8 +347,12 @@
                         </label>
                         <textarea wire:model="pasteTextData"
                                   rows="6"
-                                  placeholder="Copiez vos colonnes depuis Excel et collez-les ici...&#10;Lucas&#9;Rey&#9;02.02.2018&#9;M&#9;lucas@example.com&#9;SUI&#10;Emma&#9;Dubois&#9;15.08.2008&#9;F&#9;emma@example.com&#9;SUI"
+                                  placeholder="Copiez vos colonnes depuis Excel et collez-les ici...&#10;Lucas&#9;Rey&#9;02.02.2018&#9;M&#9;lucas@example.com&#9;SUI&#9;Nom de la course&#10;Emma&#9;Dubois&#9;15.08.2008&#9;F&#9;emma@example.com&#9;SUI"
                                   class="w-full font-mono text-xs rounded-xl border border-gray-300 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-3 focus:ring-primary-500 focus:border-primary-500"></textarea>
+
+                        @error('pasteTextData')
+                            <div class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-medium">{{ $message }}</div>
+                        @enderror
 
                         <div class="flex justify-end gap-2 pt-2">
                             <x-filament::button type="button" wire:click="closeImportModal" color="gray" size="sm">
@@ -367,8 +371,12 @@
                         </label>
                         <input type="file"
                                wire:model="importFile"
-                               accept=".xlsx,.csv"
+                               accept=".xlsx,.xls,.csv"
                                class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-gray-800 dark:file:text-gray-200" />
+
+                        @error('importFile')
+                            <div class="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs font-medium">{{ $message }}</div>
+                        @enderror
 
                         <div class="flex justify-end gap-2 pt-2">
                             <x-filament::button type="button" wire:click="closeImportModal" color="gray" size="sm">

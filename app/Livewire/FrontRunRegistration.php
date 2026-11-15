@@ -769,85 +769,25 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 
     public function processPasteText(): void
     {
-        if (empty(trim($this->pasteTextData))) {
+        if (trim($this->pasteTextData) === '') {
             return;
         }
 
-        $lines = preg_split('/\r\n|\r|\n/', trim($this->pasteTextData));
-        $newRows = [];
+        $this->resetErrorBag(['pasteTextData', 'importFile']);
 
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line)) {
-                continue;
-            }
-
-            if (str_contains($line, "\t")) {
-                $parts = explode("\t", $line);
-            } elseif (str_contains($line, '|')) {
-                $parts = explode('|', $line);
-            } elseif (str_contains($line, ';')) {
-                $parts = explode(';', $line);
-            } elseif (str_contains($line, ',')) {
-                $parts = explode(',', $line);
-            } else {
-                $parts = preg_split('/\s+/', $line);
-            }
-
-            $parts = array_values(array_filter(array_map('trim', $parts), fn ($v) => $v !== ''));
-
-            if (count($parts) < 2) {
-                continue;
-            }
-
-            $row = $this->emptyElement();
-            $row['_k'] = 'l'.bin2hex(random_bytes(4));
-
-            $row['first_name'] = $parts[0] ?? '';
-            $row['last_name'] = $parts[1] ?? '';
-            $row['birthdate'] = $parts[2] ?? '';
-
-            if (isset($parts[3]) && in_array(strtoupper($parts[3]), ['M', 'F'])) {
-                $row['gender'] = strtoupper($parts[3]);
-            }
-
-            if (isset($parts[4]) && str_contains($parts[4], '@')) {
-                $row['email'] = $parts[4];
-                if (isset($parts[5])) {
-                    $row['nationality'] = strtoupper(substr($parts[5], 0, 3));
-                }
-            } elseif (isset($parts[4])) {
-                $row['nationality'] = strtoupper(substr($parts[4], 0, 3));
-            }
-
-            $availableRuns = $this->type === 'group'
-                ? $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M')
-                : [];
-            if (count($availableRuns) === 1) {
-                $row['run_id'] = (string) array_key_first($availableRuns);
-            }
-
-            $newRows[] = $row;
-        }
-
-        if (! empty($newRows)) {
-            $this->elements = array_values(array_filter($this->elements, function ($r) {
-                return ! empty(trim($r['first_name'] ?? '')) ||
-                       ! empty(trim($r['last_name'] ?? '')) ||
-                       ! empty(trim($r['birthdate'] ?? '')) ||
-                       ! empty(trim($r['email'] ?? ''));
-            }));
-            $this->elements = array_merge($this->elements, $newRows);
-            $this->closeImportModal();
-        }
+        $this->applyImport($this->parseDelimitedText($this->pasteTextData), 'pasteTextData');
     }
 
     /** Modèle Excel à remplir puis à réimporter (mêmes en-têtes que ceux attendus par l'import). */
     public function downloadImportTemplate()
     {
+        $courseExample = $this->type === 'group'
+            ? (Run::where(fn ($q) => $q->whereJsonContains('available_for_types', 'group')->orWhereNull('available_for_types'))->orderBy('name')->value('name') ?? '')
+            : '';
+
         $rows = collect([
-            ['Prénom' => 'Lucas', 'Nom' => 'Rey', 'Date de naissance' => '02.02.2014', 'Genre' => 'M', 'Email' => 'lucas@example.com', 'Nationalité' => 'SUI'],
-            ['Prénom' => 'Emma', 'Nom' => 'Dubois', 'Date de naissance' => '15.08.2012', 'Genre' => 'F', 'Email' => '', 'Nationalité' => 'SUI'],
+            ['Prénom' => 'Lucas', 'Nom' => 'Rey', 'Date de naissance' => '02.02.2014', 'Genre' => 'M', 'Email' => 'lucas@example.com', 'Nationalité' => 'SUI', 'Course' => $courseExample],
+            ['Prénom' => 'Emma', 'Nom' => 'Dubois', 'Date de naissance' => '15.08.2012', 'Genre' => 'F', 'Email' => '', 'Nationalité' => 'SUI', 'Course' => ''],
         ]);
 
         return (new FastExcel($rows))->download('modele_import_participants.xlsx');
@@ -859,18 +799,31 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             return;
         }
 
+        $this->resetErrorBag(['pasteTextData', 'importFile']);
+
         $this->validate([
-            'importFile' => ['file', 'mimes:xlsx,xls,csv', 'max:5120'],
+            'importFile' => ['file', 'mimes:xlsx,xls,csv,txt', 'max:5120'],
         ], [
             'importFile.mimes' => 'Le fichier doit être au format Excel (.xlsx, .xls) ou CSV.',
             'importFile.max'   => 'Le fichier ne doit pas dépasser 5 Mo.',
         ]);
 
         $filePath = $this->importFile->getRealPath();
+        $extension = strtolower((string) $this->importFile->getClientOriginalExtension());
+
         try {
-            $rawRows = (new FastExcel)->withoutHeaders()->import($filePath)
-                ->map(fn ($r) => array_values(is_array($r) ? $r : $r->toArray()))
-                ->all();
+            if (in_array($extension, ['csv', 'txt'], true)) {
+                $content = (string) file_get_contents($filePath);
+                $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
+                if (! mb_check_encoding($content, 'UTF-8')) {
+                    $content = mb_convert_encoding($content, 'UTF-8', 'Windows-1252');
+                }
+                $rawRows = $this->parseDelimitedText($content, false);
+            } else {
+                $rawRows = (new FastExcel)->withoutHeaders()->import($filePath)
+                    ->map(fn ($r) => array_values(is_array($r) ? $r : $r->toArray()))
+                    ->all();
+            }
         } catch (\Throwable $e) {
             report($e);
             $this->addError('importFile', 'Impossible de lire ce fichier. Vérifiez qu\'il s\'agit bien d\'un fichier Excel valide.');
@@ -878,66 +831,154 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             return;
         }
 
+        $this->applyImport(array_values($rawRows), 'importFile');
+    }
+
+    /**
+     * Point d'entrée commun (Excel, CSV, copier-coller) : transforme les lignes brutes en participants,
+     * les ajoute à la grille et indique à l'utilisateur ce qui a été importé / ignoré.
+     *
+     * @param  array<int, array<int, mixed>>  $rawRows
+     */
+    protected function applyImport(array $rawRows, string $errorField): void
+    {
+        $result = $this->mapImportRows($rawRows);
+
+        if ($result['error'] !== null || empty($result['rows'])) {
+            $this->addError($errorField, $result['error'] ?? 'Aucun participant reconnu. Colonnes attendues : Prénom, Nom, Date de naissance, Genre, Email, Nationalité, Course. Téléchargez le modèle Excel ci-dessus pour partir d\'un fichier correct.');
+
+            return;
+        }
+
         $newRows = [];
-        foreach ($this->mapImportRows($rawRows) as $normalized) {
-            $firstName = $normalized['first_name'];
-            $lastName = $normalized['last_name'];
-
-            if ($firstName === '' && $lastName === '') {
-                continue;
-            }
-
+        $unknownRuns = 0;
+        foreach ($result['rows'] as $normalized) {
             $row = $this->emptyElement();
             $row['_k'] = 'l'.bin2hex(random_bytes(4));
-            $row['first_name'] = $firstName;
-            $row['last_name'] = $lastName;
+            $row['first_name'] = $normalized['first_name'];
+            $row['last_name'] = $normalized['last_name'];
             $row['birthdate'] = $normalized['birthdate'];
             $row['gender'] = $normalized['gender'];
             $row['email'] = $normalized['email'];
             $row['nationality'] = $normalized['nationality'] !== '' ? $normalized['nationality'] : 'SUI';
 
-            $availableRuns = $this->type === 'group'
-                ? $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M')
-                : [];
-            if (count($availableRuns) === 1) {
-                $row['run_id'] = (string) array_key_first($availableRuns);
+            if ($this->type === 'group') {
+                $availableRuns = $this->getRunsForBirthdate($row['birthdate'], $row['gender'] ?? 'M');
+                $matched = $normalized['run'] !== '' ? $this->matchImportedRun($normalized['run'], array_keys($availableRuns)) : null;
+
+                if ($matched !== null) {
+                    $row['run_id'] = $matched;
+                } else {
+                    if ($normalized['run'] !== '') {
+                        $unknownRuns++;
+                    }
+                    if (count($availableRuns) === 1) {
+                        $row['run_id'] = (string) array_key_first($availableRuns);
+                    }
+                }
             }
 
             $newRows[] = $row;
         }
 
-        if (! empty($newRows)) {
-            $this->elements = array_values(array_filter($this->elements, function ($r) {
-                return ! empty(trim($r['first_name'] ?? '')) ||
-                       ! empty(trim($r['last_name'] ?? '')) ||
-                       ! empty(trim($r['birthdate'] ?? '')) ||
-                       ! empty(trim($r['email'] ?? ''));
-            }));
-            $this->elements = array_merge($this->elements, $newRows);
-            $this->closeImportModal();
-        } else {
-            $this->addError('importFile', 'Aucun participant reconnu dans ce fichier. Vérifiez que les colonnes « Prénom » et « Nom » sont présentes.');
+        $this->elements = array_values(array_filter($this->elements, function ($r) {
+            return ! empty(trim($r['first_name'] ?? '')) ||
+                   ! empty(trim($r['last_name'] ?? '')) ||
+                   ! empty(trim($r['birthdate'] ?? '')) ||
+                   ! empty(trim($r['email'] ?? ''));
+        }));
+        $this->elements = array_merge($this->elements, $newRows);
+        $this->closeImportModal();
+
+        $count = count($newRows);
+        $message = $count.' '.($count > 1 ? 'participants importés' : 'participant importé');
+        if (! empty($result['skipped'])) {
+            $message .= ' — '.count($result['skipped']).' ligne(s) ignorée(s) (n° '.implode(', ', array_slice($result['skipped'], 0, 10)).(count($result['skipped']) > 10 ? '…' : '').').';
         }
+        if ($unknownRuns > 0) {
+            $message .= ' '.$unknownRuns.' course(s) non reconnue(s) ou incompatible(s) avec l\'âge/le genre : à choisir à la main.';
+        }
+        session()->flash('message', $message);
     }
 
     /**
-     * Transforme les lignes brutes d'un fichier Excel/CSV en participants normalisés.
-     * Tolère : lignes de titre avant les en-têtes, en-têtes avec accents/parenthèses/variantes,
-     * vraies dates Excel (objets date ou numéros de série), genres écrits en toutes lettres.
-     * Sans en-têtes reconnus, l'ordre des colonnes est : Prénom, Nom, Naissance, Genre, E-mail, Nationalité.
+     * Découpe un texte copié depuis Excel / un CSV en lignes de cellules. Le séparateur est détecté UNE fois
+     * pour tout le texte (tabulation > ; > | > ,), les cellules vides sont conservées (sinon les colonnes se décalent).
+     *
+     * @return array<int, array<int, string>>
+     */
+    protected function parseDelimitedText(string $text, bool $allowSpaces = true): array
+    {
+        $text = preg_replace('/^\xEF\xBB\xBF/', '', $text);
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        $lines = array_values(array_filter(explode("\n", $text), fn ($l) => trim($l) !== ''));
+        if (empty($lines)) {
+            return [];
+        }
+
+        $separator = null;
+        foreach (["\t", ';', '|', ','] as $candidate) {
+            if (str_contains(implode("\n", $lines), $candidate)) {
+                // Un séparateur n'est retenu que s'il figure sur au moins la moitié des lignes
+                $withIt = count(array_filter($lines, fn ($l) => str_contains($l, $candidate)));
+                if ($withIt >= max(1, (int) ceil(count($lines) / 2))) {
+                    $separator = $candidate;
+                    break;
+                }
+            }
+        }
+
+        $rows = [];
+        if ($separator === null) {
+            if (! $allowSpaces) {
+                return array_map(fn ($l) => [trim($l)], $lines);
+            }
+            foreach ($lines as $line) {
+                $rows[] = preg_split('/\s+/', trim($line));
+            }
+
+            return $rows;
+        }
+
+        $stream = fopen('php://temp', 'r+');
+        fwrite($stream, implode("\n", $lines));
+        rewind($stream);
+        while (($cells = fgetcsv($stream, 0, $separator, '"', '')) !== false) {
+            if ($cells === [null]) {
+                continue;
+            }
+            $cells = array_map(fn ($c) => trim((string) $c), $cells);
+            if (implode('', $cells) === '') {
+                continue;
+            }
+            $rows[] = $cells;
+        }
+        fclose($stream);
+
+        return $rows;
+    }
+
+    /**
+     * Transforme des lignes brutes en participants normalisés.
+     *
+     * - L'en-tête est la 1re ligne (parmi les 50 premières) qui contient au moins 2 colonnes reconnues dont un prénom ou un nom :
+     *   un simple « Nom » perdu dans un bloc d'infos n'en est pas un. Les colonnes peuvent être dans n'importe quel ordre.
+     * - Sans en-tête, l'ordre Prénom, Nom, Naissance, Genre, E-mail, Nationalité, Course est supposé SI les données y ressemblent.
+     * - Les lignes qui ne ressemblent pas à un participant (libellés, totaux, vides) sont ignorées et comptées.
      *
      * @param  array<int, array<int, mixed>>  $rawRows
-     * @return array<int, array{first_name: string, last_name: string, birthdate: string, gender: string, email: string, nationality: string}>
+     * @return array{rows: array<int, array<string, string>>, skipped: array<int, int>, error: ?string}
      */
     protected function mapImportRows(array $rawRows): array
     {
         $aliases = [
-            'first_name'  => ['prenom', 'first name', 'firstname', 'first_name', 'prenom eleve', 'prenom de l eleve'],
-            'last_name'   => ['nom', 'last name', 'lastname', 'last_name', 'nom de famille', 'nom eleve', 'nom de l eleve'],
-            'birthdate'   => ['date de naissance', 'date naissance', 'naissance', 'birthdate', 'date', 'ne le', 'nee le', 'annee de naissance', 'annee', 'date of birth', 'dob'],
-            'gender'      => ['genre', 'sexe', 'gender', 'sex', 'm f', 'h f'],
-            'email'       => ['email', 'e mail', 'mail', 'courriel', 'adresse email', 'adresse e mail', 'adresse mail'],
+            'first_name'  => ['prenom', 'first name', 'firstname', 'first_name', 'prenom eleve', 'prenom de l eleve', 'prenom participant'],
+            'last_name'   => ['nom', 'last name', 'lastname', 'last_name', 'nom de famille', 'nom eleve', 'nom de l eleve', 'nom participant', 'surname', 'family name'],
+            'birthdate'   => ['date de naissance', 'date naissance', 'naissance', 'birthdate', 'date', 'ne le', 'nee le', 'annee de naissance', 'annee naissance', 'annee', 'date of birth', 'dob', 'birth', 'ddn'],
+            'gender'      => ['genre', 'sexe', 'gender', 'sex', 'm f', 'h f', 'm w', 'categorie sexe'],
+            'email'       => ['email', 'e mail', 'mail', 'courriel', 'adresse email', 'adresse e mail', 'adresse mail', 'email participant'],
             'nationality' => ['nationalite', 'nationality', 'pays', 'country', 'nat'],
+            'run'         => ['course', 'parcours', 'epreuve', 'race', 'distance', 'categorie', 'course choisie', 'course souhaitee'],
         ];
 
         $canon = function ($v): string {
@@ -948,10 +989,9 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             return trim(preg_replace('/[^a-z0-9]+/', ' ', $v));
         };
 
-        // Recherche de la ligne d'en-têtes (les 15 premières lignes) : doit contenir un prénom OU un nom
         $headerIndex = null;
         $map = [];
-        foreach (array_slice($rawRows, 0, 15, true) as $i => $cells) {
+        foreach (array_slice($rawRows, 0, 50, true) as $i => $cells) {
             $found = [];
             foreach ($cells as $col => $cell) {
                 $c = $canon($cell);
@@ -961,10 +1001,11 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 foreach ($aliases as $field => $names) {
                     if (! isset($found[$field]) && in_array($c, $names, true)) {
                         $found[$field] = $col;
+                        break;
                     }
                 }
             }
-            if (isset($found['first_name']) || isset($found['last_name'])) {
+            if (count($found) >= 2 && (isset($found['first_name']) || isset($found['last_name']))) {
                 $headerIndex = $i;
                 $map = $found;
                 break;
@@ -972,28 +1013,159 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         }
 
         if ($headerIndex === null) {
+            // Pas d'en-têtes : on n'accepte l'ordre par défaut que si la majorité des lignes ressemble à des participants
+            $candidates = array_filter($rawRows, fn ($cells) => count(array_filter($cells, fn ($c) => $this->importCellToString($c) !== '')) >= 2);
+            $plausible = array_filter($candidates, function ($cells) {
+                $first = $this->importCellToString($cells[0] ?? '');
+                $last = $this->importCellToString($cells[1] ?? '');
+                $birth = $this->importCellToString($cells[2] ?? '');
+
+                return $first !== '' && $last !== '' && ! is_numeric($first) && ! is_numeric($last)
+                    && ! str_contains($first, '@') && ! str_contains($last, '@')
+                    && ($birth === '' || $this->normalizeImportDate($birth) !== null);
+            });
+
+            if (empty($candidates) || count($plausible) < max(1, (int) ceil(count($candidates) * 0.7))) {
+                return ['rows' => [], 'skipped' => [], 'error' => 'Aucune ligne d\'en-têtes reconnue (Prénom, Nom, Date de naissance…) et les données ne ressemblent pas à une liste de participants. Téléchargez le modèle Excel ci-dessus et collez-y vos participants.'];
+            }
+
             $headerIndex = -1;
-            $map = ['first_name' => 0, 'last_name' => 1, 'birthdate' => 2, 'gender' => 3, 'email' => 4, 'nationality' => 5];
+            $map = ['first_name' => 0, 'last_name' => 1, 'birthdate' => 2, 'gender' => 3, 'email' => 4, 'nationality' => 5, 'run' => 6];
         }
 
         $out = [];
+        $skipped = [];
         foreach ($rawRows as $i => $cells) {
             if ($i <= $headerIndex) {
                 continue;
             }
             $get = fn (string $f) => isset($map[$f]) ? $this->importCellToString($cells[$map[$f]] ?? '') : '';
 
+            $first = $get('first_name');
+            $last = $get('last_name');
+            $birthRaw = $get('birthdate');
+            $birth = $this->normalizeImportDate($birthRaw);
+            $email = $this->extractImportEmail($get('email'));
+
+            // En mode sans en-tête, un e-mail rangé dans une autre colonne est quand même retrouvé
+            if ($email === '' && $headerIndex === -1) {
+                foreach ($cells as $cell) {
+                    if (($found = $this->extractImportEmail($this->importCellToString($cell))) !== '') {
+                        $email = $found;
+                        break;
+                    }
+                }
+            }
+
+            if ($first === '' && $last === '' && $birthRaw === '' && $email === '') {
+                continue; // ligne vide
+            }
+
+            $isParticipant = ($first !== '' && $last !== '')
+                || (($first !== '' || $last !== '') && ($birth !== null && $birth !== '' || $email !== ''));
+            if (! $isParticipant) {
+                $skipped[] = $i + 1;
+
+                continue;
+            }
+
             $out[] = [
-                'first_name'  => $get('first_name'),
-                'last_name'   => $get('last_name'),
-                'birthdate'   => $get('birthdate'),
+                'first_name'  => $first,
+                'last_name'   => $last,
+                'birthdate'   => $birth ?? $birthRaw,
                 'gender'      => $this->importGender($get('gender')),
-                'email'       => $get('email'),
-                'nationality' => strtoupper(substr($get('nationality'), 0, 3)),
+                'email'       => $email,
+                'nationality' => $this->importNationality($get('nationality')),
+                'run'         => $get('run'),
             ];
         }
 
-        return $out;
+        return ['rows' => $out, 'skipped' => $skipped, 'error' => null];
+    }
+
+    /** Rapproche une valeur importée (nom, code ou code Datasport) d'une course autorisée ; null si absente ou ambiguë. */
+    protected function matchImportedRun(string $value, array $allowedRunIds): ?string
+    {
+        $canon = fn (string $v) => trim(preg_replace('/[^a-z0-9+\-.]+/', ' ', mb_strtolower(\Illuminate\Support\Str::ascii($v))));
+        $needle = $canon($value);
+        if ($needle === '' || empty($allowedRunIds)) {
+            return null;
+        }
+
+        $runs = Run::whereIn('id', $allowedRunIds)->get();
+
+        foreach ($runs as $run) {
+            foreach ([$run->name, $run->code, $run->datasport_code] as $candidate) {
+                if ($candidate !== null && $candidate !== '' && $canon((string) $candidate) === $needle) {
+                    return (string) $run->id;
+                }
+            }
+        }
+
+        $partial = $runs->filter(fn ($run) => str_contains($canon((string) $run->name), $needle) || str_contains($needle, $canon((string) $run->name)));
+
+        return $partial->count() === 1 ? (string) $partial->first()->id : null;
+    }
+
+    /** Normalise une date en jj.mm.aaaa (ou une année seule) ; '' si vide ; null si non reconnue. */
+    protected function normalizeImportDate(string $v): ?string
+    {
+        $v = trim(preg_replace('/\s+\d{1,2}:\d{2}(:\d{2})?.*$/', '', trim($v)));
+        if ($v === '') {
+            return '';
+        }
+
+        if (preg_match('/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4}|\d{2})$/', $v, $m)) {
+            $year = (int) $m[3];
+            if (strlen($m[3]) === 2) {
+                $year += $year <= (int) now()->format('y') ? 2000 : 1900;
+            }
+            if (checkdate((int) $m[2], (int) $m[1], $year)) {
+                return sprintf('%02d.%02d.%04d', $m[1], $m[2], $year);
+            }
+
+            return null;
+        }
+        if (preg_match('/^(\d{4})[.\/-](\d{1,2})[.\/-](\d{1,2})$/', $v, $m)) {
+            return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) ? sprintf('%02d.%02d.%04d', $m[3], $m[2], $m[1]) : null;
+        }
+        if (preg_match('/^(\d{4})$/', $v, $m) && (int) $m[1] >= 1900 && (int) $m[1] <= (int) now()->format('Y') + 1) {
+            return $v;
+        }
+
+        return null;
+    }
+
+    protected function extractImportEmail(string $v): string
+    {
+        return preg_match('/[^\s,;<>"\']+@[^\s,;<>"\']+\.[A-Za-z]{2,}/', $v, $m) ? $m[0] : '';
+    }
+
+    protected function importNationality(string $v): string
+    {
+        $v = trim($v);
+        if ($v === '') {
+            return '';
+        }
+
+        $options = CountryHelper::getOptions();
+        if (isset($options[strtoupper($v)])) {
+            return strtoupper($v);
+        }
+
+        $fr = ['suisse' => 'SUI', 'switzerland' => 'SUI', 'schweiz' => 'SUI', 'france' => 'FRA', 'italie' => 'ITA', 'italy' => 'ITA',
+            'allemagne' => 'GER', 'germany' => 'GER', 'espagne' => 'ESP', 'spain' => 'ESP', 'portugal' => 'POR'];
+        $key = mb_strtolower(\Illuminate\Support\Str::ascii($v));
+        if (isset($fr[$key])) {
+            return $fr[$key];
+        }
+        foreach ($options as $code => $label) {
+            if (mb_strtolower(\Illuminate\Support\Str::ascii(trim(preg_replace('/\(.*?\)/', '', $label)))) === $key) {
+                return $code;
+            }
+        }
+
+        return '';
     }
 
     protected function importCellToString(mixed $v): string
@@ -1003,7 +1175,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         }
         if (is_int($v) || is_float($v) || (is_string($v) && is_numeric($v))) {
             // Numéro de série Excel d'une date (ex. 43133 = 02.02.2018) ; une année seule (2018) reste telle quelle
-            if ($v >= 10000 && $v <= 80000) {
+            if ($v >= 10000 && $v <= 80000 && (float) $v == (int) $v) {
                 return \Carbon\Carbon::create(1899, 12, 30)->addDays((int) $v)->format('d.m.Y');
             }
         }
@@ -1018,7 +1190,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
     {
         $v = mb_strtolower(\Illuminate\Support\Str::ascii(trim($v)));
 
-        return in_array($v, ['f', 'fille', 'femme', 'feminin', 'female', 'w', 'madchen'], true) ? 'F' : 'M';
+        return in_array($v, ['f', 'fille', 'femme', 'feminin', 'female', 'w', 'weiblich', 'madchen', 'dame', 'dames', 'girl', 'woman'], true) ? 'F' : 'M';
     }
 
     public function cleanEmptyRows(): void
