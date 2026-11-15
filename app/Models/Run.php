@@ -57,6 +57,37 @@ class Run extends Model
             : null;
     }
 
+    /** Délai global (Paramètres), lu en heure suisse. */
+    public static function globalRegistrationsDeadline(): ?Carbon
+    {
+        $deadline = setting('registrations_deadline');
+
+        return $deadline ? Carbon::parse($deadline, 'Europe/Zurich') : null;
+    }
+
+    /**
+     * Délai réellement appliqué à cette course : le plus tôt entre son délai propre et le délai global
+     * (le global est un plafond ; une course sans délai propre suit le global).
+     */
+    public function effectiveRegistrationsDeadline(): ?Carbon
+    {
+        $own = $this->registrationsDeadlineAt();
+        $global = static::globalRegistrationsDeadline();
+
+        if ($own && $global) {
+            return $own->lessThan($global) ? $own : $global;
+        }
+
+        return $own ?? $global;
+    }
+
+    public function isRegistrationOpen(): bool
+    {
+        $deadline = $this->effectiveRegistrationsDeadline();
+
+        return $deadline === null || ! now()->greaterThan($deadline);
+    }
+
     public function matchesAge(?int $age): bool
     {
         if ($age === null) {

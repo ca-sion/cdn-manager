@@ -1,16 +1,10 @@
 <div class="space-y-4" x-data="{ activeTab: 'paste' }">
-    @if($this->isGridLocked())
+    @if($lock = $this->gridLockMessage())
         <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-sm flex items-start gap-3" role="alert">
             <span class="text-xl leading-none">🔒</span>
             <div>
-                <div class="font-bold">Le délai d'inscription est dépassé</div>
-                <div class="text-xs mt-0.5">
-                    La liste des participants ne peut plus être modifiée
-                    @if($deadline = setting('registrations_deadline'))
-                        (clôture le {{ \Illuminate\Support\Carbon::parse($deadline, 'Europe/Zurich')->format('d.m.Y \à H:i') }}).
-                    @endif
-                    Les boutons « Importer » et « Ajouter une ligne » sont donc masqués. Pour une modification, contactez l'organisation.
-                </div>
+                <div class="font-bold">{{ $lock['title'] }}</div>
+                <div class="text-xs mt-0.5">{{ $lock['text'] }} Les boutons « Importer » et « Ajouter une ligne » sont masqués.</div>
             </div>
         </div>
     @endif
@@ -201,7 +195,7 @@
                                    @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 0)"
                                    @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 0)"
                                    @keydown.enter.prevent="focusGrid({{ $index + 1 }}, 0)"
-                                   @disabled($this->isGridLocked())
+                                   @disabled($this->isRowLocked($row))
                                    class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500 shadow-2xs" />
                         </td>
                         <td class="px-2 py-1.5">
@@ -212,7 +206,7 @@
                                    @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 1)"
                                    @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 1)"
                                    @keydown.enter.prevent="focusGrid({{ $index + 1 }}, 1)"
-                                   @disabled($this->isGridLocked())
+                                   @disabled($this->isRowLocked($row))
                                    class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500 shadow-2xs" />
                         </td>
                         <td class="px-2 py-1.5">
@@ -224,7 +218,7 @@
                                    @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 2)"
                                    @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 2)"
                                    @keydown.enter.prevent="focusGrid({{ $index + 1 }}, 2)"
-                                   @disabled($this->isGridLocked())
+                                   @disabled($this->isRowLocked($row))
                                    class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500 font-mono shadow-2xs" />
                         </td>
                         <td class="px-2 py-1.5">
@@ -233,7 +227,7 @@
                                     data-row="{{ $index }}" data-col="3"
                                     @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 3)"
                                     @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 3)"
-                                    @disabled($this->isGridLocked())
+                                    @disabled($this->isRowLocked($row))
                                     class="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500 shadow-2xs">
                                 <option value="M">M</option>
                                 <option value="F">F</option>
@@ -244,7 +238,7 @@
                                     data-row="{{ $index }}" data-col="4"
                                     @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 4)"
                                     @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 4)"
-                                    @disabled($this->isGridLocked())
+                                    @disabled($this->isRowLocked($row))
                                     class="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500 shadow-2xs">
                                 @foreach(\App\Helpers\CountryHelper::getOptions() as $code => $country)
                                     <option value="{{ $code }}">{{ $country }}</option>
@@ -260,7 +254,7 @@
                                        @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 5)"
                                        @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 5)"
                                        @keydown.enter.prevent="focusGrid({{ $index + 1 }}, 5)"
-                                       @disabled($this->isGridLocked())
+                                       @disabled($this->isRowLocked($row))
                                        class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500 shadow-2xs" />
                             </td>
                         @endif
@@ -271,11 +265,11 @@
                                         data-row="{{ $index }}" data-col="6"
                                         @keydown.arrow-down.prevent="focusGrid({{ $index + 1 }}, 6)"
                                         @keydown.arrow-up.prevent="focusGrid({{ $index - 1 }}, 6)"
-                                        @disabled($this->isGridLocked())
+                                        @disabled($this->isRowLocked($row))
                                         class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-primary-500 focus:border-primary-500 font-medium shadow-2xs">
                                     <option value="">-- Choisir une course --</option>
-                                    @foreach($this->getRunsForBirthdate($row['birthdate'] ?? '', $row['gender'] ?? '') as $rId => $rLabel)
-                                        <option value="{{ $rId }}">{{ $rLabel }}</option>
+                                    @foreach($this->getRunsForBirthdate($row['birthdate'] ?? '', $row['gender'] ?? '', true) as $rId => $rLabel)
+                                        <option value="{{ $rId }}" @disabled(in_array((int) $rId, $this->closedRunIdsForView(), true) && (string) ($row['run_id'] ?? '') !== (string) $rId)>{{ $rLabel }}</option>
                                     @endforeach
                                 </select>
                             </td>
@@ -284,12 +278,13 @@
                             <td class="px-2 py-1.5 text-center">
                                 <input type="checkbox"
                                        wire:model.live="elements.{{ $index }}.with_video"
-                                       @disabled($this->isGridLocked())
+                                       @disabled($this->isRowLocked($row))
                                        class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 h-4 w-4" />
                             </td>
                         @endif
                         @if(! $this->isGridLocked())
                             <td class="px-2 py-1.5 text-center">
+                                @if(! $this->isRowLocked($row))
                                 <button type="button"
                                         wire:click="removeRowByKey('{{ $row['_k'] ?? '' }}')"
                                         wire:loading.attr="disabled"
@@ -298,6 +293,9 @@
                                         title="Supprimer la ligne">
                                     🗑️
                                 </button>
+                                @else
+                                    <span title="Inscriptions closes pour cette course">🔒</span>
+                                @endif
                             </td>
                         @endif
                     </tr>

@@ -86,7 +86,7 @@ class RunResource extends Resource
                             ->suffix('ans'),
                         DateTimePicker::make('registrations_deadline')
                             ->label('Délai d\'inscription')
-                            ->helperText('Heure suisse')
+                            ->helperText('Heure suisse. Vide = délai global (Paramètres). Ce délai ne peut que clôturer plus tôt que le global, jamais plus tard.')
                             // Échéance saisie telle quelle : pas de conversion de fuseau (les données existantes ne glissent pas)
                             ->timezone(config('app.timezone')),
                         TextInput::make('registrations_limit')

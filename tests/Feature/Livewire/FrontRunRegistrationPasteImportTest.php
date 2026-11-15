@@ -156,6 +156,6 @@ class FrontRunRegistrationPasteImportTest extends TestCase
         setting(['registrations_deadline' => now('Europe/Zurich')->subDay()->format('Y-m-d H:i:s')]);
 
         Livewire::test(FrontRunRegistration::class, ['type' => 'group'])
-            ->assertSee('Le délai d\'inscription est dépassé', false);
+            ->assertSee('Le délai d\'inscription est dépassé');
     }
 }

@@ -266,6 +266,18 @@ class FrontEliteRegistration extends Component implements HasActions, HasForms
 
     public function save()
     {
+        // Délai (global ou propre à la course Elite) : seuls les organisateurs peuvent encore modifier après clôture
+        $eliteRunForDeadline = Run::where('name', 'LIKE', '%Elite%')->first();
+        if (! $this->isManager && $eliteRunForDeadline && ! $eliteRunForDeadline->isRegistrationOpen()) {
+            \Filament\Notifications\Notification::make()
+                ->danger()
+                ->title('Les inscriptions pour cette course sont closes')
+                ->body('Le délai est dépassé (clôture le '.$eliteRunForDeadline->effectiveRegistrationsDeadline()->format('d.m.Y \à H:i').'). Contactez l\'organisation.')
+                ->send();
+
+            return;
+        }
+
         $formData = $this->form->getState();
         $isNew = ! $this->registration || ! $this->registration->exists;
 

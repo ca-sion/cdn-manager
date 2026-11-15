@@ -9,6 +9,7 @@ use Filament\Schemas\Schema;
 use App\Models\ClientCategory;
 use App\Models\ProvisionCategory;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -113,6 +114,11 @@ class Settings extends BaseSettings
                     ]),
                 Section::make('Inscriptions courses')
                     ->schema([
+                        DateTimePicker::make('registrations_deadline')
+                            ->label('Délai d\'inscription (global)')
+                            ->helperText('Heure suisse. Après cette date, plus aucune inscription n\'est modifiable. Une course peut avoir un délai plus court (fiche de la course) ; vide = pas de limite globale.')
+                            ->seconds(false)
+                            ->timezone(config('app.timezone')),
                         Select::make('default_run_school')
                             ->label('Course par défaut : Écoles / Interclasses')
                             ->options(Run::all()->pluck('name', 'id'))

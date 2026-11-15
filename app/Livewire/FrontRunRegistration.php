@@ -33,6 +33,9 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
     use InteractsWithForms;
     use WithFileUploads;
 
+    /** @var array<int, int>|null */
+    protected ?array $closedRunIdsCache = null;
+
     public ?array $data = [];
 
     public string $type = 'company';
@@ -511,6 +514,9 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 }
                 if ($runId === '') {
                     $rowErrors[] = 'Course non sélectionnée';
+                } elseif (in_array((int) $runId, $this->closedGroupRunIds(), true) && ! $this->isPersistedOnSameRun($row)) {
+                    $closedRun = Run::find((int) $runId);
+                    $rowErrors[] = 'Inscriptions closes pour la course "'.$closedRun?->name.'" (clôture le '.$closedRun?->effectiveRegistrationsDeadline()?->format('d.m.Y \à H:i').')';
                 }
             } elseif ($this->type === 'company') {
                 if ($email === '') {
@@ -597,7 +603,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         return null;
     }
 
-    public function getRunsForBirthdate(?string $birthdate, ?string $gender = null): array
+    public function getRunsForBirthdate(?string $birthdate, ?string $gender = null, bool $withClosed = false): array
     {
         $age = $this->calculateAge($birthdate);
 
@@ -616,12 +622,19 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 continue;
             }
 
+            if (! $withClosed && ! $r->isRegistrationOpen()) {
+                continue;
+            }
+
             $cost = $r->provision?->product?->price?->amount ?? $r->cost;
             $costLabel = ($cost > 0) ? number_format((float) $cost, 2, '.', '').' CHF' : 'Gratuit';
 
             $label = $r->name.' ('.$costLabel.')';
             if ($r->age_range_label) {
                 $label .= ' — '.$r->age_range_label;
+            }
+            if (! $r->isRegistrationOpen()) {
+                $label .= ' — inscriptions closes';
             }
 
             $options[(string) $r->id] = $label;
@@ -689,8 +702,8 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             if ($this->type === 'group') {
                 $availableRuns = $this->getRunsForBirthdate($birthdate, $gender);
 
-                // If current selected run is no longer valid for age + gender, reset it
-                if ($runId !== '' && ! isset($availableRuns[$runId])) {
+                // If current selected run is no longer valid for age + gender, reset it (une course close reste en place, la ligne est verrouillée)
+                if ($runId !== '' && ! isset($availableRuns[$runId]) && ! isset($this->getRunsForBirthdate($birthdate, $gender, true)[$runId])) {
                     $row['run_id'] = '';
                 }
 
@@ -733,6 +746,12 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
             return;
         }
 
+        foreach ($this->elements as $r) {
+            if (($r['_k'] ?? null) === $key && $this->isRowLocked($r)) {
+                return;
+            }
+        }
+
         $this->elements = array_values(array_filter(
             $this->elements,
             fn ($r) => ($r['_k'] ?? null) !== $key
@@ -745,7 +764,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
 
     public function removeRow(int $index): void
     {
-        if (! $this->isGridLocked() && isset($this->elements[$index])) {
+        if (! $this->isGridLocked() && isset($this->elements[$index]) && ! $this->isRowLocked($this->elements[$index])) {
             array_splice($this->elements, $index, 1);
             $this->elements = array_values($this->elements);
 
@@ -1211,15 +1230,93 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         session()->flash('message', 'Les lignes vides ont été nettoyées avec succès.');
     }
 
-    public function isGridLocked(): bool
+    /** Délai global dépassé : plus rien n'est modifiable. */
+    public function isGlobalDeadlinePassed(): bool
     {
-        $deadline = setting('registrations_deadline');
-        if (! $deadline) {
-            return false;
-        }
+        $deadline = Run::globalRegistrationsDeadline();
 
         // Le délai est saisi en heure suisse : sans fuseau explicite, il serait lu en UTC et la grille se verrouillerait 1 à 2 h trop tard
-        return now()->greaterThan(Carbon::parse($deadline, 'Europe/Zurich'));
+        return $deadline !== null && now()->greaterThan($deadline);
+    }
+
+    /** Course imposée aux inscriptions école / entreprise (ces formulaires n'ont pas de choix de course par ligne). */
+    protected function defaultRunForType(): ?Run
+    {
+        return match ($this->type) {
+            'company' => RunRegistration::getCompanyRun(),
+            'school'  => RunRegistration::getSchoolRun(),
+            default   => null,
+        };
+    }
+
+    /** Course école/entreprise clôturée (son délai propre est dépassé) : le formulaire entier est verrouillé. */
+    public function isDefaultRunClosed(): bool
+    {
+        $run = $this->defaultRunForType();
+
+        return $run !== null && ! $run->isRegistrationOpen();
+    }
+
+    public function isGridLocked(): bool
+    {
+        return $this->isGlobalDeadlinePassed() || $this->isDefaultRunClosed();
+    }
+
+    /** Message expliquant pourquoi le tableau est verrouillé (null si ouvert). */
+    public function gridLockMessage(): ?array
+    {
+        if ($this->isGlobalDeadlinePassed()) {
+            return [
+                'title' => 'Le délai d\'inscription est dépassé',
+                'text'  => 'La liste des participants ne peut plus être modifiée (clôture le '.Run::globalRegistrationsDeadline()->format('d.m.Y \à H:i').'). Pour une modification, contactez l\'organisation.',
+            ];
+        }
+
+        if ($this->isDefaultRunClosed()) {
+            $run = $this->defaultRunForType();
+
+            return [
+                'title' => 'Les inscriptions pour cette course sont closes',
+                'text'  => 'Le délai pour « '.$run->name.' » est dépassé (clôture le '.$run->effectiveRegistrationsDeadline()->format('d.m.Y \à H:i').'). Pour une modification, contactez l\'organisation.',
+            ];
+        }
+
+        return null;
+    }
+
+    /** @return array<int, int> */
+    protected function closedGroupRunIds(): array
+    {
+        return $this->closedRunIdsCache ??= Run::where(function ($q) {
+            $q->whereJsonContains('available_for_types', 'group')->orWhereNull('available_for_types');
+        })->get()->reject(fn ($r) => $r->isRegistrationOpen())->pluck('id')->all();
+    }
+
+    /** @return array<int, int> */
+    public function closedRunIdsForView(): array
+    {
+        return $this->type === 'group' ? $this->closedGroupRunIds() : [];
+    }
+
+    /** Ligne non modifiable : tableau verrouillé, ou (groupes) course de la ligne clôturée. */
+    public function isRowLocked(array $row): bool
+    {
+        if ($this->isGridLocked()) {
+            return true;
+        }
+
+        $runId = (int) ($row['run_id'] ?? 0);
+
+        return $this->type === 'group' && $runId > 0 && in_array($runId, $this->closedGroupRunIds(), true);
+    }
+
+    /** Une ligne déjà enregistrée sur cette course clôturée peut rester telle quelle ; toute autre ligne sur une course close est refusée. */
+    protected function isPersistedOnSameRun(array $row): bool
+    {
+        $id = $row['id'] ?? null;
+
+        return $id && $this->registration
+            && $this->registration->runRegistrationElements()->where('id', $id)->where('run_id', $row['run_id'] ?? null)->exists();
     }
 
     public function save()
@@ -1328,6 +1425,14 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 $elementData['team'] = ! empty($elementData['team']) ? $elementData['team'] : $teamName;
 
                 $elementId = $elementData['id'] ?? null;
+
+                // Course clôturée : une ligne déjà enregistrée dessus reste intacte (elle est verrouillée dans la grille)
+                if ($this->type === 'group' && in_array((int) ($elementData['run_id'] ?? 0), $this->closedGroupRunIds(), true) && $this->isPersistedOnSameRun(['id' => $elementId, 'run_id' => $elementData['run_id']])) {
+                    $keptIds[] = $elementId;
+
+                    continue;
+                }
+
                 unset($elementData['_k'], $elementData['_labels'], $elementData['_actions'], $elementData['id']);
 
                 if ($elementId && $this->registration->runRegistrationElements()->where('id', $elementId)->exists()) {
@@ -1340,7 +1445,9 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
                 }
             }
 
-            $this->registration->runRegistrationElements()->whereNotIn('id', $keptIds)->delete();
+            $this->registration->runRegistrationElements()->whereNotIn('id', $keptIds)->get()
+                ->reject(fn ($el) => $this->type === 'group' && in_array((int) $el->run_id, $this->closedGroupRunIds(), true))
+                ->each->delete();
 
             $this->loadElements();
         }
