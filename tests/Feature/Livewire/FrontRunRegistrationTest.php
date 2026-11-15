@@ -691,4 +691,20 @@ class FrontRunRegistrationTest extends TestCase
             $comp->assertSeeHtml('wire:key="element-row-k3-1"')->assertDontSeeHtml('wire:key="element-row-k3-2"');
         }
     }
+
+    /** @test */
+    public function group_runs_are_listed_alphabetically_so_variants_stay_together()
+    {
+        foreach (['Trail des Châteaux', 'Course Hommes +4.30', 'Course Dames', 'Course Hommes -4.30'] as $name) {
+            Run::create(['name' => $name, 'available_for_types' => ['group']]);
+        }
+
+        $labels = array_values(Livewire::test(FrontRunRegistration::class, ['type' => 'group'])
+            ->instance()->getRunsForBirthdate(null, null));
+
+        $this->assertSame(
+            ['Course Dames', 'Course Hommes +4.30', 'Course Hommes -4.30', 'Trail des Châteaux'],
+            array_map(fn ($l) => preg_replace('/ \(.*$/', '', $l), $labels)
+        );
+    }
 }

@@ -179,7 +179,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         $runs = Run::where(function ($query) {
             $query->whereJsonContains('available_for_types', $this->type)
                 ->orWhereNull('available_for_types');
-        })->get();
+        })->orderBy('name')->get();
 
         $runOptions = [];
         foreach ($runs as $r) {
@@ -604,7 +604,7 @@ class FrontRunRegistration extends Component implements HasActions, HasForms
         $runs = Run::where(function ($query) {
             $query->whereJsonContains('available_for_types', 'group')
                 ->orWhereNull('available_for_types');
-        })->get();
+        })->orderBy('name')->get();
 
         $options = [];
         foreach ($runs as $r) {
