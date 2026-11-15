@@ -21,7 +21,7 @@ class DatasportScraperService
     /**
      * Seuil de dossards restants à partir duquel la course est considérée comme complète (100%).
      */
-    public const FULL_THRESHOLD_SLOTS = 15;
+    public const FULL_THRESHOLD_SLOTS = 10;
 
     /**
      * Récupère le taux de remplissage de toutes les courses avec gestion du cache et fallback.
@@ -132,21 +132,15 @@ class DatasportScraperService
         $contests = $pageResponse['contests'] ?? [];
         $filterValues = $pageResponse['filter'][0]['values'] ?? [];
 
-        // Dictionnaire des inscrits Datasport par nom de contest (addition H + F)
+        // Dictionnaire des inscrits Datasport par nom de contest
         $enteredByName = [];
         foreach ($contests as $contest) {
             $name = trim((string) ($contest['name'] ?? ''));
-            $totalEntered = 0;
-
-            foreach ($contest['lists'] ?? [] as $list) {
-                if (($list['type'] ?? '') === 'gender') {
-                    $totalEntered += (int) ($list['count.entered'] ?? 0);
-                }
-            }
 
             if ($name !== '') {
-                $enteredByName[$name] = $totalEntered;
-                $enteredByName[Str::slug($name)] = $totalEntered;
+                $total = $this->countEnteredInContest($contest);
+                $enteredByName[$name] = $total;
+                $enteredByName[Str::slug($name)] = $total;
             }
         }
 
@@ -162,6 +156,7 @@ class DatasportScraperService
         $defaultRegistrationUrl = (string) config('datasport.registration_url');
 
         $seenSlugs = [];
+        $seenNames = [];
 
         foreach ($filterValues as $filter) {
             $rawName = trim((string) ($filter['name'] ?? ''));
@@ -173,13 +168,15 @@ class DatasportScraperService
             }
 
             $seenSlugs[$slug] = true;
+            $seenNames[mb_strtolower($rawName)] = true;
 
-            // Inscrits Datasport (H + F)
+            // Inscrits Datasport
             $datasportCount = $enteredByName[$rawName] ?? ($enteredByName[$slug] ?? 0);
 
-            // Recherche du Run correspondant en BD et intégration des inscrits internes CDN
-            $matchedRun = $this->findMatchingRun($rawName, $slug, $dbRuns);
-            $internalCount = $this->getInternalRegistrationsCount($matchedRun);
+            // Recherche des Runs correspondants en BD (variantes regroupées) et intégration des inscrits internes CDN
+            $matchedRuns = $this->findMatchingRuns($rawName, $slug, $dbRuns);
+            $matchedRun = $matchedRuns->first();
+            $internalCount = (int) $matchedRuns->sum(fn (Run $r) => $this->getInternalRegistrationsCount($r));
             $totalEntered = $datasportCount + $internalCount;
 
             $limit = $this->resolveLimitForCourse($rawName, $slug, $matchedRun);
@@ -200,15 +197,17 @@ class DatasportScraperService
             $rawName = trim((string) ($contest['name'] ?? ''));
             $slug = Str::slug($rawName);
 
-            if ($rawName === '' || isset($seenSlugs[$slug])) {
+            if ($rawName === '' || isset($seenSlugs[$slug]) || isset($seenNames[mb_strtolower($rawName)])) {
                 continue;
             }
 
             $seenSlugs[$slug] = true;
+            $seenNames[mb_strtolower($rawName)] = true;
             $datasportCount = $enteredByName[$rawName] ?? 0;
 
-            $matchedRun = $this->findMatchingRun($rawName, $slug, $dbRuns);
-            $internalCount = $this->getInternalRegistrationsCount($matchedRun);
+            $matchedRuns = $this->findMatchingRuns($rawName, $slug, $dbRuns);
+            $matchedRun = $matchedRuns->first();
+            $internalCount = (int) $matchedRuns->sum(fn (Run $r) => $this->getInternalRegistrationsCount($r));
             $totalEntered = $datasportCount + $internalCount;
 
             $limit = $this->resolveLimitForCourse($rawName, $slug, $matchedRun);
@@ -238,28 +237,54 @@ class DatasportScraperService
     }
 
     /**
-     * Recherche le modèle Run correspondant à une épreuve.
+     * Recherche tous les Runs correspondant à une épreuve Datasport.
+     * Les variantes (ex. « Course Hommes (moins de 4:30) ») sont regroupées avec l'épreuve principale ;
+     * le Run au nom exact est placé en premier (il porte la limite et le délai).
+     *
+     * @return Collection<int, Run>
      */
-    protected function findMatchingRun(string $name, string $slug, Collection $dbRuns): ?Run
+    protected function findMatchingRuns(string $name, string $slug, Collection $dbRuns): Collection
     {
         $datasportCode = config("datasport.slug_mappings.{$slug}");
+        $lowerName = mb_strtolower($name);
 
-        return $dbRuns->first(function (Run $run) use ($name, $slug, $datasportCode) {
-            if ($datasportCode && $run->datasport_code === $datasportCode) {
-                return true;
-            }
-            if (mb_strtolower($run->name) === mb_strtolower($name)) {
-                return true;
-            }
-            if (Str::slug($run->name) === $slug) {
-                return true;
-            }
-            if (str_starts_with(mb_strtolower($name), mb_strtolower($run->name)) || str_starts_with(mb_strtolower($run->name), mb_strtolower($name))) {
-                return true;
-            }
+        $isExact = fn (Run $run): bool => ($datasportCode && $run->datasport_code === $datasportCode)
+            || mb_strtolower($run->name) === $lowerName
+            || Str::slug($run->name) === $slug;
 
-            return false;
-        });
+        return $dbRuns
+            ->filter(function (Run $run) use ($isExact, $lowerName) {
+                $runName = mb_strtolower($run->name);
+
+                return $isExact($run)
+                    || str_starts_with($lowerName, $runName)
+                    || str_starts_with($runName, $lowerName);
+            })
+            ->sortBy(fn (Run $run) => $isExact($run) ? 0 : 1)
+            ->values();
+    }
+
+    /**
+     * Nombre d'inscrits Datasport d'un contest : genre, sinon général, sinon somme des catégories d'âge.
+     */
+    protected function countEnteredInContest(array $contest): int
+    {
+        $sums = ['gender' => 0, 'overall' => 0, 'agegroup' => 0];
+
+        foreach ($contest['lists'] ?? [] as $list) {
+            $type = $list['type'] ?? '';
+            if (isset($sums[$type])) {
+                $sums[$type] += (int) ($list['count.entered'] ?? 0);
+            }
+        }
+
+        foreach (['gender', 'overall', 'agegroup'] as $type) {
+            if ($sums[$type] > 0) {
+                return $sums[$type];
+            }
+        }
+
+        return 0;
     }
 
     /**
@@ -310,7 +335,7 @@ class DatasportScraperService
 
     /**
      * Formate un item de course avec calcul des jauges et statuts.
-     * Précision à 15 dossards près (si reste <= 15 places => 100% / Complet).
+     * Précision à 10 dossards près (si reste <= 10 places => 100% / Complet).
      */
     protected function formatCourseItem(
         string $name,
@@ -331,7 +356,7 @@ class DatasportScraperService
         if ($hasLimit) {
             $remaining = $limit - $totalEntered;
 
-            // Règle des 15 dossards près : si <= 15 dossards restants ou dépassé -> 100% complet
+            // Règle des 10 dossards près : si <= 10 dossards restants ou dépassé -> 100% complet
             if ($remaining <= self::FULL_THRESHOLD_SLOTS || $totalEntered >= $limit) {
                 $percentage = 100;
                 $status = 'full';
