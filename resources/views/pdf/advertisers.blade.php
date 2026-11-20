@@ -65,7 +65,7 @@
             border-bottom: 1px solid #222222;
         }
         .table td {
-            padding: 4px 4px 4px 0px;
+            padding: 4px 6px 4px 0px;
         }
         .table tr {
             border-bottom: 1px solid #E3E3E3;
@@ -141,13 +141,13 @@
         <table class="table">
             <thead>
                 <tr>
-                    <td>Catégorie</td>
-                    <td>Responsable</td>
+                    <td class="nowrap">Catégorie</td>
+                    <td style="width: 45px;">Resp.</td>
                     <td>Client</td>
                     <td class="nowrap">Tél.</td>
                     <td>Contact</td>
                     <td>Email</td>
-                    <td>Statut</td>
+                    <td class="nowrap">Statut</td>
                     <td style="text-align: center;">Anc.</td>
                     <td>Prestations</td>
                     <td style="text-align: right" class="nowrap">Montant</td>
@@ -156,8 +156,8 @@
             <tbody>
                 @foreach ($clients as $client)
                 <tr>
-                    <td>{{ $client->category?->name }}</td>
-                    <td>{{ $client->currentEngagement?->responsible }}</td>
+                    <td class="nowrap">{{ $client->category?->name }}</td>
+                    <td style="width: 45px;">{{ $client->currentEngagement?->responsible }}</td>
                     <td>{{ str($client->name)->limit(22) }}</td>
                     <td class="nowrap">
                         {{ $client->phone }}
@@ -169,10 +169,12 @@
                         @endif
                         @endforeach
                     </td>
-                    <td style="max-width: 120px; word-break: break-all;">
-                        {{ $client->resolved_email }}
+                    <td style="max-width: 115px; word-wrap: break-word; overflow-wrap: break-word;">
+                        @if ($client->resolved_email)
+                            {!! str_replace('@', '@<wbr>', e($client->resolved_email)) !!}
+                        @endif
                     </td>
-                    <td style="min-width: 75px;">
+                    <td class="nowrap">
                         {{ $client->currentEngagement?->stage?->getLabel() }}
                     </td>
                     <td style="text-align: center;" class="nowrap">
@@ -182,7 +184,7 @@
                     </td>
                     <td>
                         @foreach ($client->provisionElements as $pe)
-                            {{ $pe->name }} ({{ $pe->cost }})
+                            {{ $pe->name }}@if ($pe->cost) ({{ $pe->cost }})@endif
                             @if (! $loop->last)
                                 ·
                             @endif

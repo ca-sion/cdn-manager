@@ -137,31 +137,42 @@
 
     <div class="container">
 
+        @php
+            $referenceClientsCount = $comparisonData['new']->count() + $comparisonData['modified']->count() + $comparisonData['unchanged']->count();
+            $comparisonClientsCount = $comparisonData['lost']->count() + $comparisonData['modified']->count() + $comparisonData['unchanged']->count();
+            $modifiedGainCount = $comparisonData['modified']->filter(fn ($c) => ($c->diff_details['diff'] ?? 0) > 0)->count();
+            $modifiedLossCount = $comparisonData['modified']->filter(fn ($c) => ($c->diff_details['diff'] ?? 0) < 0)->count();
+        @endphp
+
         <div class="break-avoid">
             <div class="section-title">Résumé Financier</div>
             <table class="summary-table">
                 <tr>
-                    <td class="label">Total pour l'édition {{ $referenceEdition->year }}:</td>
+                    <td class="label">Total pour l'édition {{ $referenceEdition->year }} ({{ $referenceClientsCount }} clients):</td>
                     <td class="value">{{ (new App\Classes\Price())->generateFormatted($comparisonData['totals']['reference_total'], 'pdf') }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Total pour l'édition {{ $comparisonEdition->year }}:</td>
+                    <td class="label">Total pour l'édition {{ $comparisonEdition->year }} ({{ $comparisonClientsCount }} clients):</td>
                     <td class="value">{{ (new App\Classes\Price())->generateFormatted($comparisonData['totals']['comparison_total'], 'pdf') }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Montant des nouveaux clients:</td>
+                    <td class="label">Montant des nouveaux clients ({{ $comparisonData['new']->count() }}):</td>
                     <td class="value">{{ (new App\Classes\Price())->generateFormatted($comparisonData['totals']['new'], 'pdf') }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Montant des clients perdus:</td>
+                    <td class="label">Montant des clients perdus ({{ $comparisonData['lost']->count() }}):</td>
                     <td class="value">{{ (new App\Classes\Price())->generateFormatted($comparisonData['totals']['lost'], 'pdf') }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Gain sur clients modifiés:</td>
+                    <td class="label">Montant des clients inchangés ({{ $comparisonData['unchanged']->count() }}):</td>
+                    <td class="value">{{ (new App\Classes\Price())->generateFormatted($comparisonData['totals']['unchanged'], 'pdf') }}</td>
+                </tr>
+                <tr>
+                    <td class="label">Gain sur clients modifiés ({{ $modifiedGainCount }}/{{ $comparisonData['modified']->count() }}):</td>
                     <td class="value">{{ (new App\Classes\Price())->generateFormatted($comparisonData['totals']['modified_gain'], 'pdf') }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Perte sur clients modifiés:</td>
+                    <td class="label">Perte sur clients modifiés ({{ $modifiedLossCount }}/{{ $comparisonData['modified']->count() }}):</td>
                     <td class="value">{{ (new App\Classes\Price())->generateFormatted($comparisonData['totals']['modified_loss'], 'pdf') }}</td>
                 </tr>
                 <tr class="text-bold">

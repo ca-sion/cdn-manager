@@ -49,6 +49,7 @@ class ProvisionComparisonService
             'totals'    => [
                 'new'              => 0,
                 'lost'             => 0,
+                'unchanged'        => 0,
                 'modified_gain'    => 0,
                 'modified_loss'    => 0,
                 'reference_total'  => 0,
@@ -85,6 +86,7 @@ class ProvisionComparisonService
 
                 if ($referenceSignature === $comparisonSignature && $referenceTotal === $comparisonTotal) {
                     $comparisonData['unchanged']->push($client);
+                    $comparisonData['totals']['unchanged'] += $referenceTotal;
                 } else {
                     $diff = $referenceTotal - $comparisonTotal;
                     $client->diff_details = [
