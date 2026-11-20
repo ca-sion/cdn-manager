@@ -71,6 +71,7 @@ class ReportsController extends Controller
         $clients->each(function ($client) {
             $clientOrder = $client->currentEngagement?->stage?->getLabel();
             $client->order = $clientOrder;
+            $client->resolved_email = $client->contactEmail ?? $client->contacts->sortBy('order_column')->first()?->email;
         });
 
         $clients = $clients->sortBy([
@@ -79,7 +80,59 @@ class ReportsController extends Controller
             ['name', 'asc'],
         ]);
 
-        $view = View::make('pdf.advertisers', ['clients' => $clients, 'edition' => $edition, 'grandTotal' => $grandTotal]);
+        $totalsByStage = $clients
+            ->groupBy(fn ($client) => $client->currentEngagement?->stage?->getLabel() ?? 'Sans statut')
+            ->map(fn ($group, $label) => [
+                'label'                 => $label,
+                'count'                 => $group->count(),
+                'with_provisions_count' => $group->where('advertiser_total', '>', 0)->count(),
+                'total'                 => $group->sum('advertiser_total'),
+            ])
+            ->sortBy(fn ($item) => $item['label'] === 'Sans statut' ? 'ZZZ' : $item['label'])
+            ->values();
+
+        $totalsByCategory = $clients
+            ->groupBy(fn ($client) => $client->category?->name ?? 'Sans catégorie')
+            ->map(fn ($group, $label) => [
+                'label'                 => $label,
+                'count'                 => $group->count(),
+                'with_provisions_count' => $group->where('advertiser_total', '>', 0)->count(),
+                'total'                 => $group->sum('advertiser_total'),
+            ])
+            ->sortBy('label')
+            ->values();
+
+        $totalsByProvision = $clients
+            ->flatMap(fn ($client) => $client->provisionElements)
+            ->groupBy('name')
+            ->map(fn ($group, $label) => [
+                'label' => $label,
+                'count' => $group->count(),
+                'total' => $group->sum(fn ($element) => $element->price->amount ?? 0),
+            ])
+            ->sortBy([
+                ['total', 'desc'],
+                ['label', 'asc'],
+            ])
+            ->values();
+
+        $summary = [
+            'total_clients'              => $clients->count(),
+            'clients_with_provisions'    => $clients->where('advertiser_total', '>', 0)->count(),
+            'clients_without_provisions' => $clients->where('advertiser_total', '<=', 0)->count(),
+            'total_provisions'           => $clients->sum(fn ($client) => $client->provisionElements->count()),
+            'grand_total'                => $grandTotal,
+        ];
+
+        $view = View::make('pdf.advertisers', [
+            'clients'           => $clients,
+            'edition'           => $edition,
+            'grandTotal'        => $grandTotal,
+            'totalsByStage'     => $totalsByStage,
+            'totalsByCategory'  => $totalsByCategory,
+            'totalsByProvision' => $totalsByProvision,
+            'summary'           => $summary,
+        ]);
         $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
 
         $pdf = Pdf::loadHTML($html)
