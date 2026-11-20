@@ -67,6 +67,7 @@ Route::prefix('reports')->middleware([SiteProtection::class])->group(function ()
     Route::get('vip', [ReportsController::class, 'vip'])->name('reports.vip');
     Route::get('banners', [ReportsController::class, 'banners'])->name('reports.banners');
     Route::get('screens', [ReportsController::class, 'screens'])->name('reports.screens');
+    Route::get('fondue', [ReportsController::class, 'fondue'])->name('reports.fondue');
     Route::get('financial-report', [ReportsController::class, 'financialReport'])->name('reports.financial');
     Route::get('invoices', [ReportsController::class, 'invoices'])->name('reports.invoices');
     Route::get('elites', [ReportsController::class, 'elites'])->name('reports.elites');

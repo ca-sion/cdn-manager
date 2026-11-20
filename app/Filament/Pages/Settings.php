@@ -9,10 +9,10 @@ use Filament\Schemas\Schema;
 use App\Models\ClientCategory;
 use App\Models\ProvisionCategory;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\DateTimePicker;
 use Outerweb\FilamentSettings\Pages\Settings as BaseSettings;
 
 class Settings extends BaseSettings
@@ -90,6 +90,11 @@ class Settings extends BaseSettings
                         Select::make('reports_advertisers_journal_provisions')
                             ->searchable()
                             ->label('Prestations pour le journal')
+                            ->options(Provision::all()->pluck('name', 'id'))
+                            ->multiple(),
+                        Select::make('reports_fondue_provisions')
+                            ->searchable()
+                            ->label('Prestations pour la fondue')
                             ->options(Provision::all()->pluck('name', 'id'))
                             ->multiple(),
                         Select::make('reports_interclass_donor_provision')

@@ -697,6 +697,105 @@ class ReportsController extends Controller
         return $pdf;
     }
 
+    public function fondue()
+    {
+        $editionYear = request()->input('edition');
+
+        $edition = Edition::where('year', $editionYear)->first() ?? Edition::find(setting('edition_id', config('cdn.default_edition_id')));
+
+        $fondueProvisionIds = collect(setting('reports_fondue_provisions', []))->flatten()->filter()->values()->all();
+
+        abort_if(empty($fondueProvisionIds), '401');
+
+        $invoiceFilter = fn ($q) => $q->where('edition_id', $edition->id)
+            ->active()
+            ->where(fn ($sub) => $sub->where('is_pro_forma', false)->orWhereNull('is_pro_forma'));
+
+        $provisions = ProvisionElement::with([
+            'provision',
+            'recipient' => fn ($morphTo) => $morphTo->morphWith([
+                Client::class  => ['category', 'contacts', 'invoices' => $invoiceFilter],
+                Contact::class => ['client', 'client.category', 'client.invoices' => $invoiceFilter],
+            ]),
+        ])
+            ->where('edition_id', $edition->id)
+            ->whereIn('provision_id', $fondueProvisionIds)
+            ->get();
+
+        $provisions->each(function ($pe) {
+            $recipient = $pe->recipient;
+
+            if ($recipient instanceof Client) {
+                $firstContact = $recipient->contacts->sortBy('order_column')->first();
+                $latestInvoice = $recipient->invoices->sortByDesc('id')->first();
+                $pe->resolved_category = $recipient->category?->name;
+                $pe->resolved_recipient = $recipient->name;
+                $pe->resolved_contact = $firstContact?->name;
+                $pe->resolved_phone = $recipient->phone;
+                $pe->resolved_email = $recipient->contactEmail ?? $firstContact?->email;
+                $pe->resolved_invoiced = $latestInvoice ? ($latestInvoice->status?->getLabel() ?? 'Oui') : 'Non';
+            } elseif ($recipient instanceof Contact) {
+                $latestInvoice = $recipient->client?->invoices->sortByDesc('id')->first();
+                $pe->resolved_category = $recipient->client?->category?->name ?? 'Contact';
+                $pe->resolved_recipient = $recipient->client?->name ?? $recipient->name;
+                $pe->resolved_contact = $recipient->name;
+                $pe->resolved_phone = $recipient->phone ?? $recipient->client?->phone;
+                $pe->resolved_email = $recipient->email ?? $recipient->client?->contactEmail;
+                $pe->resolved_invoiced = $latestInvoice ? ($latestInvoice->status?->getLabel() ?? 'Oui') : 'Non';
+            } else {
+                $pe->resolved_category = null;
+                $pe->resolved_recipient = null;
+                $pe->resolved_contact = null;
+                $pe->resolved_phone = null;
+                $pe->resolved_email = null;
+                $pe->resolved_invoiced = 'Non';
+            }
+
+            $pe->order = $pe->status?->getLabel() ?? '';
+        });
+
+        $provisions = $provisions->sortBy([
+            ['order', 'asc'],
+            ['resolved_recipient', 'asc'],
+            ['resolved_contact', 'asc'],
+        ]);
+
+        if (request()->input('export')) {
+            $exportCollection = $provisions->map(fn ($pe) => [
+                'Statut'                => $pe->status?->getLabel(),
+                'Facturé'               => $pe->resolved_invoiced,
+                'Catégorie'             => $pe->resolved_category,
+                'Client / Bénéficiaire' => $pe->resolved_recipient,
+                'Contact'               => $pe->resolved_contact,
+                'Téléphone'             => $pe->resolved_phone,
+                'Email'                 => $pe->resolved_email,
+                'Prestation'            => $pe->provision?->name,
+                'Nb'                    => $pe->numeric_indicator,
+                'Nb réel'               => null,
+                'Précision'             => $pe->precision ?? $pe->textual_indicator,
+                'Note'                  => $pe->note,
+            ]);
+
+            return (new FastExcel($exportCollection))->download($edition?->year.'-fondue.xlsx');
+        }
+
+        $totalQuantity = $provisions->sum(fn ($pe) => (int) ($pe->numeric_indicator ?? 0));
+
+        $view = View::make('pdf.fondue', [
+            'provisions'    => $provisions,
+            'edition'       => $edition,
+            'totalQuantity' => $totalQuantity,
+        ]);
+        $html = mb_convert_encoding($view, 'HTML-ENTITIES', 'UTF-8');
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('A4', 'landscape')
+            ->setOption(['defaultFont' => 'sans-serif', 'enable_php' => true])
+            ->stream(str($edition->year)->slug().'-fondue.pdf');
+
+        return $pdf;
+    }
+
     public function financialReport()
     {
         $editionYear = request()->input('edition');

@@ -10,6 +10,7 @@
         <li><x-filament::link :href="route('reports.vip')" class="underline">VIP</x-filament::link></li>
         <li><x-filament::link :href="route('reports.banners')" class="underline">Banderoles</x-filament::link></li>
         <li><x-filament::link :href="route('reports.screens')" class="underline">Écrans</x-filament::link></li>
+        <li><x-filament::link :href="route('reports.fondue')" class="underline">Fondue</x-filament::link></li>
         <li><x-filament::link :href="route('reports.interclass-donors')" class="underline">Donateurs interclasses</x-filament::link></li>
         <li><x-filament::link :href="route('reports.client-provisions')" class="underline">Prestations (détail)</x-filament::link></li>
         <li><x-filament::link :href="route('reports.client-provisions-matrix')" class="underline">Prestations (matrice)</x-filament::link></li>
