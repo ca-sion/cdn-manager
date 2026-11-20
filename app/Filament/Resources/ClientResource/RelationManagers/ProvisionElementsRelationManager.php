@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ClientResource\RelationManagers;
 
+use App\Models\Client;
 use App\Models\Edition;
 use App\Helpers\AppHelper;
 use Filament\Tables\Table;
@@ -176,16 +177,19 @@ class ProvisionElementsRelationManager extends RelationManager
                     Action::make('frontEditLink')
                         ->label('Lien d\'édition client')
                         ->icon('heroicon-o-pencil-square')
-                        ->url(fn () => $this->ownerRecord->frontEditLink)
+                        ->visible(fn () => $this->ownerRecord instanceof Client)
+                        ->url(fn () => $this->ownerRecord instanceof Client ? $this->ownerRecord->frontEditLink : null)
                         ->openUrlInNewTab(),
-                    SendMediaMissingAction::make()->clientUsing(fn () => $this->ownerRecord),
+                    SendMediaMissingAction::make()
+                        ->visible(fn () => $this->ownerRecord instanceof Client)
+                        ->clientUsing(fn () => $this->ownerRecord instanceof Client ? $this->ownerRecord : null),
                     DeleteAction::make(),
                     ForceDeleteAction::make(),
                     RestoreAction::make(),
                 ]),
                 InvoiceActionGroup::make(
-                    invoice: fn (Model $record) => $this->ownerRecord->latestInvoice(),
-                    clientId: fn () => $this->ownerRecord->id,
+                    invoice: fn (Model $record) => $this->ownerRecord instanceof Client ? $this->ownerRecord->latestInvoice() : null,
+                    clientId: fn () => $this->ownerRecord instanceof Client ? $this->ownerRecord->id : null,
                 ),
             ], position: RecordActionsPosition::BeforeColumns)
             ->toolbarActions([
@@ -196,7 +200,9 @@ class ProvisionElementsRelationManager extends RelationManager
                     CopyEmailBulkAction::make()->emailUsing(fn ($record) => $record->recipientContactEmail),
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
-                    SendMediaMissingBulkAction::make()->clientUsing(fn () => $this->ownerRecord),
+                    SendMediaMissingBulkAction::make()
+                        ->visible(fn () => $this->ownerRecord instanceof Client)
+                        ->clientUsing(fn () => $this->ownerRecord instanceof Client ? $this->ownerRecord : null),
                     BulkEditProvisionElementsAction::make(),
                 ]),
             ])
