@@ -476,8 +476,8 @@ class DatabaseSeeder extends Seeder
             'recipient_id'          => $contactDirector->id,
             'status'                => ProvisionElementStatusEnum::Confirmed,
             'vip_invitation_number' => 2,
-            'vip_response_status'   => 'accepted',
-            'vip_guests'            => [['name' => 'Mme Dubois']],
+            'vip_response_status'   => 1,
+            'vip_guests'            => ['Mme Dubois'],
             'cost'                  => 0,
         ]);
 
