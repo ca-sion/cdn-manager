@@ -4,13 +4,12 @@ namespace App\Filament\Actions;
 
 use Exception;
 use App\Models\Client;
-use App\Models\Voucher;
-use App\Helpers\AppHelper;
 use Filament\Actions\Action;
+use Filament\Schemas\Components\Text;
 use Filament\Forms\Components\Textarea;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
-use App\Notifications\ClientSendVouchers;
+use App\Filament\Actions\Support\VoucherMailing;
 use App\Filament\Actions\Concerns\ResolvesClientId;
 
 /**
@@ -33,10 +32,30 @@ class SendClientVouchersAction extends Action
         $this->label('Envoyer les vouchers')
             ->icon('heroicon-o-ticket')
             ->visible(fn (?Model $record): bool => $this->resolveClientId($record) !== null)
-            ->schema([
-                Textarea::make('custom_message')
-                    ->label('Message personnalisé (optionnel)'),
-            ])
+            ->modalHeading(fn (?Model $record): string => 'Envoyer les vouchers — '.(Client::find($this->resolveClientId($record))?->name ?? 'Client'))
+            ->modalSubmitActionLabel('Envoyer par email')
+            ->schema(function (?Model $record): array {
+                $client = Client::find($this->resolveClientId($record));
+                if (! $client) {
+                    return [Text::make('Client introuvable.')->color('danger')];
+                }
+
+                $assessment = VoucherMailing::assess($client);
+
+                $components = [
+                    Text::make($assessment['description'])
+                        ->color($assessment['disabled'] ? 'danger' : ($assessment['warning'] ? 'warning' : 'success'))
+                        ->weight('bold'),
+                ];
+
+                if (! $assessment['disabled']) {
+                    $components[] = Textarea::make('custom_message')
+                        ->label('Message personnalisé (optionnel)')
+                        ->placeholder('Ex : Voici vos codes vouchers pour la Course de Noël...');
+                }
+
+                return $components;
+            })
             ->action(function (?Model $record, array $data) {
                 $client = Client::find($this->resolveClientId($record));
                 if (! $client) {
@@ -45,18 +64,22 @@ class SendClientVouchersAction extends Action
                     return;
                 }
 
-                $editionId = AppHelper::getCurrentEditionId() ?? config('cdn.default_edition_id');
-                $vouchers = Voucher::where('client_id', $client->id)->where('edition_id', $editionId)->get();
-
-                if ($vouchers->isEmpty() && (int) $client->trail_vouchers_quota === 0) {
-                    Notification::make()->title('Aucun voucher attribué et aucun quota Trail pour ce client.')->warning()->send();
+                $assessment = VoucherMailing::assess($client);
+                if ($assessment['disabled']) {
+                    Notification::make()
+                        ->title('Envoi impossible : '.$assessment['disabled'])
+                        ->warning()
+                        ->send();
 
                     return;
                 }
 
                 try {
-                    $client->notify(new ClientSendVouchers($vouchers, $data['custom_message'] ?? null, $client->trail_vouchers_quota));
-                    Notification::make()->title("Email de vouchers envoyé à {$client->name}")->success()->send();
+                    VoucherMailing::send($client, $data['custom_message'] ?? null);
+                    Notification::make()
+                        ->title("Email de vouchers envoyé à {$client->name} ({$assessment['email']})")
+                        ->success()
+                        ->send();
                 } catch (Exception $e) {
                     Notification::make()->title('Erreur lors de l\'envoi')->body($e->getMessage())->danger()->send();
                 }

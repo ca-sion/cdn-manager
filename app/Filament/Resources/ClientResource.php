@@ -49,6 +49,7 @@ use App\Filament\Actions\CopyEmailBulkAction;
 use App\Filament\Actions\SendInvoiceBulkAction;
 use App\Filament\Actions\Support\ClientMailing;
 use App\Filament\Actions\SendMediaMissingAction;
+use App\Filament\Actions\SendVouchersBulkAction;
 use App\Filament\Actions\ClientMailingBulkAction;
 use App\Filament\Actions\SendClientVouchersAction;
 use App\Filament\Actions\RelaunchInvoiceBulkAction;
@@ -434,6 +435,7 @@ class ClientResource extends Resource
                     ClientMailingBulkAction::for('relaunch_interclass_donors_email'),
                     SendMediaMissingBulkAction::make(),
                     SendVipInvitationBulkAction::make()->forRecipients(),
+                    SendVouchersBulkAction::make(),
                     BulkAction::make('mark_as_relaunched')
                         ->label('Marquer comme relancé (manuellement)')
                         ->icon('heroicon-o-check-badge')
