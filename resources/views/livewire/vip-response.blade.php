@@ -19,15 +19,6 @@
                         </p>
                     </div>
                 </div>
-
-                <div class="shrink-0 flex flex-wrap sm:flex-col items-start sm:items-end gap-2 text-xs">
-                    <a
-                        href="mailto:info@coursedenoel.ch?subject=Invitation%20VIP"
-                        class="inline-flex items-center gap-1.5 rounded-lg bg-white/15 hover:bg-white/25 px-3 py-2 font-semibold text-white transition ring-1 ring-white/20"
-                    >
-                        <span>info@coursedenoel.ch</span>
-                    </a>
-                </div>
             </div>
 
             <!-- Current Status Bar -->
@@ -76,6 +67,7 @@
                     size="lg"
                     icon="heroicon-m-check-circle"
                     wire:loading.attr="disabled"
+                    :disabled="! $this->hasValidStatus() || ! $this->hasChanges()"
                 >
                     <span wire:loading.remove wire:target="update">Enregistrer et envoyer</span>
                     <span wire:loading wire:target="update">Enregistrement en cours...</span>

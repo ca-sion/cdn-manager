@@ -170,3 +170,70 @@ it('routes confirmation email to client vip contact email and ccs main contact e
             && collect($mail->cc)->pluck(0)->contains('commercial@acme.ch');
     });
 });
+
+it('does not save or send confirmation email when nothing has changed', function () {
+    Notification::fake();
+
+    $edition = Edition::factory()->create();
+    $provision = Provision::factory()->create([
+        'edition_id' => $edition->id,
+        'product_id' => Product::factory(),
+    ]);
+    $contact = Contact::factory()->create([
+        'email' => 'unchanged@example.ch',
+    ]);
+
+    $element = ProvisionElement::factory()->create([
+        'edition_id'            => $edition->id,
+        'provision_id'          => $provision->id,
+        'recipient_type'        => Contact::class,
+        'recipient_id'          => $contact->id,
+        'vip_invitation_number' => 2,
+        'vip_category'          => 'individual',
+        'vip_response_status'   => 1,
+        'vip_guests'            => ['Alice'],
+        'note'                  => 'Déjà noté',
+    ]);
+
+    Livewire::test(VipResponse::class, ['provisionElement' => $element])
+        ->call('update')
+        ->assertHasNoErrors()
+        ->assertSet('saved', false);
+
+    Notification::assertNothingSent();
+});
+
+it('rate limits repeated vip response updates to prevent email spam', function () {
+    Notification::fake();
+
+    $edition = Edition::factory()->create();
+    $provision = Provision::factory()->create([
+        'edition_id' => $edition->id,
+        'product_id' => Product::factory(),
+    ]);
+    $contact = Contact::factory()->create([
+        'email' => 'spam@example.ch',
+    ]);
+
+    $element = ProvisionElement::factory()->create([
+        'edition_id'            => $edition->id,
+        'provision_id'          => $provision->id,
+        'recipient_type'        => Contact::class,
+        'recipient_id'          => $contact->id,
+        'vip_invitation_number' => 2,
+        'vip_category'          => 'individual',
+        'vip_response_status'   => null,
+    ]);
+
+    $component = Livewire::test(VipResponse::class, ['provisionElement' => $element]);
+
+    $component->set('data.vip_response_status', 1)->call('update')->assertSet('saved', true);
+    $component->set('data.vip_response_status', 0)->call('update')->assertSet('saved', true);
+    $component->set('data.vip_response_status', 1)->call('update')->assertSet('saved', true);
+
+    // 4th attempt within 5 minutes should be blocked by RateLimiter
+    $component->set('data.vip_response_status', 0)->call('update');
+
+    Notification::assertSentToTimes($contact, VipResponseUpdated::class, 3);
+    expect((bool) $element->fresh()->vip_response_status)->toBeTrue();
+});

@@ -18,6 +18,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use App\Notifications\VipResponseUpdated;
 use Filament\Actions\Contracts\HasActions;
+use Illuminate\Support\Facades\RateLimiter;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Utilities\Get;
@@ -40,7 +41,11 @@ class VipResponse extends Component implements HasActions, HasForms
     public function mount(ProvisionElement $provisionElement): void
     {
         $this->provisionElement = $provisionElement;
-        $this->form->fill($provisionElement->toArray());
+
+        $initialData = $provisionElement->toArray();
+        $initialData['vip_response_status'] = $this->normalizeStatus($provisionElement->vip_response_status);
+
+        $this->form->fill($initialData);
     }
 
     public function form(Schema $schema): Schema
@@ -98,6 +103,7 @@ class VipResponse extends Component implements HasActions, HasForms
                             ->splitKeys([',', 'Tab'])
                             ->placeholder('Ajouter un invité (Prénom et nom de famille)')
                             ->reorderable()
+                            ->live()
                             ->nestedRecursiveRules([
                                 'min:3',
                                 'max:255',
@@ -109,7 +115,8 @@ class VipResponse extends Component implements HasActions, HasForms
                             ->label('Remarques')
                             ->placeholder('Allergies alimentaires, heure d\'arrivée estimée ou toute autre précision...')
                             ->maxLength(40000)
-                            ->autosize(),
+                            ->autosize()
+                            ->live(debounce: 300),
                     ]),
 
             ])
@@ -117,14 +124,64 @@ class VipResponse extends Component implements HasActions, HasForms
             ->model($this->provisionElement);
     }
 
+    public function hasValidStatus(): bool
+    {
+        return $this->normalizeStatus(data_get($this->data, 'vip_response_status')) !== null;
+    }
+
+    public function hasChanges(?array $state = null): bool
+    {
+        $source = $state ?? $this->data;
+
+        $currentStatus = $this->normalizeStatus($this->provisionElement->vip_response_status);
+        $newStatus = $this->normalizeStatus(data_get($source, 'vip_response_status'));
+
+        $currentGuests = $this->normalizeGuests($this->provisionElement->vip_guests);
+        $newGuests = $this->normalizeGuests(data_get($source, 'vip_guests'));
+
+        $currentNote = $this->normalizeNote($this->provisionElement->note);
+        $newNote = $this->normalizeNote(data_get($source, 'note'));
+
+        return $currentStatus !== $newStatus
+            || $currentGuests !== $newGuests
+            || $currentNote !== $newNote;
+    }
+
     public function update(): void
     {
         $data = $this->form->getState();
+
+        if (! $this->hasChanges($data)) {
+            Notification::make()
+                ->title('Aucune modification')
+                ->body('Votre réponse est déjà à jour, aucun e-mail n\'a été envoyé.')
+                ->info()
+                ->send();
+
+            return;
+        }
+
+        $rateLimitKey = 'vip-response:'.$this->provisionElement->id;
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+
+            Notification::make()
+                ->title('Trop de tentatives')
+                ->body('Veuillez patienter '.$seconds.' secondes avant de modifier à nouveau votre réponse.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        RateLimiter::hit($rateLimitKey, 300);
+
         $recipient = $this->provisionElement->recipient;
 
         $this->provisionElement->vip_response_status = data_get($data, 'vip_response_status');
-        $this->provisionElement->vip_guests = data_get($data, 'vip_guests');
-        $this->provisionElement->note = data_get($data, 'note');
+        $this->provisionElement->vip_guests = $this->normalizeGuests(data_get($data, 'vip_guests'));
+        $this->provisionElement->note = $this->normalizeNote(data_get($data, 'note'));
         $this->provisionElement->save();
 
         $emailSentTo = null;
@@ -152,6 +209,42 @@ class VipResponse extends Component implements HasActions, HasForms
             ->body($body)
             ->success()
             ->send();
+    }
+
+    private function normalizeStatus(mixed $value): ?bool
+    {
+        if ($value === null || $value === '' || $value === 'pending') {
+            return null;
+        }
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return match ($value) {
+            1, '1', 'true'  => true,
+            0, '0', 'false' => false,
+            default         => null,
+        };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function normalizeGuests(mixed $value): array
+    {
+        return collect($value ?? [])
+            ->map(fn (mixed $guest): string => trim((string) $guest))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function normalizeNote(mixed $value): ?string
+    {
+        $trimmed = trim((string) ($value ?? ''));
+
+        return $trimmed === '' ? null : $trimmed;
     }
 
     public function render(): View
