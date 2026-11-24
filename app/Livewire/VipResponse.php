@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire;
 
+use Throwable;
 use Livewire\Component;
 use Filament\Schemas\Schema;
 use App\Models\ProvisionElement;
@@ -13,6 +16,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TagsInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
+use App\Notifications\VipResponseUpdated;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
@@ -28,6 +32,10 @@ class VipResponse extends Component implements HasActions, HasForms
     public ProvisionElement $provisionElement;
 
     public ?array $data = [];
+
+    public bool $saved = false;
+
+    public ?string $confirmationEmail = null;
 
     public function mount(ProvisionElement $provisionElement): void
     {
@@ -46,7 +54,7 @@ class VipResponse extends Component implements HasActions, HasForms
                     ->schema([
                         TextEntry::make('vip_invitation_number')
                             ->label('Nombre d\'invitations')
-                            ->state(fn () => $this->provisionElement->vip_invitation_number)
+                            ->state(fn () => $this->provisionElement->vip_invitation_number ?? 1)
                             ->icon('heroicon-m-ticket')
                             ->badge()
                             ->color('primary')
@@ -58,18 +66,18 @@ class VipResponse extends Component implements HasActions, HasForms
                             ->weight(FontWeight::Bold),
                         TextEntry::make('category')
                             ->label('Type d\'invitation')
-                            ->state(fn () => $this->provisionElement->vip_category)
+                            ->state(fn () => $this->provisionElement->vip_category_label)
                             ->icon('heroicon-m-tag')
                             ->badge()
                             ->color('info'),
                     ]),
                 Section::make('Réponse')
                     ->icon('heroicon-m-envelope-open')
-                    ->columns(2)
                     ->schema([
                         ToggleButtons::make('vip_response_status')
                             ->label('Votre réponse')
                             ->default(null)
+                            ->required()
                             ->boolean()
                             ->inline()
                             ->live()
@@ -94,14 +102,14 @@ class VipResponse extends Component implements HasActions, HasForms
                                 'min:3',
                                 'max:255',
                             ])
-                            ->hint('Appuyer sur `,` ou `enter` pour ajouter un nom')
-                            ->helperText(fn () => 'Vous avez le droit à '.$this->provisionElement->vip_invitation_number.' invités y compris vous-même.')
-                            ->visible(fn (Get $get) => $get('vip_response_status') && $this->provisionElement->vip_invitation_number > 1),
+                            ->hint('Validez chaque nom avec Entrée ou une virgule')
+                            ->helperText(fn () => 'Vous avez droit à '.$this->provisionElement->vip_invitation_number.' places au total, vous y compris.')
+                            ->visible(fn (Get $get) => (bool) $get('vip_response_status') && $this->provisionElement->vip_invitation_number > 1),
                         Textarea::make('note')
                             ->label('Remarques')
+                            ->placeholder('Allergies alimentaires, heure d\'arrivée estimée ou toute autre précision...')
                             ->maxLength(40000)
-                            ->autosize()
-                            ->columnSpanFull(),
+                            ->autosize(),
                     ]),
 
             ])
@@ -109,7 +117,7 @@ class VipResponse extends Component implements HasActions, HasForms
             ->model($this->provisionElement);
     }
 
-    public function update()
+    public function update(): void
     {
         $data = $this->form->getState();
         $recipient = $this->provisionElement->recipient;
@@ -119,13 +127,29 @@ class VipResponse extends Component implements HasActions, HasForms
         $this->provisionElement->note = data_get($data, 'note');
         $this->provisionElement->save();
 
-        // Email
-        // $recipient->notify(new VipResponseUpdated());
+        $emailSentTo = null;
+        $recipientEmail = $this->provisionElement->recipientVipContactEmail ?? $this->provisionElement->recipientContactEmail;
 
-        // Notification
+        if ($recipient && filled($recipientEmail)) {
+            try {
+                $recipient->notify(new VipResponseUpdated($this->provisionElement));
+                $emailSentTo = (string) $recipientEmail;
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
+        $this->saved = true;
+        $this->confirmationEmail = $emailSentTo;
+
+        $body = 'Merci beaucoup, votre réponse a été sauvegardée.';
+        if ($emailSentTo) {
+            $body .= ' Un e-mail de confirmation a été envoyé à '.$emailSentTo.'.';
+        }
+
         Notification::make()
             ->title('Magnifique !')
-            ->body('Merci beaucoup, votre réponse a été sauvegardée.')
+            ->body($body)
             ->success()
             ->send();
     }

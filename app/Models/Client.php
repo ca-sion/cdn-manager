@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\ClientSendInvoice;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\VipResponseUpdated;
 use Illuminate\Notifications\Notification;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -308,7 +309,7 @@ class Client extends Model implements HasMedia
             return [$this->invoicingContactEmail ?? $this->contactEmail => $this->name];
         }
 
-        if ($notification instanceof RecipientSendVipInvitation) {
+        if ($notification instanceof RecipientSendVipInvitation || $notification instanceof VipResponseUpdated) {
             return [$this->vipContactEmail ?? $this->contactEmail => $this->name];
         }
 

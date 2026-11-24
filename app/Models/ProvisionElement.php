@@ -117,6 +117,22 @@ class ProvisionElement extends Model implements HasMedia, Sortable
         );
     }
 
+    public const VIP_CATEGORIES = [
+        'individual'        => 'Individu',
+        'company'           => 'Entreprise',
+        'sponsor'           => 'Sponsor',
+        'partner'           => 'Partenaire',
+        'town_council'      => 'Conseil municipal',
+        'general_council'   => 'Conseil général',
+        'states_council'    => 'Conseil d\'État',
+        'national_council'  => 'Conseil national',
+        'council_of_states' => 'Conseil des États',
+        'committee'         => 'Comité (CDN)',
+        'committee_trail'   => 'Comité (Trail)',
+        'trail'             => 'Trail',
+        'swisslife'         => 'Swisslife',
+    ];
+
     /**
      * Get the client vip contact name.
      */
@@ -124,6 +140,16 @@ class ProvisionElement extends Model implements HasMedia, Sortable
     {
         return Attribute::make(
             get: fn () => $this->recipient?->last_name ?? $this->recipient?->name ?? $this->recipient?->long_name,
+        );
+    }
+
+    /**
+     * Get the human-readable label for the VIP category.
+     */
+    protected function vipCategoryLabel(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => self::VIP_CATEGORIES[$this->vip_category] ?? $this->vip_category,
         );
     }
 
