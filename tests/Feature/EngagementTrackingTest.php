@@ -16,6 +16,8 @@ use App\Services\InvoiceService;
 use App\Enums\EngagementStageEnum;
 use App\Enums\EngagementStatusEnum;
 use App\Services\EngagementSnapshot;
+use App\Enums\ProvisionElementStatusEnum;
+use Filament\Notifications\NotificationMailbox;
 use Filament\Notifications\Livewire\Notifications;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Filament\Resources\ClientResource\Pages\ListClients;
@@ -65,6 +67,7 @@ class EngagementTrackingTest extends TestCase
             'edition_id'   => $this->edition->id, 'recipient_id' => $client->id, 'recipient_type' => Client::class,
             'provision_id' => Provision::factory()->create(['edition_id' => $this->edition->id, 'product_id' => null])->id,
             'has_product'  => true, 'quantity' => 1, 'cost' => 100, 'tax_rate' => 8.1,
+            'status'       => ProvisionElementStatusEnum::ToPrepare,
         ]);
 
         return $client;
@@ -247,6 +250,14 @@ class EngagementTrackingTest extends TestCase
 
     private function lastNotification(): array
     {
+        $mailbox = app(NotificationMailbox::class);
+        $mailbox->flush();
+        $notifications = $mailbox->tryPull();
+
+        if (! empty($notifications)) {
+            return $notifications[0];
+        }
+
         $component = new Notifications;
         $component->mount();
 

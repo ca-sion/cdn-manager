@@ -18,6 +18,7 @@ use App\Models\RunRegistrationElement;
 use App\Notifications\ClientSendInvoice;
 use App\Services\RunRegistrationService;
 use Illuminate\Support\Facades\Notification;
+use Filament\Notifications\NotificationMailbox;
 use App\Notifications\ClientSendInvoiceRelaunch;
 use Filament\Notifications\Livewire\Notifications;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -70,6 +71,14 @@ class BulkInvoicingTest extends TestCase
 
     private function lastNotification(): array
     {
+        $mailbox = app(NotificationMailbox::class);
+        $mailbox->flush();
+        $notifications = $mailbox->tryPull();
+
+        if (! empty($notifications)) {
+            return end($notifications);
+        }
+
         $component = new Notifications;
         $component->mount();
 

@@ -17,6 +17,7 @@ use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\Notification;
 use App\Filament\Actions\Support\ClientMailing;
 use App\Notifications\ClientAdvertiserFormLink;
+use Filament\Notifications\NotificationMailbox;
 use Filament\Notifications\Livewire\Notifications;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Notifications\ClientAdvertiserFormRelaunch;
@@ -56,6 +57,14 @@ class ClientMailingTest extends TestCase
 
     private function lastNotification(): array
     {
+        $mailbox = app(NotificationMailbox::class);
+        $mailbox->flush();
+        $notifications = $mailbox->tryPull();
+
+        if (! empty($notifications)) {
+            return end($notifications);
+        }
+
         $component = new Notifications;
         $component->mount();
 
