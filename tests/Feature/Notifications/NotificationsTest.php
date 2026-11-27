@@ -13,6 +13,7 @@ use App\Models\RunRegistrationElement;
 use App\Notifications\ClientSendVouchers;
 use App\Notifications\EliteRunnerFormLink;
 use App\Notifications\RunRegistrationLink;
+use App\Notifications\ClientAdvertiserFormLink;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Notifications\EliteRunnerContractFinalized;
 
@@ -99,5 +100,18 @@ class NotificationsTest extends TestCase
         $this->assertStringContainsString('.csv', $attachment['name']);
         $this->assertStringContainsString('CDN2026-UBS1', $attachment['data']);
         $this->assertStringContainsString('CDN2026-UBS2', $attachment['data']);
+    }
+
+    /** @test */
+    public function mail_footer_displays_swiss_event_signature_instead_of_copyright(): void
+    {
+        Edition::factory()->create(['year' => (int) date('Y')]);
+
+        $client = Client::factory()->create(['name' => 'Test Footer SA']);
+        $mail = (new ClientAdvertiserFormLink($client))->toMail($client);
+        $rendered = (string) $mail->render();
+
+        $this->assertStringContainsString('Course de Noël et Trail des Châteaux · Case postale 4057 · 1950 Sion', $rendered);
+        $this->assertStringNotContainsString('Tous droits réservés', $rendered);
     }
 }
