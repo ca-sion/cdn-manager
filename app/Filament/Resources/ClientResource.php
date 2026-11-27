@@ -55,10 +55,12 @@ use App\Filament\Actions\SendClientVouchersAction;
 use App\Filament\Actions\RelaunchInvoiceBulkAction;
 use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
+use App\Filament\Actions\SendMediaMissingRelaunchAction;
 use App\Filament\Actions\GenerateClientInvoicesBulkAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use App\Filament\Resources\ClientResource\Pages\EditClient;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use App\Filament\Actions\SendMediaMissingRelaunchBulkAction;
 use App\Filament\Resources\ClientResource\Pages\ListClients;
 use App\Filament\Resources\ClientResource\Pages\CreateClient;
 use App\Filament\Resources\ClientResource\RelationManagers\ContactsRelationManager;
@@ -380,6 +382,7 @@ class ClientResource extends Resource
                     ClientPdfAction::make(),
                     SendClientVouchersAction::make(),
                     SendMediaMissingAction::make(),
+                    SendMediaMissingRelaunchAction::make(),
                 ])->iconButton(),
                 ActionGroup::make(
                     collect(ClientMailing::DEFINITIONS)->keys()->map(fn (string $key) => ClientMailingAction::for($key))->all()
@@ -434,6 +437,7 @@ class ClientResource extends Resource
                     ClientMailingBulkAction::for('send_interclass_donors_email'),
                     ClientMailingBulkAction::for('relaunch_interclass_donors_email'),
                     SendMediaMissingBulkAction::make(),
+                    SendMediaMissingRelaunchBulkAction::make(),
                     SendVipInvitationBulkAction::make()->forRecipients(),
                     SendVouchersBulkAction::make(),
                     BulkAction::make('mark_as_relaunched')

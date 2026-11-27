@@ -8,6 +8,7 @@ use Filament\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Notifications\Notification;
 use App\Notifications\ClientAdvertiserMediaMissing;
+use Illuminate\Notifications\Notification as LaravelNotification;
 
 /**
  * Demande au client ses visuels manquants (uniquement si une prestation de l'édition courante
@@ -26,7 +27,7 @@ class SendMediaMissingAction extends Action
     /**
      * Envoie la demande si un média manque. Retourne true si un email a été envoyé.
      */
-    public static function sendTo(Client $client): bool
+    public static function sendTo(Client $client, ?LaravelNotification $notification = null): bool
     {
         $elementsRequiringMedia = $client->currentProvisionElements
             ->filter(fn ($pe) => $pe->provision?->format_indicator !== null);
@@ -39,7 +40,7 @@ class SendMediaMissingAction extends Action
             return false;
         }
 
-        $client->notify(new ClientAdvertiserMediaMissing);
+        $client->notify($notification ?? new ClientAdvertiserMediaMissing);
 
         return true;
     }

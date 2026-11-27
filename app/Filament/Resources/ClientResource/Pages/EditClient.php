@@ -22,6 +22,7 @@ use App\Filament\Actions\SendMediaMissingAction;
 use App\Filament\Actions\SendClientVouchersAction;
 use App\Notifications\ClientAdvertiserFormCreated;
 use App\Filament\Actions\GenerateClientInvoiceAction;
+use App\Filament\Actions\SendMediaMissingRelaunchAction;
 use App\Filament\Actions\GenerateRegistrationInvoiceAction;
 
 class EditClient extends EditRecord
@@ -51,6 +52,7 @@ class EditClient extends EditRecord
                     ->action(fn (Model $record) => $record->notify(new ClientAdvertiserFormCreated)),
                 SendClientVouchersAction::make(),
                 SendMediaMissingAction::make(),
+                SendMediaMissingRelaunchAction::make(),
                 ...collect(ClientMailing::DEFINITIONS)->keys()->map(fn (string $key) => ClientMailingAction::for($key))->all(),
             ])
                 ->label('Envois')

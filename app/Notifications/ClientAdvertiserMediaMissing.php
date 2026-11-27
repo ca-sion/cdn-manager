@@ -29,9 +29,11 @@ class ClientAdvertiserMediaMissing extends Notification
     }
 
     /**
-     * Get the mail representation of the notification.
+     * Extrait le résumé des prestations avec visuel manquant et l'année d'édition associée.
+     *
+     * @return array{summary: string, year: int|string}|null
      */
-    public function toMail(object $notifiable): MailMessage
+    protected function resolveMissingMediaSummary(object $notifiable): ?array
     {
         $currentEditionYear = now()->format('Y');
 
@@ -42,8 +44,7 @@ class ClientAdvertiserMediaMissing extends Notification
             });
 
         if ($provisionElementsWithMissingMedia->isEmpty()) {
-            // If no media is missing, return an empty MailMessage to prevent sending an email.
-            return (new MailMessage)->subject('')->line('');
+            return null;
         }
 
         $provisionElements = '';
@@ -56,8 +57,29 @@ class ClientAdvertiserMediaMissing extends Notification
             $provisionElements .= $pe->textual_indicator ? '- Mention  : '.$pe->textual_indicator."\n" : null;
             $provisionElements .= "\n";
 
-            $currentEditionYear = $pe->edition?->year;
+            $currentEditionYear = $pe->edition?->year ?? $currentEditionYear;
         }
+
+        return [
+            'summary' => $provisionElements,
+            'year'    => $currentEditionYear,
+        ];
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail(object $notifiable): MailMessage
+    {
+        $missing = $this->resolveMissingMediaSummary($notifiable);
+
+        if ($missing === null) {
+            // If no media is missing, return an empty MailMessage to prevent sending an email.
+            return (new MailMessage)->subject('')->line('');
+        }
+
+        $currentEditionYear = $missing['year'];
+        $provisionElements = $missing['summary'];
 
         return (new MailMessage)
             ->subject('🏃‍♂️ Course de Noël et Trail des Châteaux '.$currentEditionYear.' - Visuel manquant ('.$notifiable->name.')')

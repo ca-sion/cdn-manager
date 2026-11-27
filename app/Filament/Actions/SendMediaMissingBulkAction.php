@@ -7,6 +7,7 @@ use App\Models\Client;
 use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Notifications\Notification as LaravelNotification;
 
 class SendMediaMissingBulkAction extends BulkAction
 {
@@ -24,6 +25,16 @@ class SendMediaMissingBulkAction extends BulkAction
         return $this;
     }
 
+    protected function sendRecords(Collection $records, ?LaravelNotification $notification = null): int
+    {
+        return $records
+            ->map(fn ($record) => $this->clientResolver ? ($this->clientResolver)($record) : $record)
+            ->filter(fn ($client) => $client instanceof Client)
+            ->unique('id')
+            ->filter(fn (Client $client) => SendMediaMissingAction::sendTo($client, $notification))
+            ->count();
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -34,12 +45,7 @@ class SendMediaMissingBulkAction extends BulkAction
             ->requiresConfirmation()
             ->deselectRecordsAfterCompletion()
             ->action(function (Collection $records) {
-                $sent = $records
-                    ->map(fn ($record) => $this->clientResolver ? ($this->clientResolver)($record) : $record)
-                    ->filter(fn ($client) => $client instanceof Client)
-                    ->unique('id')
-                    ->filter(fn (Client $client) => SendMediaMissingAction::sendTo($client))
-                    ->count();
+                $sent = $this->sendRecords($records);
 
                 Notification::make()
                     ->title($sent.' email(s) pour médias manquants envoyé(s)')

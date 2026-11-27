@@ -39,8 +39,10 @@ use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Resources\ProvisionElementResource;
 use App\Filament\Actions\GenerateClientInvoiceAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
+use App\Filament\Actions\SendMediaMissingRelaunchAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use App\Filament\Actions\BulkEditProvisionElementsAction;
+use App\Filament\Actions\SendMediaMissingRelaunchBulkAction;
 
 class ProvisionElementsRelationManager extends RelationManager
 {
@@ -183,6 +185,9 @@ class ProvisionElementsRelationManager extends RelationManager
                     SendMediaMissingAction::make()
                         ->visible(fn () => $this->ownerRecord instanceof Client)
                         ->clientUsing(fn () => $this->ownerRecord instanceof Client ? $this->ownerRecord : null),
+                    SendMediaMissingRelaunchAction::make()
+                        ->visible(fn () => $this->ownerRecord instanceof Client)
+                        ->clientUsing(fn () => $this->ownerRecord instanceof Client ? $this->ownerRecord : null),
                     DeleteAction::make(),
                     ForceDeleteAction::make(),
                     RestoreAction::make(),
@@ -201,6 +206,9 @@ class ProvisionElementsRelationManager extends RelationManager
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
                     SendMediaMissingBulkAction::make()
+                        ->visible(fn () => $this->ownerRecord instanceof Client)
+                        ->clientUsing(fn () => $this->ownerRecord instanceof Client ? $this->ownerRecord : null),
+                    SendMediaMissingRelaunchBulkAction::make()
                         ->visible(fn () => $this->ownerRecord instanceof Client)
                         ->clientUsing(fn () => $this->ownerRecord instanceof Client ? $this->ownerRecord : null),
                     BulkEditProvisionElementsAction::make(),

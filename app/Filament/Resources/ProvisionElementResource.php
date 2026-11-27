@@ -57,9 +57,11 @@ use App\Filament\Actions\ClientMailingBulkAction;
 use Filament\Forms\Components\MorphToSelect\Type;
 use App\Filament\Actions\SendMediaMissingBulkAction;
 use App\Filament\Actions\SendVipInvitationBulkAction;
+use App\Filament\Actions\SendMediaMissingRelaunchAction;
 use App\Filament\Actions\BulkEditProvisionElementsAction;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use App\Filament\Actions\SendMediaMissingRelaunchBulkAction;
 use App\Filament\Resources\ProvisionElementResource\Pages\EditProvisionElement;
 use App\Filament\Resources\ProvisionElementResource\Pages\ListProvisionElements;
 use App\Filament\Resources\ProvisionElementResource\Pages\CreateProvisionElement;
@@ -596,6 +598,7 @@ class ProvisionElementResource extends Resource
                         ->openUrlInNewTab(),
                     ClientPdfAction::make()->clientUsing(fn (Model $record) => $record->recipient),
                     SendMediaMissingAction::make()->clientUsing(fn (Model $record) => $record->recipient),
+                    SendMediaMissingRelaunchAction::make()->clientUsing(fn (Model $record) => $record->recipient),
                 ]),
                 ActionGroup::make(
                     collect(ClientMailing::DEFINITIONS)->keys()
@@ -616,6 +619,7 @@ class ProvisionElementResource extends Resource
                     SendVipInvitationBulkAction::make(),
                     ExportMediaBulkAction::make(),
                     SendMediaMissingBulkAction::make()->clientUsing(fn (Model $record) => $record->recipient),
+                    SendMediaMissingRelaunchBulkAction::make()->clientUsing(fn (Model $record) => $record->recipient),
                     ...collect(ClientMailing::DEFINITIONS)->keys()
                         ->map(fn (string $key) => ClientMailingBulkAction::for($key)->clientUsing(fn (Model $record) => $record->recipient))
                         ->all(),
