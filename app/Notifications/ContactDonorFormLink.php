@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Contact;
+use App\Models\Edition;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Notifications\Notification;
@@ -38,14 +39,19 @@ class ContactDonorFormLink extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $signedUrl = URL::signedRoute('donors.form.contact', ['contact' => $this->contact->id]);
-        $currentEditionYear = now()->format('Y');
+        $currentEditionYear = Edition::currentYear();
+        $email = Edition::currentMeta('advertisers_email');
+        $eventDate = Edition::currentMeta('event_date');
+        $cdnNumber = Edition::currentMeta('cdn_edition_number');
+        $trailNumber = Edition::currentMeta('trail_edition_number');
+        $participants = Edition::currentMeta('expected_participants');
 
         return (new MailMessage)
             ->subject('🏃‍♂️ Course de Noël et Trail des Châteaux '.$currentEditionYear.' - Formulaire donateur ('.$notifiable->name.')')
-            ->replyTo('pub@coursedenoel.ch')
-            ->bcc('pub@coursedenoel.ch')
+            ->replyTo($email)
+            ->bcc($email)
             ->greeting('Cher Ami de la Course de Noël et du Trail des Châteaux,')
-            ->line('Comme vous le savez, la Course de Noël est devenue un événement incontournable du 2ᵉ samedi de décembre à Sion. Cette année, nous organisons la 57ᵉ édition et nous sommes impatients d’accueillir plus de 6000 participant·e·s le 12 décembre 2026. Le 8ᵉ Trail des Châteaux se tiendra le même jour entre les châteaux de notre belle région. Votre contribution, même modeste, est précieuse. Elle nous permettra de continuer à offrir un événement de qualité.')
+            ->line('Comme vous le savez, la Course de Noël est devenue un événement incontournable du 2ᵉ samedi de décembre à Sion. Cette année, nous organisons la '.$cdnNumber.' édition et nous sommes impatients d’accueillir plus de '.$participants.' participant·e·s le '.$eventDate.'. Le '.$trailNumber.' Trail des Châteaux se tiendra le même jour entre les châteaux de notre belle région. Votre contribution, même modeste, est précieuse. Elle nous permettra de continuer à offrir un événement de qualité.')
             // ->line('En remerciement de votre générosité, votre nom sera mentionné dans l\'encarté du Nouvelliste, distribué à 40 000 exemplaires dans les districts de Sion, d’Hérens et de Conthey le x décembre. C\'est une belle opportunité de montrer votre engagement auprès de la communauté. Mention anonyme possible.')
             ->line('Si vous souhaitez **soutenir** la Course de Noël et le Trail des Châteaux, nous vous invitons à **remplir le formulaire en ligne** suivant :')
             ->action('Formulaire de don', $signedUrl)

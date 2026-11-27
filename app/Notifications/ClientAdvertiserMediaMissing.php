@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Edition;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -80,20 +81,22 @@ class ClientAdvertiserMediaMissing extends Notification
 
         $currentEditionYear = $missing['year'];
         $provisionElements = $missing['summary'];
+        $email = Edition::currentMeta('advertisers_email');
+        $signature = Edition::currentMeta('advertisers_signature');
 
         return (new MailMessage)
             ->subject('🏃‍♂️ Course de Noël et Trail des Châteaux '.$currentEditionYear.' - Visuel manquant ('.$notifiable->name.')')
-            ->replyTo('pub@coursedenoel.ch')
-            ->bcc('pub@coursedenoel.ch')
+            ->replyTo($email)
+            ->bcc($email)
             ->greeting('Bonjour,')
             ->line('Sauf erreur de notre part, nous n\'avons pas encore reçu de visuel·s de votre part pour la Course de Noël et le Trail des Châteaux. Seriez-vous d\'accord de me les faire parvenir selon les spécifications ci-après ?')
             ->line([$provisionElements])
             ->line('Vous pouvez ajouter vos visuels en cliquant sur le lien ci-après :')
             ->action('Ajouter les visuels', $notifiable->frontEditLink)
-            ->line('Vous pouvez également simplement envoyer vos visuels par retour d\'email à l\'adresse [pub@coursedenoel.ch](mailto:pub@coursedenoel.ch).')
+            ->line('Vous pouvez également simplement envoyer vos visuels par retour d\'email à l\'adresse ['.$email.'](mailto:'.$email.').')
             ->line('Si vous avez déjà envoyé les visuels il y a quelque temps, je vous prie de m\'en excuser. Dans ce cas, merci de m\'en faire part.')
             ->line('Merci pour votre soutien et belle journée !')
-            ->salutation('Michael Ravedoni, Administration');
+            ->salutation($signature);
     }
 
     /**

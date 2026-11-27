@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Client;
+use App\Models\Edition;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
@@ -89,28 +90,35 @@ class ClientSendVouchers extends Notification
             .'</div>';
         $mail->line(new HtmlString($summaryHtml));
 
+        $vouchersDeadline = e(Edition::currentMeta('vouchers_deadline'));
+        $companyFormUrl = e(Edition::currentMeta('vouchers_company_form_url'));
+        $datasportUrl = e(Edition::currentMeta('vouchers_datasport_url'));
+        $infoUrl = e(Edition::currentMeta('vouchers_info_url'));
+        $tshirtDeadline = e(Edition::currentMeta('vouchers_tshirt_deadline'));
+        $tshirtUrl = e(Edition::currentMeta('vouchers_tshirt_url'));
+
         // 2. Section Challenge Entreprises (Course de Noël) adaptée au nombre de vouchers
         if ($cdnCount >= 20) {
             $registrationDetailsHtml = '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 10px;">'
                 .'<div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">🔹 Équipe de 20 personnes et plus (Recommandé) :</div>'
                 .'<div style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 8px;">Inscription groupée simplifiée via notre formulaire en ligne (vos '.$cdnCount.' inscriptions seront déduites automatiquement).</div>'
-                .'<a href="https://manager.coursedenoel.ch/registrations/company" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 4px;">Formulaire en ligne (+ 20) →</a>'
+                .'<a href="'.$companyFormUrl.'" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 4px;">Formulaire en ligne (+ 20) →</a>'
                 .'</div>'
                 .'<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 12px;">'
                 .'<div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">🔹 Pour des inscriptions individuelles :</div>'
                 .'<div style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 8px;">Vous pouvez également transmettre les codes vouchers joints à vos coureurs pour une inscription individuelle sur Datasport.</div>'
-                .'<a href="https://coursedenoel.ch/courses/challenge-entreprises#content-inscriptions" style="display: inline-block; background-color: #475569; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Inscription Datasport →</a>'
+                .'<a href="'.$datasportUrl.'" style="display: inline-block; background-color: #475569; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Inscription Datasport →</a>'
                 .'</div>';
         } else {
             $registrationDetailsHtml = '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 10px;">'
                 .'<div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">🔹 Moins de 20 participants :</div>'
                 .'<div style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 8px;">Inscription individuelle sur la plateforme Datasport en saisissant un code voucher par participant lors de la validation.</div>'
-                .'<a href="https://coursedenoel.ch/courses/challenge-entreprises#content-inscriptions" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 4px;">Inscription Datasport →</a>'
+                .'<a href="'.$datasportUrl.'" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 7px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 4px;">Inscription Datasport →</a>'
                 .'</div>'
                 .'<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 12px;">'
                 .'<div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">🔹 20 participants et plus :</div>'
                 .'<div style="font-size: 13px; color: #334155; line-height: 1.5; margin-bottom: 8px;">Si votre délégation atteint 20 personnes ou plus, vous pouvez utiliser notre formulaire de groupe simplifié (vos '.$cdnCount.' inscriptions seront déduites automatiquement).</div>'
-                .'<a href="https://manager.coursedenoel.ch/registrations/company" style="display: inline-block; background-color: #475569; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Formulaire de groupe (≥ 20) →</a>'
+                .'<a href="'.$companyFormUrl.'" style="display: inline-block; background-color: #475569; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Formulaire de groupe (≥ 20) →</a>'
                 .'</div>';
         }
 
@@ -118,7 +126,7 @@ class ClientSendVouchers extends Notification
             .'<h4 style="margin: 0 0 12px 0; color: #1e3a8a; font-size: 16px; font-weight: 700;">🏃 Challenge Entreprises</h4>'
             .$registrationDetailsHtml
             .'<div style="font-size: 13px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 10px; line-height: 1.5;">'
-            .'⏰ <strong>Délai :</strong> <strong style="color: #dc2626;">22 novembre</strong> · ℹ️ <strong>Infos :</strong> <a href="https://coursedenoel.ch/courses/challenge-entreprises" style="color: #2563eb; text-decoration: underline;">coursedenoel.ch/courses/challenge-entreprises</a>'
+            .'⏰ <strong>Délai :</strong> <strong style="color: #dc2626;">'.$vouchersDeadline.'</strong> · ℹ️ <strong>Infos :</strong> <a href="'.$infoUrl.'" style="color: #2563eb; text-decoration: underline;">'.preg_replace('#^https?://#', '', $infoUrl).'</a>'
             .'</div>'
             .'</div>';
         $mail->line(new HtmlString($instructionsHtml));
@@ -142,9 +150,9 @@ class ClientSendVouchers extends Notification
         $tshirtHtml = '<div style="margin: 16px 0; background: #f0f9ff; border: 1px solid #bae6fd; border-top: 4px solid #0284c7; border-radius: 8px; padding: 16px;">'
             .'<h4 style="margin: 0 0 6px 0; color: #0369a1; font-size: 15px; font-weight: 700;">👕 T-shirts personnalisés avec Texner</h4>'
             .'<p style="margin: 0 0 10px 0; font-size: 13px; color: #0c4a6e; line-height: 1.5;">'
-            .'Vous souhaitez un T-shirt personnalisé aux couleurs de votre entreprise ? Choisissez un visuel et commandez directement avec notre partenaire <strong>Texner</strong> avant le <strong>11 novembre</strong>.'
+            .'Vous souhaitez un T-shirt personnalisé aux couleurs de votre entreprise ? Choisissez un visuel et commandez directement avec notre partenaire <strong>Texner</strong> avant le <strong>'.$tshirtDeadline.'</strong>.'
             .'</p>'
-            .'<a href="https://coursedenoel.ch/courses/challenge-entreprises#content-t-shirt" style="display: inline-block; background-color: #0284c7; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Commander vos T-shirts Texner →</a>'
+            .'<a href="'.$tshirtUrl.'" style="display: inline-block; background-color: #0284c7; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 600; text-decoration: none; border-radius: 4px;">Commander vos T-shirts Texner →</a>'
             .'</div>';
         $mail->line(new HtmlString($tshirtHtml));
 

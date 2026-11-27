@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Edition;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -33,7 +34,8 @@ class ClientAdvertiserFormCreated extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $currentEditionYear = now()->format('Y');
+        $currentEditionYear = Edition::currentYear();
+        $email = Edition::currentMeta('advertisers_email');
         $provisionElements = '';
         foreach ($notifiable->currentProvisionElements as $pe) {
             $provisionElements .= ($pe->provision->description ? '## '.$pe->provision->description : '## '.$pe->provision->name).' - '.$pe->price->amount('c')."\n";
@@ -49,8 +51,8 @@ class ClientAdvertiserFormCreated extends Notification
 
         return (new MailMessage)
             ->subject('CDN '.$currentEditionYear.' - Commande annonceur effectuée ('.$notifiable->name.')')
-            ->replyTo('pub@coursedenoel.ch')
-            ->bcc('pub@coursedenoel.ch')
+            ->replyTo($email)
+            ->bcc($email)
             ->greeting($notifiable->name.',')
             ->line('Vous venez de passer une commande pour une prestation en tant qu\'annonceur pour la Course de Noël et le Trail des Châteaux. Nous vous remercions beaucoup pour votre soutien.')
             ->line('En cliquant sur le bouton ci-dessous, vous pouvez voir la commande passée.')

@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Client;
+use App\Models\Edition;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\URL;
@@ -42,20 +43,23 @@ class ClientAdvertiserFormRelaunch extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $signedUrl = URL::signedRoute('advertisers.form.client', ['client' => $this->client->id]);
-        $currentEditionYear = now()->format('Y');
+        $currentEditionYear = Edition::currentYear();
+        $email = Edition::currentMeta('advertisers_email');
+        $participants = Edition::currentMeta('expected_participants');
+        $paperFormUrl = Edition::currentMeta('advertisers_paper_form_url');
 
         return (new MailMessage)
             ->subject('🏃‍♂️ Course de Noël et Trail des Châteaux '.$currentEditionYear.' - Formulaire annonceur ('.$notifiable->name.') : rappel')
-            ->replyTo('pub@coursedenoel.ch')
-            ->bcc('pub@coursedenoel.ch')
+            ->replyTo($email)
+            ->bcc($email)
             ->greeting('Cher Partenaire,')
             ->line('Sauf erreur de notre part, il semble que nous n\'ayons pas encore reçu votre formulaire de sponsoring pour l\'édition '.$currentEditionYear.' de la Course de Noël et du Trail des Châteaux. Ce n\'est pas grave, la date limite est encore lointaine !')
-            ->line('Pour rappel, cet événement qui accueillera plus de 6000 participant·e·s est une superbe opportunité de visibilité.')
+            ->line('Pour rappel, cet événement qui accueillera plus de '.$participants.' participant·e·s est une superbe opportunité de visibilité.')
             ->line('Si vous souhaitez renouveler votre soutien ou devenir partenaire, vous pouvez remplir le formulaire en ligne via le lien ci-dessous :')
             ->action('Formulaire de commande', $signedUrl)
             ->lineIf($this->previousOrderDetails, 'Détails de votre commande de l\'édition précédente :')
             ->lineIf($this->previousOrderDetails, $this->previousOrderDetails ? '- '.implode(', ', $this->previousOrderDetails) : '- Aucune commande trouvée pour l\'édition précédente.')
-            ->line('Vous pouvez aussi nous retourner le formulaire papier au format PDF après l\'avoir rempli à l\'adresse pub@coursedenoel.ch. Vous pouvez le télécharger sous : https://coursedenoel.ch/assets/documents/fo-annonceurs.pdf')
+            ->line('Vous pouvez aussi nous retourner le formulaire papier au format PDF après l\'avoir rempli à l\'adresse '.$email.'. Vous pouvez le télécharger sous : '.$paperFormUrl)
             ->line('Nous nous réjouissons de vous compter parmi nos partenaires et restons à votre disposition pour toute question.')
             ->salutation('Le Comité d\'organisation')
             ->line(new HtmlString('<img src="'.$notifiable->currentEngagement?->tracker.'" width="1" height="1" />'));
